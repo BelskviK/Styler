@@ -1,8 +1,11 @@
 // src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "@/components/common/Sidebar";
+
 import Dashboard from "@/pages/Dashboard";
-import Profile from "@/pages/Profile";
+import Bookings from "@/pages/Bookings";
+import Stylists from "@/pages/Stylists";
+import Services from "@/pages/Services";
 import Settings from "@/pages/Settings";
 
 export default function App() {
@@ -16,7 +19,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/Bookings" element={<Bookings />} />
+          <Route path="/Stylists" element={<Stylists />} />
+          <Route path="/services" element={<Services />} />
           <Route path="/settings" element={<Settings />} />
           {/* fallback route */}
           <Route

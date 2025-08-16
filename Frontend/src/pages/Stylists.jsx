@@ -1,0 +1,138 @@
+// src/pages/Stylists.jsx
+import { useState } from "react";
+
+export default function Stylists() {
+  const [search, setSearch] = useState("");
+
+  // Dummy stylists data
+  const stylists = [
+    {
+      id: 1,
+      name: "Emily Carter",
+      expertise: "Color Specialist",
+      schedule: "Available",
+      reviews: "4.8 (120 reviews)",
+    },
+    {
+      id: 2,
+      name: "David Lee",
+      expertise: "Cutting & Styling",
+      schedule: "Booked",
+      reviews: "4.9 (150 reviews)",
+    },
+    {
+      id: 3,
+      name: "Sophia Clark",
+      expertise: "Extensions & Treatments",
+      schedule: "Available",
+      reviews: "4.7 (100 reviews)",
+    },
+    {
+      id: 4,
+      name: "Ethan Brown",
+      expertise: "Barbering & Men's Styling",
+      schedule: "Booked",
+      reviews: "4.6 (80 reviews)",
+    },
+    {
+      id: 5,
+      name: "Olivia Green",
+      expertise: "Bridal & Special Occasions",
+      schedule: "Available",
+      reviews: "4.9 (90 reviews)",
+    },
+  ];
+
+  // Filter by search
+  const filteredStylists = stylists.filter((stylist) =>
+    stylist.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="layout-content-container flex flex-col flex-1">
+      {/* Header */}
+      <div className="flex flex-wrap justify-between gap-3 p-4">
+        <p className="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">
+          Stylists
+        </p>
+        <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal">
+          <span className="truncate">Add Stylist</span>
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="px-4 py-3">
+        <label className="flex flex-col min-w-40 h-12 w-full">
+          <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
+            <div className="text-[#60758a] flex border-none bg-[#f0f2f5] items-center justify-center pl-4 rounded-l-lg border-r-0">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24px"
+                height="24px"
+                fill="currentColor"
+                viewBox="0 0 256 256"
+              >
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search stylists"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] focus:outline-0 focus:ring-0 border-none bg-[#f0f2f5] focus:border-none h-full placeholder:text-[#60758a] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+            />
+          </div>
+        </label>
+      </div>
+
+      {/* Table */}
+      <div className="px-4 py-3 @container">
+        <div className="flex overflow-hidden rounded-lg border border-[#dbe0e6] bg-white">
+          <table className="flex-1">
+            <thead>
+              <tr className="bg-white">
+                <th className="px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
+                  Name
+                </th>
+                <th className="px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
+                  Expertise
+                </th>
+                <th className="px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
+                  Schedule
+                </th>
+                <th className="px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
+                  Reviews
+                </th>
+                <th className="px-4 py-3 text-left text-[#111418] w-60 text-[#60758a] text-sm font-medium leading-normal">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStylists.map((stylist) => (
+                <tr key={stylist.id} className="border-t border-t-[#dbe0e6]">
+                  <td className="h-[72px] px-4 py-2 w-[400px] text-[#111418] text-sm font-normal leading-normal">
+                    {stylist.name}
+                  </td>
+                  <td className="h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
+                    {stylist.expertise}
+                  </td>
+                  <td className="h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
+                    {stylist.schedule}
+                  </td>
+                  <td className="h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
+                    {stylist.reviews}
+                  </td>
+                  <td className="h-[72px] px-4 py-2 w-60 text-[#60758a] text-sm font-bold leading-normal tracking-[0.015em] cursor-pointer">
+                    Edit
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
