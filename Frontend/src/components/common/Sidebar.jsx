@@ -1,12 +1,15 @@
-import { NavLink } from "react-router-dom";
+// src/components/common/Sidebar.jsx
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
 
-const navItems = [
+const commonNavItems = [
   {
     label: "Dashboard",
     path: "/dashboard",
     icon: (
       <div
-        class="text-[#111418]"
+        className="text-[#111418]"
         data-icon="House"
         data-size="24px"
         data-weight="fill"
@@ -22,12 +25,13 @@ const navItems = [
         </svg>
       </div>
     ),
+    roles: ["superadmin", "styler", "customer"],
   },
   {
     label: "Bookings",
     path: "/bookings",
     icon: (
-      <div class="text-[#111418]" data-size="24px" data-weight="regular">
+      <div className="text-[#111418]" data-size="24px" data-weight="regular">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24px"
@@ -39,13 +43,14 @@ const navItems = [
         </svg>
       </div>
     ),
+    roles: ["superadmin", "styler"],
   },
   {
     label: "Stylists",
     path: "/stylists",
     icon: (
       <div
-        class="text-[#111418]"
+        className="text-[#111418]"
         data-icon="Users"
         data-size="24px"
         data-weight="regular"
@@ -61,14 +66,15 @@ const navItems = [
         </svg>
       </div>
     ),
+    roles: ["superadmin"],
   },
   {
-    label: "Services",
-    path: "/services",
+    label: "Appointments",
+    path: "/appointments",
     icon: (
       <div
-        class="text-[#111418]"
-        data-icon="Scissors"
+        className="text-[#111418]"
+        data-icon="Calendar"
         data-size="24px"
         data-weight="regular"
       >
@@ -79,17 +85,41 @@ const navItems = [
           fill="currentColor"
           viewBox="0 0 256 256"
         >
-          <path d="M157.73,113.13A8,8,0,0,1,159.82,102L227.48,55.7a8,8,0,0,1,9,13.21l-67.67,46.3a7.92,7.92,0,0,1-4.51,1.4A8,8,0,0,1,157.73,113.13Zm80.87,85.09a8,8,0,0,1-11.12,2.08L136,137.7,93.49,166.78a36,36,0,1,1-9-13.19L121.83,128,84.44,102.41a35.86,35.86,0,1,1,9-13.19l143,97.87A8,8,0,0,1,238.6,198.22ZM80,180a20,20,0,1,0-5.86,14.14A19.85,19.85,0,0,0,80,180ZM74.14,90.13a20,20,0,1,0-28.28,0A19.85,19.85,0,0,0,74.14,90.13Z"></path>
+          <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"></path>
         </svg>
       </div>
     ),
+    roles: ["stylist"],
+  },
+  {
+    label: "Shops",
+    path: "/barbershops",
+    icon: (
+      <div
+        className="text-[#111418]"
+        data-icon="Storefront"
+        data-size="24px"
+        data-weight="regular"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24px"
+          height="24px"
+          fill="currentColor"
+          viewBox="0 0 256 256"
+        >
+          <path d="M232,104v96a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V104A16,16,0,0,1,40,88H48a24,24,0,0,0,48,0h64a24,24,0,0,0,48,0h8A16,16,0,0,1,232,104ZM40,120v16H72V120Zm56,0v16H200V120ZM24,104V64A16,16,0,0,1,40,48H216a16,16,0,0,1,16,16V104a32,32,0,0,1-8.53,21.88A32,32,0,0,1,200,136H160a32,32,0,0,1-32-32,8,8,0,0,0-16,0,32,32,0,0,1-32,32H56a32,32,0,0,1-32-32ZM40,64V80H216V64Z"></path>
+        </svg>
+      </div>
+    ),
+    roles: ["superadmin"],
   },
   {
     label: "Settings",
     path: "/settings",
     icon: (
       <div
-        class="text-[#111418]"
+        className="text-[#111418]"
         data-icon="Gear"
         data-size="24px"
         data-weight="regular"
@@ -105,22 +135,48 @@ const navItems = [
         </svg>
       </div>
     ),
+    roles: ["superadmin", "styler", "customer"],
   },
 ];
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect customers to /barbershops
+  useEffect(() => {
+    if (user?.role === "customer") {
+      navigate("/barbershops");
+    }
+  }, [user, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  // Filter nav items based on user role
+  const filteredNavItems = commonNavItems.filter((item) => {
+    console.log(`Checking ${item.label} for role ${user?.role}`);
+    return item.roles.includes(user?.role?.toLowerCase() || "");
+  });
+
   return (
     <div className="layout-content-container flex flex-col w-80">
       <div className="flex h-full min-h-[700px] flex-col justify-between bg-white p-4 shadow-md">
         <div className="flex flex-col gap-4">
-          {/* Logo / Title */}
+          {/* Company Name */}
           <h1 className="text-[#111418] text-base font-medium leading-normal">
-            SalonApp
+            {user?.company || "SalonApp"}
           </h1>
 
           {/* Nav Items */}
           <div className="flex flex-col gap-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
@@ -139,6 +195,25 @@ export default function Sidebar() {
             ))}
           </div>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#111418] hover:bg-gray-100 mt-auto"
+        >
+          <div className="text-[#111418]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24px"
+              height="24px"
+              fill="currentColor"
+              viewBox="0 0 256 256"
+            >
+              <path d="M112,216a8,8,0,0,1-8,8H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h56a8,8,0,0,1,0,16H48V208h56A8,8,0,0,1,112,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L196.69,120H104a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,221.66,122.34Z"></path>
+            </svg>
+          </div>
+          <p>Logout</p>
+        </button>
       </div>
     </div>
   );

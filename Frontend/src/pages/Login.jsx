@@ -6,33 +6,19 @@ import { useNavigate } from "react-router-dom";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const { login } = useAuth();
+  const [formError, setFormError] = useState("");
+  const { login, loading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setFormError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        login(data.token);
-        navigate("/dashboard");
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch {
-      setError("An error occurred during login");
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setFormError(err.message || "Login failed");
     }
   };
 
@@ -40,7 +26,21 @@ export default function Login() {
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
-        {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
+
+        {/* Display any auth context errors */}
+        {error && (
+          <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Display form-specific errors */}
+        {formError && (
+          <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-center">
+            {formError}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="email">
@@ -53,6 +53,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={loading}
             />
           </div>
           <div className="mb-6">
@@ -66,13 +67,15 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={loading}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 disabled:bg-blue-400"
+            disabled={loading}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

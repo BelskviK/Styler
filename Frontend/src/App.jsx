@@ -1,10 +1,11 @@
 // src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import Sidebar from "@/components/common/Sidebar";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import Login from "@/pages/Login";
-
+import Barbershops from "@/pages/Barbershops";
+import AuthenticatedLayout from "@/components/common/AuthenticatedLayout";
 import Dashboard from "@/pages/Dashboard";
+import Appointments from "@/pages/Appointments";
 import Bookings from "@/pages/Bookings";
 import Stylists from "@/pages/Stylists";
 import Services from "@/pages/Services";
@@ -15,36 +16,24 @@ export default function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/barbershops" element={<Barbershops />} />
 
-      {/* Protected routes with layout */}
+      {/* Protected routes */}
       <Route element={<ProtectedRoute />}>
-        <Route
-          element={
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto p-6">
-                <Routes>
-                  <Route
-                    path="/"
-                    element={<Navigate to="/dashboard" replace />}
-                  />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/bookings" element={<Bookings />} />
-                  <Route path="/stylists" element={<Stylists />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
-              </main>
-            </div>
-          }
-        >
-          {/* These will render inside the layout above */}
-          <Route
-            path="*"
-            element={<h1 className="text-xl">Page Not Found</h1>}
-          />
+        <Route element={<AuthenticatedLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="bookings" element={<Bookings />} />
+          <Route path="stylists" element={<Stylists />} />
+          <Route path="services" element={<Services />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="appointments" element={<Appointments />} />
+          {/* Removed duplicate barbershops route */}
         </Route>
       </Route>
+
+      {/* Catch-all route */}
+      <Route path="*" element={<h1 className="text-xl">Page Not Found</h1>} />
     </Routes>
   );
 }
