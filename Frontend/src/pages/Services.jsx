@@ -1,5 +1,5 @@
-// src/pages/Services.jsx
 import { useState } from "react";
+import Modal from "@/components/common/Modal";
 
 const initialServices = [
   {
@@ -35,16 +35,38 @@ const initialServices = [
 ];
 
 export default function Services() {
-  const [services] = useState(initialServices);
+  const [services, setServices] = useState(initialServices);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    duration: "",
+    price: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setServices((prev) => [...prev, form]);
+    setForm({ name: "", description: "", duration: "", price: "" });
+    setIsModalOpen(false);
+  };
 
   return (
-    <div className="layout-content-container flex flex-col  flex-1">
+    <div className="layout-content-container flex flex-col flex-1">
       {/* Header */}
       <div className="flex flex-wrap justify-between gap-3 p-4">
         <p className="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">
           Services
         </p>
-        <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal"
+        >
           <span className="truncate">Add Service</span>
         </button>
       </div>
@@ -107,6 +129,83 @@ export default function Services() {
           `}
         </style>
       </div>
+
+      {/* Add Service Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Service"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Service Name</label>
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 mt-1"
+              placeholder="Enter service name"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Description</label>
+            <input
+              type="text"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 mt-1"
+              placeholder="Enter description"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Duration</label>
+            <input
+              type="text"
+              name="duration"
+              value={form.duration}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 mt-1"
+              placeholder="e.g. 30 min"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Price</label>
+            <input
+              type="text"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 mt-1"
+              placeholder="$50"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 border rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
