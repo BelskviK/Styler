@@ -6,10 +6,31 @@ const Company = require("../models/Company");
 // @access  Private (admin, styler, customer of the company)
 exports.getServices = async (req, res, next) => {
   try {
-    // For customers, they can see all services
-    // For admins and stylers, they can see services of their company
-    const query =
-      req.user.role === "customer" ? {} : { company: req.user.company };
+    // For superadmin, allow querying by company ID
+    let query = {};
+    if (req.user.role === "superadmin") {
+      if (req.query.companyId) {
+        query.company = req.query.companyId;
+      }
+    } else if (req.user.role === "admin") {
+      // Regular admin can only see their company's services
+      query.company = req.user.company;
+    } else if (req.user.role === "styler") {
+      // Stylers can see services assigned to them
+      query = {
+        _id: { $in: req.user.services },
+        company: req.user.company,
+      };
+    } else if (req.user.role === "customer") {
+      // Customers can see all services of the company they're viewing
+      if (req.query.companyId) {
+        query.company = req.query.companyId;
+      } else {
+        return res
+          .status(400)
+          .json({ message: "Company ID required for customers" });
+      }
+    }
 
     const services = await Service.find(query).populate("company", "name");
     res.status(200).json(services);
@@ -18,7 +39,6 @@ exports.getServices = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 // @desc    Create a service (admin only)
 // @route   POST /api/services
 // @access  Private (admin)
@@ -26,7 +46,7 @@ exports.createService = async (req, res, next) => {
   const { name, description, duration, price } = req.body;
 
   try {
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "superadmin") {
       return res
         .status(403)
         .json({ message: "Not authorized to perform this action" });
@@ -56,7 +76,7 @@ exports.updateService = async (req, res, next) => {
   const { name, description, duration, price } = req.body;
 
   try {
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "superadmin") {
       return res
         .status(403)
         .json({ message: "Not authorized to perform this action" });
@@ -94,7 +114,7 @@ exports.updateService = async (req, res, next) => {
 // @access  Private (admin)
 exports.deleteService = async (req, res, next) => {
   try {
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "superadmin") {
       return res
         .status(403)
         .json({ message: "Not authorized to perform this action" });
@@ -113,18 +133,21 @@ exports.deleteService = async (req, res, next) => {
         .json({ message: "Not authorized to delete this service" });
     }
 
-    await service.remove();
+    // Use deleteOne() instead of remove()
+    await Service.deleteOne({ _id: req.params.id });
 
     res.status(200).json({
       success: true,
       message: "Service deleted successfully",
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Delete error:", err); // More detailed logging
+    res.status(500).json({
+      message: "Server error",
+      error: err.message, // Include error message in response
+    });
   }
 };
-
 // @desc    Assign services to stylist (admin only)
 // @route   PUT /api/services/assign/:stylistId
 // @access  Private (admin)
@@ -132,7 +155,7 @@ exports.assignServicesToStylist = async (req, res, next) => {
   const { serviceIds } = req.body;
 
   try {
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "superadmin") {
       return res
         .status(403)
         .json({ message: "Not authorized to perform this action" });
@@ -162,11 +185,9 @@ exports.assignServicesToStylist = async (req, res, next) => {
       company: req.user.company,
     });
     if (services.length !== serviceIds.length) {
-      return res
-        .status(400)
-        .json({
-          message: "Some services do not exist or belong to another company",
-        });
+      return res.status(400).json({
+        message: "Some services do not exist or belong to another company",
+      });
     }
 
     stylist.services = serviceIds;

@@ -173,12 +173,14 @@ export default function Stylists() {
         <p className="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">
           Stylists
         </p>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal"
-        >
-          <span className="truncate">Add Stylist</span>
-        </button>
+        {user?.role === "superadmin" && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal"
+          >
+            <span className="truncate">Add Stylist</span>
+          </button>
+        )}
       </div>
 
       {/* Add Stylist Modal */}
