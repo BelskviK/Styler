@@ -20,6 +20,8 @@ export default function Stylists() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [editingStylist, setEditingStylist] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Dummy services for demo
   const dummyServices = [
@@ -90,9 +92,10 @@ export default function Stylists() {
       newErrors.email = "Email is invalid";
     }
 
-    if (!formData.password) {
+    // Only validate password if we're creating a new stylist or if it's being changed
+    if (!editingStylist && !formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    } else if (formData.password && formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
 
@@ -140,7 +143,70 @@ export default function Stylists() {
       setIsSubmitting(false);
     }
   };
+  // Add this function to handle opening the edit modal
+  const handleEditClick = (stylist) => {
+    console.log("Editing stylist:", stylist); // Add this line
 
+    setEditingStylist(stylist);
+    setFormData({
+      name: stylist.name,
+      email: stylist.email,
+      password: "", // Leave password blank for editing
+      role: stylist.role,
+      services: stylist.services
+        ? stylist.services.map((service) => service._id || service)
+        : [], // Handle undefined services
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Modify the validateForm function to make password optional during editing
+
+  // Add this function to handle the edit submission
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      await axios.put(
+        `http://localhost:5000/api/users/${editingStylist._id}`,
+        {
+          ...formData,
+          // Only include password if it's been changed
+          password: formData.password || undefined,
+          company: user.company,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setSubmitSuccess((prev) => !prev); // Toggle to trigger refresh
+      setIsEditModalOpen(false);
+      setEditingStylist(null);
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        role: "styler",
+        services: [],
+      });
+    } catch (err) {
+      console.error("Update error:", err);
+      setErrors({
+        ...errors,
+        server: err.response?.data?.message || "Update failed",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   // Filter by search
   const filteredStylists = stylists.filter((stylist) =>
     stylist.name.toLowerCase().includes(search.toLowerCase())
@@ -301,6 +367,131 @@ export default function Stylists() {
           </div>
         </form>
       </Modal>
+      {/* Edit Stylist Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingStylist(null);
+        }}
+        title="Edit Stylist"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          {errors.server && (
+            <div className="text-red-500 text-sm">{errors.server}</div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+            {errors.name && (
+              <span className="text-red-500 text-xs">{errors.name}</span>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+            {errors.email && (
+              <span className="text-red-500 text-xs">{errors.email}</span>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Password (leave blank to keep current)
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+              placeholder="Leave blank to keep current password"
+            />
+            {errors.password && (
+              <span className="text-red-500 text-xs">{errors.password}</span>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Role
+            </label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            >
+              <option value="styler">Stylist</option>
+              <option value="admin">Admin</option>
+              <option value="superadmin">Super Admin</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Services
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {dummyServices.map((service) => (
+                <div key={service.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`edit-service-${service.id}`}
+                    checked={formData.services.includes(service.id)}
+                    onChange={() => handleServiceToggle(service.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label
+                    htmlFor={`edit-service-${service.id}`}
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    {service.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingStylist(null);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              {isSubmitting ? "Updating..." : "Update"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Search */}
       <div className="px-4 py-3">
@@ -372,7 +563,7 @@ export default function Stylists() {
                       {stylist.reviews || "N/A"}
                     </td>
                     <td className="h-[72px] px-4 py-2 w-60 text-[#60758a] text-sm font-bold leading-normal tracking-[0.015em] cursor-pointer">
-                      Edit
+                      <span onClick={() => handleEditClick(stylist)}>Edit</span>
                     </td>
                   </tr>
                 ))}
