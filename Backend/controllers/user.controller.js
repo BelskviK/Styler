@@ -1,21 +1,41 @@
+// controllers/user.controller.js
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Company = require("../models/Company");
 
 // @desc    Get all users (superadmin only)
 // @route   GET /api/users
 // @access  Private (superadmin)
-exports.getUsers = async (req, res, next) => {
+
+// @desc    Get all stylists for the current user's company
+// @route   GET /api/users/stylists
+// @access  Private (admin/superadmin/styler)
+exports.getStylists = async (req, res, next) => {
   try {
-    if (req.user.role !== "superadmin") {
+    // Ensure user has a company (should always be true except for customers)
+    if (!req.user.company) {
       return res
         .status(403)
-        .json({ message: "Not authorized to access this resource" });
+        .json({ message: "Not authorized to view stylists" });
     }
 
-    const users = await User.find()
+    const stylists = await User.find({
+      company: req.user.company,
+      role: "styler",
+    })
       .select("-password")
-      .populate("company", "name");
-    res.status(200).json(users);
+      .lean();
+
+    // Format response
+    const formattedStylists = stylists.map((stylist) => ({
+      id: stylist._id,
+      name: stylist.name,
+      expertise: stylist.expertise || "General Styling",
+      schedule: stylist.schedule || "Available",
+      reviews: stylist.reviews || "No reviews yet",
+    }));
+
+    res.status(200).json(formattedStylists);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

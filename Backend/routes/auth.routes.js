@@ -1,25 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth.controller");
+const auth = require("../middleware/auth");
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
-// @access  Public
-router.post("/register", authController.register);
+// @access  Private (admin/superadmin only)
+router.post(
+  "/register",
+  auth, // This is your main auth middleware
+  auth.authorize("admin", "superadmin"), // This is the role check
+  authController.register
+);
 
-// @route   POST /api/auth/login
-// @desc    Login user
-// @access  Public
+// Other routes remain the same
 router.post("/login", authController.login);
-
-// @route   GET /api/auth/me
-// @desc    Get current user
-// @access  Private
-router.get("/me", authController.getMe);
-
-// @route   GET /api/auth/logout
-// @desc    Logout user
-// @access  Private
-router.get("/logout", authController.logout);
+router.get("/me", auth, authController.getMe);
+router.get("/logout", auth, authController.logout);
 
 module.exports = router;

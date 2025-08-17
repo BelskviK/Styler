@@ -4,58 +4,41 @@ const Company = require("../models/Company");
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
-// @access  Public
-exports.register = async (req, res, next) => {
-  const { name, email, password, role, companyName } = req.body;
+// @access  Private (admin/superadmin only)
 
+// @desc    Register a new user
+exports.register = async (req, res) => {
   try {
-    // Check if user exists
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: "User already exists" });
+    const { name, email, password, role } = req.body;
+
+    // Validate role
+    if (role === "customer") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot register customers through admin interface",
+      });
+    }
+
+    // Check for existing user
+    if (await User.findOne({ email })) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
     }
 
     // Create user
-    user = new User({
+    const user = await User.create({
       name,
       email,
       password,
-      role: role || "customer",
-    });
-
-    // If user is admin or superadmin, create or assign company
-    if (role === "admin" || role === "superadmin") {
-      let company = await Company.findOne({ name: companyName });
-
-      if (!company) {
-        company = new Company({
-          name: companyName,
-          createdBy: user._id,
-        });
-        await company.save();
-      }
-
-      user.company = company._id;
-    }
-
-    await user.save();
-
-    // Create token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE,
-    });
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      role: role || "styler",
+      company: req.user.company, // Inherits creator's company
     });
 
     res.status(201).json({
       success: true,
-      token,
-      user: {
+      data: {
         id: user._id,
         name: user.name,
         email: user.email,
@@ -65,7 +48,10 @@ exports.register = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Server error during registration",
+    });
   }
 };
 

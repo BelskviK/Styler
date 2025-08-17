@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const checkCompany = require("../middleware/checkCompany");
+
 const userController = require("../controllers/user.controller");
 
 // @route   GET /api/users
 // @desc    Get all users (superadmin only)
 // @access  Private (superadmin)
-router.get("/", auth, userController.getUsers);
+router.get("/", auth, checkCompany, userController.getStylists);
 
 // @route   GET /api/users/company
 // @desc    Get current company users (admin only)
