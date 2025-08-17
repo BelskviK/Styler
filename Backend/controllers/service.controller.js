@@ -6,39 +6,42 @@ const Company = require("../models/Company");
 // @access  Private (admin, styler, customer of the company)
 exports.getServices = async (req, res, next) => {
   try {
-    // For superadmin, allow querying by company ID
     let query = {};
+
     if (req.user.role === "superadmin") {
+      // Superadmin can see by query param or own company
       if (req.query.companyId) {
         query.company = req.query.companyId;
+      } else {
+        query.company = req.user.company;
       }
     } else if (req.user.role === "admin") {
-      // Regular admin can only see their company's services
+      // Admin: only their company's services
       query.company = req.user.company;
     } else if (req.user.role === "styler") {
-      // Stylers can see services assigned to them
+      // Styler: only their assigned services within their company
       query = {
         _id: { $in: req.user.services },
         company: req.user.company,
       };
     } else if (req.user.role === "customer") {
-      // Customers can see all services of the company they're viewing
-      if (req.query.companyId) {
-        query.company = req.query.companyId;
-      } else {
-        return res
-          .status(400)
-          .json({ message: "Company ID required for customers" });
+      // Customer: only services from their company
+      if (!req.user.company) {
+        return res.status(400).json({
+          message: "Customer must belong to a company to view services",
+        });
       }
+      query.company = req.user.company;
     }
 
     const services = await Service.find(query).populate("company", "name");
     res.status(200).json(services);
   } catch (err) {
-    console.error(err);
+    console.error("getServices error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 // @desc    Create a service (admin only)
 // @route   POST /api/services
 // @access  Private (admin)

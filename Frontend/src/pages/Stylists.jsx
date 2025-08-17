@@ -22,37 +22,37 @@ export default function Stylists() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [editingStylist, setEditingStylist] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // Dummy services for demo
-  const dummyServices = [
-    { id: 1, name: "Haircut" },
-    { id: 2, name: "Coloring" },
-    { id: 3, name: "Styling" },
-    { id: 4, name: "Manicure" },
-    { id: 5, name: "Pedicure" },
-    { id: 6, name: "Makeup" },
-  ];
+  const [companyServices, setCompanyServices] = useState([]);
 
   useEffect(() => {
-    const fetchStylists = async () => {
+    const fetchData = async () => {
       try {
         if (user?.company) {
-          const response = await axios.get("http://localhost:5000/api/users", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          setStylists(response.data);
+          // Fetch stylists
+          const stylistsResponse = await axios.get(
+            "http://localhost:5000/api/users",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setStylists(stylistsResponse.data);
+
+          // Fetch company services
+          const servicesResponse = await axios.get(
+            `http://localhost:5000/api/services?companyId=${user.company}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setCompanyServices(servicesResponse.data);
         }
       } catch (err) {
-        console.error("Error fetching stylists:", err);
-        setError("Failed to load stylists");
+        console.error("Error fetching data:", err);
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStylists();
+    fetchData();
   }, [token, user, submitSuccess]);
 
   const handleInputChange = (e) => {
@@ -92,7 +92,6 @@ export default function Stylists() {
       newErrors.email = "Email is invalid";
     }
 
-    // Only validate password if we're creating a new stylist or if it's being changed
     if (!editingStylist && !formData.password) {
       newErrors.password = "Password is required";
     } else if (formData.password && formData.password.length < 6) {
@@ -102,6 +101,7 @@ export default function Stylists() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -114,7 +114,7 @@ export default function Stylists() {
         "http://localhost:5000/api/auth/register",
         {
           ...formData,
-          company: user.company, // Assuming the company ID is needed for registration
+          company: user.company,
         },
         {
           headers: {
@@ -125,7 +125,6 @@ export default function Stylists() {
 
       setSubmitSuccess(true);
       setIsModalOpen(false);
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -143,26 +142,20 @@ export default function Stylists() {
       setIsSubmitting(false);
     }
   };
-  // Add this function to handle opening the edit modal
-  const handleEditClick = (stylist) => {
-    console.log("Editing stylist:", stylist); // Add this line
 
+  const handleEditClick = (stylist) => {
     setEditingStylist(stylist);
     setFormData({
       name: stylist.name,
       email: stylist.email,
-      password: "", // Leave password blank for editing
+      password: "",
       role: stylist.role,
-      services: stylist.services
-        ? stylist.services.map((service) => service._id || service)
-        : [], // Handle undefined services
+      services:
+        stylist.services?.map((service) => service._id || service) || [],
     });
     setIsEditModalOpen(true);
   };
 
-  // Modify the validateForm function to make password optional during editing
-
-  // Add this function to handle the edit submission
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
@@ -174,22 +167,23 @@ export default function Stylists() {
       await axios.put(
         `http://localhost:5000/api/users/${editingStylist._id}`,
         {
-          ...formData,
-          // Only include password if it's been changed
+          name: formData.name,
+          email: formData.email,
           password: formData.password || undefined,
-          company: user.company,
+          role: formData.role,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setSubmitSuccess((prev) => !prev); // Toggle to trigger refresh
+      await axios.put(
+        `http://localhost:5000/api/services/assign/${editingStylist._id}`,
+        { serviceIds: formData.services },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setSubmitSuccess((prev) => !prev);
       setIsEditModalOpen(false);
       setEditingStylist(null);
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -207,7 +201,7 @@ export default function Stylists() {
       setIsSubmitting(false);
     }
   };
-  // Filter by search
+
   const filteredStylists = stylists.filter((stylist) =>
     stylist.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -328,25 +322,31 @@ export default function Stylists() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Services
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {dummyServices.map((service) => (
-                <div key={service.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`service-${service.id}`}
-                    checked={formData.services.includes(service.id)}
-                    onChange={() => handleServiceToggle(service.id)}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <label
-                    htmlFor={`service-${service.id}`}
-                    className="ml-2 text-sm text-gray-700"
-                  >
-                    {service.name}
-                  </label>
-                </div>
-              ))}
-            </div>
+            {companyServices.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No services found for your company
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {companyServices.map((service) => (
+                  <div key={service._id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`service-${service._id}`}
+                      checked={formData.services.includes(service._id)}
+                      onChange={() => handleServiceToggle(service._id)}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label
+                      htmlFor={`service-${service._id}`}
+                      className="ml-2 text-sm text-gray-700"
+                    >
+                      {service.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
@@ -367,6 +367,7 @@ export default function Stylists() {
           </div>
         </form>
       </Modal>
+
       {/* Edit Stylist Modal */}
       <Modal
         isOpen={isEditModalOpen}
@@ -450,25 +451,31 @@ export default function Stylists() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Services
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {dummyServices.map((service) => (
-                <div key={service.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`edit-service-${service.id}`}
-                    checked={formData.services.includes(service.id)}
-                    onChange={() => handleServiceToggle(service.id)}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <label
-                    htmlFor={`edit-service-${service.id}`}
-                    className="ml-2 text-sm text-gray-700"
-                  >
-                    {service.name}
-                  </label>
-                </div>
-              ))}
-            </div>
+            {companyServices.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No services found for your company
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {companyServices.map((service) => (
+                  <div key={service._id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`edit-service-${service._id}`}
+                      checked={formData.services.includes(service._id)}
+                      onChange={() => handleServiceToggle(service._id)}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label
+                      htmlFor={`edit-service-${service._id}`}
+                      className="ml-2 text-sm text-gray-700"
+                    >
+                      {service.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
@@ -549,7 +556,7 @@ export default function Stylists() {
               </thead>
               <tbody>
                 {filteredStylists.map((stylist) => (
-                  <tr key={stylist.id} className="border-t border-t-[#dbe0e6]">
+                  <tr key={stylist._id} className="border-t border-t-[#dbe0e6]">
                     <td className="h-[72px] px-4 py-2 w-[400px] text-[#111418] text-sm font-normal leading-normal">
                       {stylist.name}
                     </td>
