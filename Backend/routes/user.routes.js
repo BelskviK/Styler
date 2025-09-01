@@ -29,5 +29,12 @@ router.put("/:id", auth, userController.updateUser);
 // @desc    Delete user
 // @access  Private (admin or superadmin)
 router.delete("/:id", auth, userController.deleteUser);
-
+// @route   GET /api/users/:id
+// @desc    Get a stylist with services populated
+// @access  Private (admin or self)
+router.get("/:id", auth, userController.getStylistWithServices);
+// @route   GET /api/users/stylist/:id
+// @desc    Get a stylist with services populated
+// @access  Private (admin or superadmin)
+router.get("/stylist/:id", auth, userController.getStylistWithServices);
 module.exports = router;

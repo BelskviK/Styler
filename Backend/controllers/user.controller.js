@@ -193,3 +193,26 @@ exports.deleteUser = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+exports.getStylistWithServices = async (req, res) => {
+  try {
+    const stylist = await User.findById(req.params.id)
+      .populate("services", "name description duration price")
+      .select("-password");
+
+    if (!stylist) {
+      return res.status(404).json({ message: "Stylist not found" });
+    }
+
+    // Check if user has permission to view this stylist
+    if (req.user.role !== "superadmin" && req.user.role !== "admin") {
+      if (stylist.company.toString() !== req.user.company.toString()) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+    }
+
+    res.status(200).json(stylist);
+  } catch (err) {
+    console.error("getStylistWithServices error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

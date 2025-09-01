@@ -1,6 +1,7 @@
+const mongoose = require("mongoose");
 const Service = require("../models/Service");
 const Company = require("../models/Company");
-
+const User = require("../models/User");
 // @desc    Get all services for a company
 // @route   GET /api/services
 // @access  Private (admin, styler, customer of the company)
@@ -156,56 +157,75 @@ exports.deleteService = async (req, res, next) => {
 // @access  Private (admin)
 exports.assignServicesToStylist = async (req, res, next) => {
   const { serviceIds } = req.body;
+  const { stylistId } = req.params;
 
   try {
-    if (req.user.role !== "superadmin") {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to perform this action" });
+    // Validate inputs
+    if (!stylistId || !mongoose.Types.ObjectId.isValid(stylistId)) {
+      return res.status(400).json({ message: "Invalid stylist ID" });
     }
 
-    const stylist = await User.findById(req.params.stylistId);
+    if (!Array.isArray(serviceIds)) {
+      return res.status(400).json({ message: "serviceIds must be an array" });
+    }
 
+    // Check permissions - allow both superadmin and admin
+    if (req.user.role !== "superadmin" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Find and validate stylist
+    const stylist = await User.findById(stylistId);
     if (!stylist) {
       return res.status(404).json({ message: "Stylist not found" });
     }
 
-    // Check if stylist belongs to the admin's company
+    // Check if stylist belongs to the same company
     if (stylist.company.toString() !== req.user.company.toString()) {
       return res
         .status(403)
-        .json({ message: "Not authorized to assign services to this stylist" });
+        .json({ message: "Not authorized for this stylist" });
     }
 
-    // Check if stylist has styler role
     if (stylist.role !== "styler") {
       return res.status(400).json({ message: "User is not a stylist" });
     }
 
-    // Verify all services belong to the company
+    // Validate services - only services from the same company
     const services = await Service.find({
       _id: { $in: serviceIds },
       company: req.user.company,
     });
+
     if (services.length !== serviceIds.length) {
+      const invalidServices = serviceIds.filter(
+        (id) => !services.some((s) => s._id.toString() === id)
+      );
       return res.status(400).json({
-        message: "Some services do not exist or belong to another company",
+        message: "Some services are invalid or don't belong to your company",
+        invalidServices,
       });
     }
 
+    // Update and save
     stylist.services = serviceIds;
     await stylist.save();
 
+    // Return populated response
+    const result = await User.findById(stylist._id)
+      .populate("services", "name description duration price")
+      .select("-password");
+
     res.status(200).json({
       success: true,
-      stylist: {
-        id: stylist._id,
-        name: stylist.name,
-        services: stylist.services,
-      },
+      stylist: result,
+      message: "Services assigned successfully",
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Assignment error:", err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
