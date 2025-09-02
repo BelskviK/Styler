@@ -15,15 +15,15 @@ exports.getStylists = async (req, res, next) => {
   try {
     let companyId = req.user.company;
 
-    console.log("=== BACKEND GET STYLISTS ===");
-    console.log("User role:", req.user.role);
-    console.log("User company:", req.user.company);
-    console.log("Query params:", req.query);
+    // console.log("=== BACKEND GET STYLISTS ===");
+    // console.log("User role:", req.user.role);
+    // console.log("User company:", req.user.company);
+    // console.log("Query params:", req.query);
 
     // If superadmin and companyId query parameter is provided, use that
     if (req.user.role === "superadmin" && req.query.companyId) {
       companyId = req.query.companyId;
-      console.log("Using query parameter companyId:", companyId);
+      // console.log("Using query parameter companyId:", companyId);
     }
 
     if (!companyId) {
@@ -42,7 +42,7 @@ exports.getStylists = async (req, res, next) => {
       .select("-password")
       .lean();
 
-    console.log("Found stylists:", stylists.length);
+    // console.log("Found stylists:", stylists.length);
 
     // Format response
     const formattedStylists = stylists.map((stylist) => ({
@@ -215,13 +215,13 @@ exports.deleteUser = async (req, res, next) => {
 // Backend/controllers/user.controller.js
 exports.getStylistWithServices = async (req, res) => {
   try {
-    console.log("📞 getStylistWithServices called with ID:", req.params.id);
+    // console.log("📞 getStylistWithServices called with ID:", req.params.id);
 
     const stylist = await User.findById(req.params.id)
       .populate("services", "name description duration price")
       .select("-password");
 
-    console.log("👤 Found stylist:", stylist);
+    // console.log("👤 Found stylist:", stylist);
 
     if (!stylist) {
       return res.status(404).json({ message: "Stylist not found" });
@@ -246,7 +246,7 @@ exports.getStylistWithServices = async (req, res) => {
 exports.getCompanyStylists = async (req, res, next) => {
   try {
     const { companyId } = req.params;
-    console.log("📞 getCompanyStylists called with companyId:", companyId);
+    // console.log("📞 getCompanyStylists called with companyId:", companyId);
 
     // Only superadmin can access other companies' stylists
     if (req.user.role !== "superadmin") {
@@ -266,7 +266,7 @@ exports.getCompanyStylists = async (req, res, next) => {
       .select("-password")
       .lean();
 
-    console.log("✅ Found stylists:", stylists.length);
+    // console.log("✅ Found stylists:", stylists.length);
 
     // Format response to match the existing structure
     const formattedStylists = stylists.map((stylist) => ({

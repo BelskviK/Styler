@@ -6,7 +6,11 @@ class AppointmentService {
   }
 
   static async create(data) {
-    return api.post("/appointments", data);
+    return api.post("/appointments", {
+      ...data,
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+    });
   }
 
   static async updateStatus(id, status) {

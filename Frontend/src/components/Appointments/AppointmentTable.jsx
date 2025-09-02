@@ -102,15 +102,29 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
 
   return (
     <tr className="hover:bg-gray-50">
+      {/* Customer info (name, phone, email) */}
       <td className="px-4 py-4 text-sm text-gray-900">
         <div>
-          <div className="font-medium">{appointment.customer?.name}</div>
-          <div className="text-gray-500">{appointment.customer?.phone}</div>
+          <div className="font-medium">
+            {appointment.customerName || appointment.customer?.name}
+          </div>
+          {appointment.customerPhone && (
+            <div className="text-sm text-gray-500">
+              {appointment.customerPhone}
+            </div>
+          )}
+          {appointment.customer?.email && (
+            <div className="text-sm text-gray-500">
+              {appointment.customer.email}
+            </div>
+          )}
         </div>
       </td>
+
       <td className="px-4 py-4 text-sm text-gray-900">
         {appointment.stylist?.name}
       </td>
+
       <td className="px-4 py-4 text-sm text-gray-900">
         <div>
           <div className="font-medium">{appointment.service?.name}</div>
@@ -119,12 +133,15 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
           </div>
         </div>
       </td>
+
       <td className="px-4 py-4 text-sm text-gray-900">
         {formatDate(appointment.date)}
       </td>
+
       <td className="px-4 py-4 text-sm text-gray-900">
         {appointment.startTime} - {appointment.endTime}
       </td>
+
       <td className="px-4 py-4 text-sm">
         <span
           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
@@ -134,6 +151,7 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
           {appointment.status}
         </span>
       </td>
+
       <td className="px-4 py-4 text-sm text-gray-900 space-x-2">
         {(userRole === "admin" || userRole === "styler") && (
           <select

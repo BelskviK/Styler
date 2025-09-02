@@ -181,15 +181,10 @@ export default function AppointmentForm({
     if (!formData.companyId) newErrors.companyId = "Company is required";
     if (!formData.stylistId) newErrors.stylistId = "Stylist is required";
     if (!formData.serviceId) newErrors.serviceId = "Service is required";
-
-    // Only require customer name/phone for admin/styler users creating appointments for others
-    if (user?.role === "admin" || user?.role === "styler") {
-      if (!formData.customerName)
-        newErrors.customerName = "Customer name is required";
-      if (!formData.customerPhone)
-        newErrors.customerPhone = "Customer phone is required";
-    }
-
+    if (!formData.customerName)
+      newErrors.customerName = "Customer name is required";
+    if (!formData.customerPhone)
+      newErrors.customerPhone = "Customer phone is required";
     if (!formData.date) newErrors.date = "Date is required";
     if (!formData.startTime) newErrors.startTime = "Start time is required";
 
@@ -297,7 +292,9 @@ export default function AppointmentForm({
       )}
 
       {/* Only show customer fields for admin/styler users */}
-      {(user?.role === "admin" || user?.role === "styler") && (
+      {(user?.role === "admin" ||
+        user?.role === "styler" ||
+        user?.role === "superadmin") && (
         <>
           <FormInput
             label="Customer Name"
@@ -305,6 +302,7 @@ export default function AppointmentForm({
             value={formData.customerName}
             onChange={handleInputChange}
             error={errors.customerName}
+            required
           />
 
           <FormInput
@@ -314,6 +312,7 @@ export default function AppointmentForm({
             onChange={handleInputChange}
             error={errors.customerPhone}
             type="tel"
+            required
           />
         </>
       )}

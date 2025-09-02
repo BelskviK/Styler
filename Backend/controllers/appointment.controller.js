@@ -42,8 +42,6 @@ exports.getAppointments = async (req, res, next) => {
 };
 
 exports.createAppointment = async (req, res, next) => {
-  console.log("📥 Received appointment creation request:", req.body);
-
   const {
     stylistId,
     serviceId,
@@ -57,7 +55,15 @@ exports.createAppointment = async (req, res, next) => {
 
   try {
     // Validate required fields
-    if (!stylistId || !serviceId || !date || !startTime || !endTime) {
+    if (
+      !stylistId ||
+      !serviceId ||
+      !date ||
+      !startTime ||
+      !endTime ||
+      !customerName ||
+      !customerPhone
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -68,8 +74,8 @@ exports.createAppointment = async (req, res, next) => {
 
     // Create a customer
     const customer = new User({
-      name: customerName || "Anonymous Customer",
-      phone: customerPhone || `+9955${Math.random().toString().slice(2, 9)}`,
+      name: customerName,
+      phone: customerPhone,
       role: "customer",
       company: "68a10fb0102bc83919e269ac", // Use your default company ID
       email: uniqueEmail,
@@ -77,7 +83,7 @@ exports.createAppointment = async (req, res, next) => {
     });
 
     await customer.save();
-    console.log("✅ Customer created:", customer._id);
+    // console.log("✅ Customer created:", customer._id);
 
     // Find stylist
     const stylist = await User.findById(stylistId);
@@ -118,6 +124,8 @@ exports.createAppointment = async (req, res, next) => {
     // Create appointment
     const appointment = new Appointment({
       customer: customer._id,
+      customerName,
+      customerPhone,
       stylist: stylistId,
       service: serviceId,
       company: stylist.company,
@@ -129,7 +137,7 @@ exports.createAppointment = async (req, res, next) => {
     });
 
     await appointment.save();
-    console.log("✅ Appointment created:", appointment._id);
+    // console.log("✅ Appointment created:", appointment._id);
 
     // Populate and return the appointment
     const populatedAppointment = await Appointment.findById(appointment._id)
@@ -143,15 +151,6 @@ exports.createAppointment = async (req, res, next) => {
     });
   } catch (err) {
     console.error("❌ Appointment creation error:", err);
-
-    // Handle specific errors
-    if (err.code === 11000) {
-      return res.status(400).json({
-        message: "Duplicate entry error. Please try again.",
-        error: err.message,
-      });
-    }
-
     res.status(500).json({
       message: "Server error",
       error: err.message,
@@ -186,7 +185,7 @@ exports.getAppointments = async (req, res, next) => {
     }
 
     const appointments = await Appointment.find(query)
-      .populate("customer", "name email")
+      .populate("customer", "name email phone")
       .populate("stylist", "name email")
       .populate("service", "name price duration")
       .populate("company", "name");
