@@ -29,7 +29,7 @@ const commonNavItems = [
   },
   {
     label: "Bookings",
-    path: "/bookings",
+    path: "/appointments",
     icon: (
       <div className="text-[#111418]" data-size="24px" data-weight="regular">
         <svg
@@ -184,7 +184,7 @@ export default function Sidebar() {
 
   // Filter nav items based on user role
   const filteredNavItems = commonNavItems.filter((item) => {
-    console.log(`Checking ${item.label} for role ${user?.role}`);
+    // console.log(`Checking ${item.label} for role ${user?.role}`);
     return item.roles.includes(user?.role?.toLowerCase() || "");
   });
 

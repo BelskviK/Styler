@@ -61,7 +61,7 @@ function TableHeader({ children, className = "" }) {
 
 function TableRow({ stylist, onEditClick, onAssignServicesClick, userRole }) {
   const handleAssignServicesClick = () => {
-    console.log("Assign services clicked for:", stylist);
+    // console.log("Assign services clicked for:", stylist);
     if (!stylist.id) {
       console.error("Stylist has no ID:", stylist);
       alert("Error: Stylist ID is missing");
@@ -71,7 +71,7 @@ function TableRow({ stylist, onEditClick, onAssignServicesClick, userRole }) {
   };
 
   const handleEditClick = () => {
-    console.log("Edit clicked for:", stylist);
+    // console.log("Edit clicked for:", stylist);
     if (!stylist.id) {
       console.error("Stylist has no ID:", stylist);
       alert("Error: Stylist ID is missing");

@@ -74,3 +74,116 @@ exports.getMyCompany = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// @desc    Create a new company (superadmin only)
+// @route   POST /api/companies
+// @access  Private (superadmin)
+exports.createCompany = async (req, res, next) => {
+  try {
+    if (req.user.role !== "superadmin") {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to create companies" });
+    }
+
+    const { name, description } = req.body;
+
+    // Check if company already exists
+    const existingCompany = await Company.findOne({ name });
+    if (existingCompany) {
+      return res.status(400).json({ message: "Company already exists" });
+    }
+
+    const company = new Company({
+      name,
+      description,
+      createdBy: req.user._id,
+    });
+
+    await company.save();
+
+    res.status(201).json({
+      success: true,
+      company,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Update a company
+// @route   PUT /api/companies/:id
+// @access  Private (superadmin or admin of the company)
+exports.updateCompany = async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    // Check if user is superadmin or admin of this company
+    if (
+      req.user.role !== "superadmin" &&
+      req.user.company.toString() !== company._id.toString()
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this company" });
+    }
+
+    company.name = name || company.name;
+    company.description = description || company.description;
+
+    await company.save();
+
+    res.status(200).json({
+      success: true,
+      company,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Delete a company
+// @route   DELETE /api/companies/:id
+// @access  Private (superadmin only)
+exports.deleteCompany = async (req, res, next) => {
+  try {
+    if (req.user.role !== "superadmin") {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete companies" });
+    }
+
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    // Check if there are users associated with this company
+    const usersWithCompany = await User.countDocuments({
+      company: company._id,
+    });
+    if (usersWithCompany > 0) {
+      return res.status(400).json({
+        message:
+          "Cannot delete company with associated users. Please reassign or delete users first.",
+      });
+    }
+
+    await Company.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Company deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

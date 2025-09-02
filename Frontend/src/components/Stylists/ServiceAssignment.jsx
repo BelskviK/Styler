@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function ServiceAssignment({
   services,
-  selectedStylist, // stylist object with services populated
+  selectedStylist, // stylist object (with .services pre-populated from API)
   stylistName,
   onAssign,
   onCancel,

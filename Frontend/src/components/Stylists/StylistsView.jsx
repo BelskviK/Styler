@@ -39,7 +39,7 @@ export default function StylistsView({
   // Handle service assignment click
   const onAssignServicesClick = async (stylist) => {
     try {
-      console.log("Assign services clicked for stylist:", stylist);
+      // console.log("Assign services clicked for stylist:", stylist);
 
       if (!stylist || !stylist.id) {
         toast.error("Invalid stylist selected");
@@ -115,6 +115,9 @@ export default function StylistsView({
         )}
       </div>
 
+      {/* Search */}
+      <SearchInput value={search} onChange={handleSearchChange} />
+
       {/* Add Stylist Modal */}
       <Modal
         isOpen={isModalOpen}
@@ -166,9 +169,6 @@ export default function StylistsView({
           isSubmitting={assignmentLoading}
         />
       </Modal>
-
-      {/* Search */}
-      <SearchInput value={search} onChange={handleSearchChange} />
 
       {/* Table */}
       <StylistTable

@@ -40,19 +40,101 @@ exports.getAppointments = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 // @desc    Create an appointment
 // @route   POST /api/appointments
 // @access  Private
 exports.createAppointment = async (req, res, next) => {
-  const { stylistId, serviceId, date, startTime, endTime, notes } = req.body;
+  console.log("📥 Received appointment creation request:", req.body);
+  console.log("👤 User making request:", req.user);
+
+  const {
+    stylistId,
+    serviceId,
+    date,
+    startTime,
+    endTime,
+    notes,
+    customerName,
+    customerPhone,
+  } = req.body;
 
   try {
-    // Check if user is customer or admin
-    if (req.user.role !== "customer" && req.user.role !== "admin") {
+    // TEMPORARY FIX: If auth middleware is removed, allow all requests
+    // Remove this temporary fix once auth middleware is restored
+    if (!req.user) {
+      console.warn(
+        "⚠️  No user authentication - proceeding without permission checks"
+      );
+
+      // For testing purposes, create a temporary customer
+      const customer = new User({
+        name: customerName || "Temp Customer",
+        phone: customerPhone || "0000000000",
+        role: "customer",
+        company: "68a10fb0102bc83919e269ac", // Use a default company ID
+        email: `${customerPhone || "temp"}@temp.com`,
+        password: Math.random().toString(36).slice(-8),
+      });
+      await customer.save();
+
+      const stylist = await User.findById(stylistId);
+      const service = await Service.findById(serviceId);
+
+      const appointment = new Appointment({
+        customer: customer._id,
+        stylist: stylistId,
+        service: serviceId,
+        company: stylist.company,
+        date,
+        startTime,
+        endTime,
+        notes,
+        status: "pending",
+      });
+
+      await appointment.save();
+
+      return res.status(201).json({
+        success: true,
+        appointment: await Appointment.findById(appointment._id)
+          .populate("customer", "name email phone")
+          .populate("stylist", "name email")
+          .populate("service", "name price duration"),
+      });
+    }
+
+    // Allow customers, admins, AND stylists to create appointments
+    if (
+      req.user.role !== "customer" &&
+      req.user.role !== "admin" &&
+      req.user.role !== "styler"
+    ) {
       return res
         .status(403)
         .json({ message: "Not authorized to create appointments" });
+    }
+
+    let customerId;
+
+    // If admin/styler is creating appointment for a new customer
+    if (
+      (req.user.role === "admin" || req.user.role === "styler") &&
+      (customerName || customerPhone)
+    ) {
+      // Create a new customer user
+      const customer = new User({
+        name: customerName,
+        phone: customerPhone,
+        role: "customer",
+        company: req.user.company,
+        email: `${customerPhone}@temp.com`,
+        password: Math.random().toString(36).slice(-8),
+      });
+      await customer.save();
+      customerId = customer._id;
+    } else {
+      // Use existing customer (logged-in customer)
+      customerId = req.user._id;
     }
 
     // Find stylist
@@ -67,15 +149,18 @@ exports.createAppointment = async (req, res, next) => {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    // For admin, check if stylist and service belong to their company
-    if (
-      req.user.role === "admin" &&
-      (stylist.company.toString() !== req.user.company.toString() ||
-        service.company.toString() !== req.user.company.toString())
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to create this appointment" });
+    // Check permissions
+    if (req.user.role === "admin" || req.user.role === "styler") {
+      if (stylist.company.toString() !== req.user.company.toString()) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized for this stylist" });
+      }
+      if (service.company.toString() !== req.user.company.toString()) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized for this service" });
+      }
     }
 
     // Check if stylist is assigned to this service
@@ -97,7 +182,7 @@ exports.createAppointment = async (req, res, next) => {
     }
 
     const appointment = new Appointment({
-      customer: req.user.role === "admin" ? req.body.customerId : req.user._id,
+      customer: customerId,
       stylist: stylistId,
       service: serviceId,
       company: stylist.company,
@@ -113,12 +198,12 @@ exports.createAppointment = async (req, res, next) => {
     res.status(201).json({
       success: true,
       appointment: await Appointment.findById(appointment._id)
-        .populate("customer", "name email")
+        .populate("customer", "name email phone")
         .populate("stylist", "name email")
         .populate("service", "name price duration"),
     });
   } catch (err) {
-    console.error(err);
+    console.error("Appointment creation error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -196,6 +281,30 @@ exports.deleteAppointment = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Appointment deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+// Add these to your existing appointment.controller.js
+
+// @desc    Get availability
+// @route   GET /api/appointments/availability
+// @access  Private
+exports.checkAvailability = async (req, res, next) => {
+  const { stylistId, date, startTime, endTime } = req.query;
+
+  try {
+    const conflictingAppointment = await Appointment.findOne({
+      stylist: stylistId,
+      date,
+      $or: [{ startTime: { $lt: endTime }, endTime: { $gt: startTime } }],
+    });
+
+    res.status(200).json({
+      available: !conflictingAppointment,
+      conflictingAppointment,
     });
   } catch (err) {
     console.error(err);

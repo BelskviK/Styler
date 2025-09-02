@@ -1,3 +1,4 @@
+// Backend/routes/user.routes.js
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
@@ -15,6 +16,15 @@ router.get("/", auth, checkCompany, userController.getStylists);
 // @access  Private (admin)
 router.get("/company", auth, userController.getCompanyUsers);
 
+// @route   GET /api/users/company/:companyId/stylists
+// @desc    Get stylists for a specific company (superadmin only)
+// @access  Private (superadmin)
+router.get(
+  "/company/:companyId/stylists",
+  auth,
+  userController.getCompanyStylists
+);
+
 // @route   POST /api/users/employee
 // @desc    Add employee to company (admin only)
 // @access  Private (admin)
@@ -25,16 +35,14 @@ router.post("/employee", auth, userController.addEmployee);
 // @access  Private (admin or self)
 router.put("/:id", auth, userController.updateUser);
 
-// @route   DELETE /api/users/:id
-// @desc    Delete user
-// @access  Private (admin or superadmin)
-router.delete("/:id", auth, userController.deleteUser);
-// @route   GET /api/users/:id
-// @desc    Get a stylist with services populated
-// @access  Private (admin or self)
-router.get("/:id", auth, userController.getStylistWithServices);
 // @route   GET /api/users/stylist/:id
 // @desc    Get a stylist with services populated
 // @access  Private (admin or superadmin)
 router.get("/stylist/:id", auth, userController.getStylistWithServices);
+
+// @route   DELETE /api/users/:id
+// @desc    Delete user
+// @access  Private (admin or superadmin)
+router.delete("/:id", auth, userController.deleteUser);
+
 module.exports = router;

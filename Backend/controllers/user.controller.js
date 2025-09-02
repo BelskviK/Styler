@@ -10,25 +10,44 @@ const Company = require("../models/Company");
 // @desc    Get all stylists for the current user's company
 // @route   GET /api/users/stylists
 // @access  Private (admin/superadmin/styler)
+// Backend/controllers/user.controller.js
 exports.getStylists = async (req, res, next) => {
   try {
-    // Ensure user has a company (should always be true except for customers)
-    if (!req.user.company) {
+    let companyId = req.user.company;
+
+    console.log("=== BACKEND GET STYLISTS ===");
+    console.log("User role:", req.user.role);
+    console.log("User company:", req.user.company);
+    console.log("Query params:", req.query);
+
+    // If superadmin and companyId query parameter is provided, use that
+    if (req.user.role === "superadmin" && req.query.companyId) {
+      companyId = req.query.companyId;
+      console.log("Using query parameter companyId:", companyId);
+    }
+
+    if (!companyId) {
+      console.log("No company ID found");
       return res
         .status(403)
         .json({ message: "Not authorized to view stylists" });
     }
 
+    console.log("Final company ID:", companyId);
+
     const stylists = await User.find({
-      company: req.user.company,
+      company: companyId,
       role: "styler",
     })
       .select("-password")
       .lean();
 
+    console.log("Found stylists:", stylists.length);
+
     // Format response
     const formattedStylists = stylists.map((stylist) => ({
-      id: stylist._id,
+      _id: stylist._id, // Add this
+      id: stylist._id, // Keep this for compatibility
       name: stylist.name,
       expertise: stylist.expertise || "General Styling",
       schedule: stylist.schedule || "Available",
@@ -37,7 +56,7 @@ exports.getStylists = async (req, res, next) => {
 
     res.status(200).json(formattedStylists);
   } catch (err) {
-    console.error(err);
+    console.error("Error in getStylists:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -193,17 +212,22 @@ exports.deleteUser = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// Backend/controllers/user.controller.js
 exports.getStylistWithServices = async (req, res) => {
   try {
+    console.log("📞 getStylistWithServices called with ID:", req.params.id);
+
     const stylist = await User.findById(req.params.id)
       .populate("services", "name description duration price")
       .select("-password");
+
+    console.log("👤 Found stylist:", stylist);
 
     if (!stylist) {
       return res.status(404).json({ message: "Stylist not found" });
     }
 
-    // Check if user has permission to view this stylist
+    // Check permissions
     if (req.user.role !== "superadmin" && req.user.role !== "admin") {
       if (stylist.company.toString() !== req.user.company.toString()) {
         return res.status(403).json({ message: "Not authorized" });
@@ -213,6 +237,50 @@ exports.getStylistWithServices = async (req, res) => {
     res.status(200).json(stylist);
   } catch (err) {
     console.error("getStylistWithServices error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+// @desc    Get stylists for a specific company (superadmin only)
+// @route   GET /api/users/company/:companyId/stylists
+// @access  Private (superadmin)
+exports.getCompanyStylists = async (req, res, next) => {
+  try {
+    const { companyId } = req.params;
+    console.log("📞 getCompanyStylists called with companyId:", companyId);
+
+    // Only superadmin can access other companies' stylists
+    if (req.user.role !== "superadmin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Validate company ID
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      console.error("Invalid company ID format:", companyId);
+      return res.status(400).json({ message: "Invalid company ID format" });
+    }
+
+    const stylists = await User.find({
+      company: companyId,
+      role: "styler",
+    })
+      .select("-password")
+      .lean();
+
+    console.log("✅ Found stylists:", stylists.length);
+
+    // Format response to match the existing structure
+    const formattedStylists = stylists.map((stylist) => ({
+      id: stylist._id,
+      _id: stylist._id,
+      name: stylist.name,
+      expertise: stylist.expertise || "General Styling",
+      schedule: stylist.schedule || "Available",
+      reviews: stylist.reviews || "No reviews yet",
+    }));
+
+    res.status(200).json(formattedStylists);
+  } catch (err) {
+    console.error("getCompanyStylists error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
