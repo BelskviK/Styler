@@ -138,7 +138,27 @@ exports.createAppointment = async (req, res, next) => {
 
     await appointment.save();
     // console.log("✅ Appointment created:", appointment._id);
+    // Send notification to stylist
+    const notificationService = req.app.get("notificationService");
+    await notificationService.sendToUser(
+      stylistId,
+      "New Appointment",
+      `You have a new appointment with ${customerName} on ${date} at ${startTime}`,
+      "appointment",
+      appointment._id
+    );
 
+    // Send notification to customer (if they have a real account)
+    if (customer.email !== uniqueEmail) {
+      // Check if it's a real user
+      await notificationService.sendToUser(
+        customer._id,
+        "Appointment Confirmed",
+        `Your appointment with ${stylist.name} is confirmed for ${date} at ${startTime}`,
+        "appointment",
+        appointment._id
+      );
+    }
     // Populate and return the appointment
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate("customer", "name email phone")
@@ -230,6 +250,29 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     appointment.status = status;
     await appointment.save();
 
+    const notificationService = req.app.get("notificationService");
+
+    // Notify customer about status change
+    if (appointment.customer.toString() !== req.user._id.toString()) {
+      await notificationService.sendToUser(
+        appointment.customer,
+        "Appointment Status Updated",
+        `Your appointment status has been changed to ${status}`,
+        "appointment",
+        appointment._id
+      );
+    }
+
+    // Notify stylist about status change (if not the one making the change)
+    if (appointment.stylist.toString() !== req.user._id.toString()) {
+      await notificationService.sendToUser(
+        appointment.stylist,
+        "Appointment Status Updated",
+        `Appointment with ${appointment.customerName} status changed to ${status}`,
+        "appointment",
+        appointment._id
+      );
+    }
     res.status(200).json({
       success: true,
       appointment: await Appointment.findById(appointment._id)
