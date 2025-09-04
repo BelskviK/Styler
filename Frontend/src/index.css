@@ -8,3 +8,11 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+/* Add to your global CSS */
+body {
+  overflow-x: hidden;
+}
+
+.sidebar-container {
+  overflow-y: auto;
+}

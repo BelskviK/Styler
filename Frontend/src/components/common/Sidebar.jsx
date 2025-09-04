@@ -1,6 +1,6 @@
 // src/components/common/Sidebar.jsx
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { useEffect } from "react";
 
 const commonNavItems = [
@@ -189,7 +189,7 @@ export default function Sidebar() {
   });
 
   return (
-    <div className="layout-content-container flex flex-col w-80">
+    <div className="flex h-full min-h-[700px] flex-col justify-between bg-white  shadow-md overflow-y-auto">
       <div className="flex h-full min-h-[700px] flex-col justify-between bg-white p-4 shadow-md">
         <div className="flex flex-col gap-4">
           {/* Company Name */}

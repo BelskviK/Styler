@@ -12,32 +12,40 @@ import Services from "@/pages/Services";
 import Settings from "@/pages/Settings";
 import CompanyPage from "./pages/CompanyPage";
 
-import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationProvider } from "@/context/NotificationProvider";
+
+import Layout from "@/components/common/Layout";
 
 export default function App() {
   return (
     <NotificationProvider>
       <Routes>
-        {/* Public routes */}
+        {/* Public routes without Layout (they'll handle their own layout) */}
         <Route path="/login" element={<Login />} />
         <Route path="/barbershops" element={<Barbershops />} />
         <Route path="/barbershop/:companyName" element={<CompanyPage />} />
 
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AuthenticatedLayout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="bookings" element={<Bookings />} />
-            <Route path="stylists" element={<Stylists />} />
-            <Route path="services" element={<Services />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="appointments" element={<Appointments />} />
+        {/* All other routes use Layout with Header */}
+        <Route element={<Layout />}>
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AuthenticatedLayout />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="bookings" element={<Bookings />} />
+              <Route path="stylists" element={<Stylists />} />
+              <Route path="services" element={<Services />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="appointments" element={<Appointments />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Catch-all route */}
-        <Route path="*" element={<h1 className="text-xl">Page Not Found</h1>} />
+          {/* Catch-all */}
+          <Route
+            path="*"
+            element={<h1 className="text-xl">Page Not Found</h1>}
+          />
+        </Route>
       </Routes>
     </NotificationProvider>
   );

@@ -1,6 +1,6 @@
 // Frontend/src/components/common/Header.jsx (create if doesn't exist)
 import NotificationDropdown from "./NotificationDropdown";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 
 const Header = () => {
   const { user, logout } = useAuth();

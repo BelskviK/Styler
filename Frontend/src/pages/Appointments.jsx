@@ -1,6 +1,6 @@
 // src/pages/Appointments.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import Modal from "@/components/common/Modal";
 import AppointmentForm from "@/components/Appointments/AppointmentForm";
 import AppointmentTable from "@/components/Appointments/AppointmentTable";

@@ -1,6 +1,6 @@
 // src/components/Appointments/AppointmentForm.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import AppointmentService from "@/services/AppointmentService";
 import CompanyService from "@/services/CompanyService";
 import toast from "react-hot-toast";
