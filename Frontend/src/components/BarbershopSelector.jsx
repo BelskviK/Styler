@@ -1,48 +1,141 @@
+// Frontend/src/components/BarbershopSelector.jsx
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import AnimatedImage from "@/components/common/AnimatedImage";
+import CompanyService from "@/services/CompanyService";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function BarbershopSelector() {
-  const barbershops = [
-    {
-      name: "The Sharp Edge",
-      reviews: "4.8 (120 reviews)",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDBMIvn5OkVuFsRE5cxYgz80aUCk_BzCUoa3o7WKfVKm9P3QvEzoZ4HwdSp2LgNKCh191NV2nOSFV5s73TyuXXzoosK8GefwdOQQHyC-TViXEiW806NFCsmvmuQ8RHP2OPll_oezOaJvGbk5v4Gi4JBOfdjqmZiRDDELZtCtLem65C95WazWCbHZ2u3w0F2rME7vZuXO6ufUI0wGrkQaDHrjB2RaiF6_iT4HWOeFwDkSLL9ayBbBxNYzIgW6a6K732hY9Avp2d1jSg",
-    },
-    {
-      name: "City Style Cuts",
-      reviews: "4.7 (95 reviews)",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAY1V1A8uOT3zJVJ-Ht5CuytZnkhznjFO3tU6OGaZDObsBChSlfIn2wbyYhZTLMHqiU12WlqnC08ffBkAmpYjyq8evQzRX3CxpyYMzXB9QlDnxVhJHK6E3-ZPxBZyTxVquwcmZIMHpiNuJfC_iB1UclU2LhkfZqKZNP5Z2JKRfgVqMqwuWa-hWUy4SRgtVD_ChFnIw0WUcLH6BaVRbZrjRel7Zscc-GRem8PO77j55TLynfUbfJZNkgnRtSxSnXpTa_p6erc5IY1_4",
-    },
-    {
-      name: "Urban Grooming Lounge",
-      reviews: "4.9 (150 reviews)",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB7kKzfc152_JmeNi8T9YLJFycRvBDOgyJIBUbV9OwWH-GUXlDZwXdknODrrsnmgcSRjNFl7rl1zgGNiI9abQ7fQd2BKHNIdKxkmA7ykjZ4XnNea1ZInb07Y0BXXpvP3RjDIPlePsZhQ7BWg-u1j4wkVtQbU_DOOKKcf11u27k8Rhjsu3nTSQLm3wFbko3trPvo4LguuUqdJWlkYD1QJo4gNxMGDmynMUWTkJq3eQkEMoUqZ0TKXN0wQ7FeDf7uycjKUFBzxlB_SGY",
-    },
-    {
-      name: "Classic Cuts & Shaves",
-      reviews: "4.6 (80 reviews)",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6hdQ_r1ly6VE0e0D8BZpB-Gn3Y0rBkpNUwTfIESYadZCmJHhe_D_PBSnfWKnG30wDFO4uoA3NZTmeipwPhrwPkZPz64myYT94lMDJdC9MzlFw0hpFZ8SV-xAgb8eKfsyL_5Un6fAX_TA7sNPTx3Z178Sr-qKk_BE0-BlMfeBLcZDIzpzL7LJSr8Y3WnFBNh24KeexrDXxYmR-J0QaUK2JWFoORhaXs5_P16F8qffx7YCabgbaSu4iwPoy1Qu1iitLOIbj3Ssvys",
-    },
-  ];
+  const [barbershops, setBarbershops] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    fetchBarbershops();
+  }, []);
+
+  const fetchBarbershops = async () => {
+    try {
+      setLoading(true);
+      const response = await CompanyService.getPublicBarbershops();
+      setBarbershops(response.data);
+    } catch (err) {
+      console.error("Error fetching barbershops:", err);
+      setError("Failed to load barbershops. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleExpand = () => {
+    setExpanded(!expanded);
+  };
+
+  if (loading) {
+    return (
+      <>
+        <h3 className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
+          Choose a barbershop
+        </h3>
+        <div className="relative px-4">
+          <div className="flex gap-4 pb-4 overflow-x-auto scrollbar-hide">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="flex-shrink-0 w-40">
+                <div className="animate-pulse bg-gray-300 rounded-lg h-32 w-full" />
+                <div className="space-y-2 mt-2">
+                  <div className="animate-pulse bg-gray-300 rounded-lg h-4 w-3/4" />
+                  <div className="animate-pulse bg-gray-300 rounded-lg h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-500">
+        {error}
+        <button
+          onClick={fetchBarbershops}
+          className="ml-2 text-blue-500 hover:text-blue-700 underline"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (barbershops.length === 0) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        No barbershops available at the moment.
+      </div>
+    );
+  }
+
+  const displayedBarbershops = expanded ? barbershops : barbershops.slice(0, 5);
 
   return (
     <>
       <h3 className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
         Choose a barbershop
       </h3>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4">
-        {barbershops.map((shop, index) => (
-          <div key={index} className="flex flex-col gap-3 pb-3">
-            <AnimatedImage src={shop.img} alt={shop.name} />
-            <div>
-              <p className="text-[#0d141c] text-base font-medium leading-normal">
-                {shop.name}
-              </p>
-              <p className="text-[#49739c] text-sm font-normal leading-normal">
-                {shop.reviews}
-              </p>
-            </div>
-          </div>
-        ))}
+
+      <div className="relative px-4">
+        <div
+          className={`flex gap-4 pb-4 overflow-x-auto scrollbar-hide ${
+            expanded ? "flex-wrap justify-start" : ""
+          }`}
+        >
+          {displayedBarbershops.map((shop) => (
+            <Link
+              key={shop._id}
+              to={`/barbershop/${shop.name.toLowerCase().replace(/\s+/g, "-")}`}
+              className={`flex flex-col gap-2 cursor-pointer hover:opacity-90 transition-opacity ${
+                expanded ? "w-40 flex-shrink-0" : "w-40 flex-shrink-0"
+              }`}
+            >
+              <div className="w-full aspect-square">
+                <AnimatedImage
+                  src={
+                    shop.image ||
+                    "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=400&h=300&fit=crop"
+                  }
+                  alt={shop.name}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+              <div>
+                <p className="text-[#0d141c] text-base font-medium leading-normal line-clamp-2">
+                  {shop.name}
+                </p>
+                <p className="text-[#49739c] text-sm font-normal leading-normal">
+                  {shop.reviews?.rating
+                    ? `${shop.reviews.rating} (${shop.reviews.count} reviews)`
+                    : "No reviews yet"}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {barbershops.length > 5 && (
+          <button
+            onClick={toggleExpand}
+            className="absolute right-4 bottom-2 bg-white rounded-full p-1 shadow-md border border-gray-200 hover:bg-gray-50 transition-colors"
+            aria-label={expanded ? "Collapse" : "Expand to see all"}
+          >
+            {expanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-600" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        )}
       </div>
     </>
   );

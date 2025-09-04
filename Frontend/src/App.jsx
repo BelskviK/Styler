@@ -10,6 +10,8 @@ import Bookings from "@/pages/Bookings";
 import Stylists from "@/pages/Stylists";
 import Services from "@/pages/Services";
 import Settings from "@/pages/Settings";
+import CompanyPage from "./pages/CompanyPage";
+
 import { NotificationProvider } from "@/context/NotificationContext";
 
 export default function App() {
@@ -19,6 +21,7 @@ export default function App() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/barbershops" element={<Barbershops />} />
+        <Route path="/barbershop/:companyName" element={<CompanyPage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
