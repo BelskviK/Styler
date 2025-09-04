@@ -1,4 +1,5 @@
 import React from "react";
+import AnimatedImage from "@/components/common/AnimatedImage";
 
 const stylists = [
   {
@@ -39,9 +40,10 @@ export default function StylistSelector() {
             key={i}
             className="flex flex-col gap-4 min-w-32 text-center cursor-pointer"
           >
-            <div
-              className="aspect-square w-full bg-cover bg-center rounded-full"
-              style={{ backgroundImage: `url(${stylist.image})` }}
+            <AnimatedImage
+              src={stylist.image}
+              alt={stylist.name}
+              className="aspect-square w-full rounded-full object-cover"
             />
             <div>
               <p className="text-base font-medium">{stylist.name}</p>

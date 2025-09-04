@@ -15,6 +15,10 @@ const companySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  type: {
+    type: String,
+    enum: ["barbershop", "market"],
+  },
 });
 
 module.exports = mongoose.model("Company", companySchema);

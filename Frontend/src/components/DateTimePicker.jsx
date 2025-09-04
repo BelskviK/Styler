@@ -15,14 +15,15 @@ export default function DateTimePicker() {
             <button className="p-2">→</button>
           </div>
           <div className="grid grid-cols-7">
-            {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
+            {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
               <p
-                key={d}
+                key={`${d}-${i}`} // combine letter + index
                 className="text-xs font-bold h-12 flex items-center justify-center"
               >
                 {d}
               </p>
             ))}
+
             {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
               <button
                 key={day}
