@@ -1,3 +1,4 @@
+// Backend/models/Company.js
 const mongoose = require("mongoose");
 
 const companySchema = new mongoose.Schema({
@@ -18,6 +19,26 @@ const companySchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ["barbershop", "market"],
+    default: "barbershop",
+  },
+  reviews: {
+    rating: {
+      type: Number,
+      default: 0,
+    },
+    count: {
+      type: Number,
+      default: 0,
+    },
+  },
+  image: {
+    type: String,
+    default: "",
+  },
+  location: String,
+  isActive: {
+    type: Boolean,
+    default: true,
   },
 });
 

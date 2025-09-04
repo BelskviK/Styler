@@ -33,4 +33,9 @@ router.put("/:id", auth, companyController.updateCompany);
 // @access  Private (superadmin only)
 router.delete("/:id", auth, companyController.deleteCompany);
 
+// @route   GET /api/companies/public/barbershops
+// @desc    Get all active barbershops (public access)
+// @access  Public
+router.get("/public/barbershops", companyController.getPublicBarbershops);
+
 module.exports = router;

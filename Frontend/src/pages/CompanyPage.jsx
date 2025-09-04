@@ -10,35 +10,37 @@ export default function CompanyPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCompanyData();
-  }, [companyName]);
+    const fetchCompanyData = async () => {
+      try {
+        setLoading(true);
+        // Convert URL-friendly name back to normal name
+        const normalizedName = companyName
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
 
-  const fetchCompanyData = async () => {
-    try {
-      setLoading(true);
-      // Convert URL-friendly name back to normal name
-      const normalizedName = companyName
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (l) => l.toUpperCase());
+        // In a real app, you'd fetch by ID or slug, but for demo we'll filter by name
+        const response = await CompanyService.getPublicBarbershops();
+        const foundCompany = response.data.find(
+          (comp) => comp.name.toLowerCase() === normalizedName.toLowerCase()
+        );
 
-      // In a real app, you'd fetch by ID or slug, but for demo we'll filter by name
-      const response = await CompanyService.getPublicBarbershops();
-      const foundCompany = response.data.find(
-        (comp) => comp.name.toLowerCase() === normalizedName.toLowerCase()
-      );
-
-      if (foundCompany) {
-        setCompany(foundCompany);
-      } else {
-        setError("Company not found");
+        if (foundCompany) {
+          setCompany(foundCompany);
+        } else {
+          setError("Company not found");
+        }
+      } catch (err) {
+        console.error("Error fetching company:", err);
+        setError("Failed to load company information");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching company:", err);
-      setError("Failed to load company information");
-    } finally {
-      setLoading(false);
+    };
+
+    if (companyName) {
+      fetchCompanyData();
     }
-  };
+  }, [companyName]);
 
   if (loading) {
     return (

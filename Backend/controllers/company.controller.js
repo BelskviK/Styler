@@ -187,3 +187,20 @@ exports.deleteCompany = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// @desc    Get all active barbershops (public access)
+// @route   GET /api/companies/public/barbershops
+// @access  Public
+exports.getPublicBarbershops = async (req, res, next) => {
+  try {
+    const barbershops = await Company.find({
+      type: "barbershop",
+      isActive: true,
+    }).select("name reviews image location description");
+
+    res.status(200).json(barbershops);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
