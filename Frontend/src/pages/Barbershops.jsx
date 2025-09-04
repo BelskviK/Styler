@@ -1,23 +1,16 @@
-// src/pages/Shops.jsx
-export default function Shops() {
-  // This would fetch real data in a real app
-  const shops = [
-    { id: 1, name: "Hair Haven", address: "123 Main St" },
-    { id: 2, name: "Style Studio", address: "456 Oak Ave" },
-    { id: 3, name: "Cut & Color", address: "789 Elm Blvd" },
-  ];
+import BarbershopSelector from "@/components/BarbershopSelector";
+import StylistSelector from "@/components/StylistSelector";
+import DateTimePicker from "@/components/DateTimePicker";
+import ServiceSelector from "@/components/ServiceSelector";
 
+export default function BookingPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Barbershops</h1>
-      <div className="grid gap-4">
-        {shops.map((shop) => (
-          <div key={shop.id} className="p-4 border rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold">{shop.name}</h2>
-            <p className="text-gray-600">{shop.address}</p>
-          </div>
-        ))}
-      </div>
+    <div className="max-w-4xl mx-auto py-10">
+      <h2 className="text-2xl font-bold mb-6">Book a haircut</h2>
+      <BarbershopSelector />
+      <StylistSelector />
+      <DateTimePicker />
+      <ServiceSelector />
     </div>
   );
 }
