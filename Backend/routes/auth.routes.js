@@ -3,17 +3,18 @@ const router = express.Router();
 const authController = require("../controllers/auth.controller");
 const auth = require("../middleware/auth");
 
-// @route   POST /api/auth/register
-// @desc    Register a new user
-// @access  Private (admin/superadmin only)
+// ✅ Public self-registration (customers)
+router.post("/register/customer", authController.registerCustomer);
+
+// ✅ Employee registration (admin/superadmin only)
 router.post(
   "/register",
-  auth, // This is your main auth middleware
-  auth.authorize("admin", "superadmin"), // This is the role check
+  auth,
+  auth.authorize("admin", "superadmin"),
   authController.register
 );
 
-// Other routes remain the same
+// Login / Me / Logout
 router.post("/login", authController.login);
 router.get("/me", auth, authController.getMe);
 router.get("/logout", auth, authController.logout);

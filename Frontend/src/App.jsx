@@ -11,6 +11,7 @@ import Stylists from "@/pages/Stylists";
 import Services from "@/pages/Services";
 import Settings from "@/pages/Settings";
 import CompanyPage from "./pages/CompanyPage";
+import Register from "@/pages/Register";
 
 import { NotificationProvider } from "@/context/NotificationProvider";
 
@@ -22,11 +23,13 @@ export default function App() {
       <Routes>
         {/* Public routes without Layout (they'll handle their own layout) */}
         <Route path="/login" element={<Login />} />
-        <Route path="/barbershops" element={<Barbershops />} />
-        <Route path="/barbershop/:companyName" element={<CompanyPage />} />
+        <Route path="/register/customer" element={<Register />} />
 
-        {/* All other routes use Layout with Header */}
         <Route element={<Layout />}>
+          <Route path="/barbershops" element={<Barbershops />} />
+          <Route path="/barbershop/:companyName" element={<CompanyPage />} />
+
+          {/* All other routes use Layout with Header */}
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AuthenticatedLayout />}>
