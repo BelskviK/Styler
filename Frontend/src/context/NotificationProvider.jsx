@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/useAuth";
 import { io } from "socket.io-client";
 import { NotificationContext } from "./NotificationContext";
+const SOCKET_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
+  "http://localhost:10000";
 
 // This file only exports the NotificationProvider component
 export const NotificationProvider = ({ children }) => {
@@ -13,7 +16,7 @@ export const NotificationProvider = ({ children }) => {
 
   useEffect(() => {
     if (token && user) {
-      const newSocket = io("http://localhost:10000", {
+      const newSocket = io(SOCKET_URL, {
         auth: { token },
       });
 
