@@ -6,14 +6,13 @@ const isDev = import.meta.env.VITE_DEV === "true";
 
 // Choose base URL
 const API_BASE = isDev
-  ? import.meta.env.VITE_LOCAL_API + "/api"
-  : import.meta.env.VITE_PROD_API + "/api";
+  ? import.meta.env.VITE_LOCAL_API
+  : import.meta.env.VITE_PROD_API;
 
 const api = axios.create({
-  baseURL: API_BASE,
-  withCredentials: true, // in case you use cookies
+  baseURL: `${API_BASE}/api`, // Add /api here instead
+  withCredentials: true,
 });
-
 // Request interceptor
 api.interceptors.request.use(
   (config) => {

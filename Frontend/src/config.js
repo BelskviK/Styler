@@ -1,4 +1,3 @@
-// Frontend/src/config.js
 const isDev = import.meta.env.VITE_DEV === "true";
 
 export const API_BASE = isDev

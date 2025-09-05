@@ -17,16 +17,7 @@ export default function LoginForm() {
     setError("");
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Login failed");
-
-      login(data.token, data.user);
+      await login(formData.email, formData.password);
       navigate("/profile");
     } catch (err) {
       setError(err.message);

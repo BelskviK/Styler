@@ -45,7 +45,8 @@ export const AuthProvider = ({ children }) => {
 
       return response.data;
     } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
+      console.error("Full login error:", error);
+      console.error("Request URL:", `${API_BASE}/api/auth/login`);
       throw error.response?.data || { message: "Login failed" };
     }
   };
