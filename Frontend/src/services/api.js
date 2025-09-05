@@ -1,25 +1,26 @@
 // src/services/api.js
 import axios from "axios";
-
-// Check dev flag
-const isDev = import.meta.env.VITE_DEV === "true";
-
-// Choose base URL
-const API_BASE = isDev
-  ? import.meta.env.VITE_LOCAL_API
-  : import.meta.env.VITE_PROD_API;
+import { API_BASE } from "@/config";
 
 const api = axios.create({
-  baseURL: `${API_BASE}/api`, // Add /api here instead
+  baseURL: `${API_BASE}/api`,
   withCredentials: true,
 });
-// Request interceptor
+
+// Single request interceptor that handles both logging and auth
 api.interceptors.request.use(
   (config) => {
+    console.log(
+      `Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${
+        config.url
+      }`
+    );
+
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -37,4 +38,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 export default api;
