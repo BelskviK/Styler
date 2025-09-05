@@ -99,7 +99,7 @@ export default function StylistsView({
   }
 
   return (
-    <div className="layout-content-container flex flex-col flex-1">
+    <div className="layout-content-container flex flex-col flex-1 overflow-hidden">
       {/* Header */}
       <div className="flex flex-wrap justify-between gap-3 p-4">
         <p className="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">
