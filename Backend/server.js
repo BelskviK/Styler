@@ -8,7 +8,7 @@ class NotificationServer {
     this.app = app;
     this.server = http.createServer(app);
     this.io = this.initializeSocketIO();
-    this.port = process.env.PORT || 5000;
+    this.port = process.env.PORT || 10000;
     this.notificationService = null;
   }
 

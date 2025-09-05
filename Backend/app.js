@@ -16,6 +16,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://styler-frontend.onrender.com",
+  "https://styler-d41n.onrender.com",
 ];
 
 // Database connection
