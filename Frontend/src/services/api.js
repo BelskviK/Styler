@@ -1,8 +1,17 @@
 // src/services/api.js
 import axios from "axios";
 
+// Check dev flag
+const isDev = import.meta.env.VITE_DEV === "true";
+
+// Choose base URL
+const API_BASE = isDev
+  ? import.meta.env.VITE_LOCAL_API + "/api"
+  : import.meta.env.VITE_PROD_API + "/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:10000/api",
+  baseURL: API_BASE,
+  withCredentials: true, // in case you use cookies
 });
 
 // Request interceptor
@@ -14,9 +23,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
@@ -24,7 +31,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized errors (token expired, etc.)
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";
@@ -32,5 +38,4 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 export default api;

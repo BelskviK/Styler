@@ -1,42 +1,33 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { API_BASE } from "@/config";
 import { useAuth } from "@/context/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      // ✅ Replace with your actual backend API
-      const res = await fetch("https://your-api.com/api/login", {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      login(data.token); // ⬅ store the JWT token
-      navigate("/profile"); // ⬅ redirect after login
+      login(data.token, data.user);
+      navigate("/profile");
     } catch (err) {
       setError(err.message);
     }

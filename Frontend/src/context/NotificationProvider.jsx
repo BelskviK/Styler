@@ -1,11 +1,9 @@
-// Frontend/src/context/NotificationProvider.jsx (rename this file)
+// Frontend/src/context/NotificationProvider.jsx
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/useAuth";
 import { io } from "socket.io-client";
 import { NotificationContext } from "./NotificationContext";
-const SOCKET_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
-  "http://localhost:10000";
+import { SOCKET_URL } from "@/config"; // ⬅ use centralized config
 
 // This file only exports the NotificationProvider component
 export const NotificationProvider = ({ children }) => {
@@ -13,28 +11,22 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [socket, setSocket] = useState(null);
   const { token, user } = useAuth();
-
   useEffect(() => {
     if (token && user) {
-      const newSocket = io(SOCKET_URL, {
-        auth: { token },
-      });
+      const newSocket = io(SOCKET_URL, { auth: { token } });
 
-      newSocket.on("connect", () => {
-        console.log("Connected to notification server");
-      });
-
+      newSocket.on("connect", () =>
+        console.log("Connected to notification server")
+      );
       newSocket.on("newNotification", (notification) => {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
       });
-
-      newSocket.on("disconnect", () => {
-        console.log("Disconnected from notification server");
-      });
+      newSocket.on("disconnect", () =>
+        console.log("Disconnected from notification server")
+      );
 
       setSocket(newSocket);
-
       return () => newSocket.close();
     }
   }, [token, user]);

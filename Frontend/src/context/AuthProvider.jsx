@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:10000";
+import { API_BASE } from "@/config"; // ⬅ use centralized config
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
@@ -11,15 +11,13 @@ export const AuthProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  // Check token expiration periodically
+  // Token expiration check ...
   useEffect(() => {
     const checkTokenExpiration = () => {
       if (token) {
         try {
           const decoded = JSON.parse(atob(token.split(".")[1]));
-          if (decoded.exp * 1000 < Date.now()) {
-            logout();
-          }
+          if (decoded.exp * 1000 < Date.now()) logout();
         } catch (error) {
           console.error("Token validation error:", error);
           logout();
@@ -38,7 +36,6 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
       });
-
       const { token: newToken, user: userData } = response.data;
 
       localStorage.setItem("token", newToken);
@@ -60,10 +57,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const isGuest = !user;
-
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isGuest }}>
+    <AuthContext.Provider
+      value={{ token, user, login, logout, isGuest: !user }}
+    >
       {children}
     </AuthContext.Provider>
   );
