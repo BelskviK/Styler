@@ -13,6 +13,10 @@ const appointmentRoutes = require("./routes/appointment.routes");
 const notificationRoutes = require("./routes/notification.routes");
 // Initialize app
 const app = express();
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://styler-frontend.onrender.com",
+];
 
 // Database connection
 mongoose
@@ -23,7 +27,7 @@ mongoose
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
