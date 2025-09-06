@@ -1,3 +1,4 @@
+// Backend\middleware\role.js
 const role = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {

@@ -6,7 +6,7 @@ export default function AuthenticatedLayout() {
   return (
     <div className="flex min-h-[calc(100vh-64px)] overflow-hidden">
       {/* Sidebar - fixed */}
-      <div className="fixed left-0 top-16 bottom-0 w-1/5 z-40">
+      <div className="fixed left-0 top-16 bottom-0 w-1/5 z-10">
         <Sidebar />
       </div>
 

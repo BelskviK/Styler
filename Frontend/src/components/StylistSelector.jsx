@@ -1,3 +1,4 @@
+// Frontend\src\components\StylistSelector.jsx
 import React from "react";
 import AnimatedImage from "@/components/common/AnimatedImage";
 
