@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CompanyService from "@/services/CompanyService";
 import UserService from "@/services/UserService";
+import PublicService from "@/services/PublicService"; // Add this import
 import AppointmentService from "@/services/AppointmentService";
 import StylistSelector from "@/components/StylistSelector";
 import DateTimePicker from "@/components/DateTimePicker";
@@ -28,22 +29,34 @@ export default function CompanyPage() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check user role on component mount
+  // Check if user is authenticated
   useEffect(() => {
-    const checkUserRole = async () => {
+    const checkAuth = async () => {
       try {
-        const userResponse = await UserService.getCurrentUser();
-        const user = userResponse.data.user;
-        setUserRole(user.role);
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("authToken");
+        if (token) {
+          // Try to get user info to verify token is valid
+          const userResponse = await UserService.getCurrentUser();
+          const user = userResponse.data.user;
+          setUserRole(user.role);
+          setIsAuthenticated(true);
+        } else {
+          // Not authenticated, treat as customer
+          setUserRole("customer");
+          setIsAuthenticated(false);
+        }
       } catch (err) {
-        console.error("Error checking user role:", err);
-        // If user is not authenticated, treat as customer
+        console.error("Auth check failed:", err);
+        // If authentication fails, treat as non-authenticated customer
         setUserRole("customer");
+        setIsAuthenticated(false);
       }
     };
 
-    checkUserRole();
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -72,41 +85,19 @@ export default function CompanyPage() {
         setLoading(false);
       }
     };
+
     const fetchCompanyStylists = async (companyId) => {
       try {
         setStylistsLoading(true);
 
-        let response;
-        if (
-          userRole === "customer" ||
-          userRole === "styler" ||
-          userRole === "admin"
-        ) {
-          // Use public route for customers and company employees
-          response = await UserService.getAvailableStylists(companyId);
-        } else if (userRole === "superadmin") {
-          // Use protected route only for superadmin
-          response = await UserService.getCompanyStylists(companyId);
-        } else {
-          // Default to public route for unauthenticated users
-          response = await UserService.getAvailableStylists(companyId);
-        }
-
+        // Always use public route for non-authenticated users
+        const response = await PublicService.getCompanyStylists(companyId);
         console.log("Stylists response:", response.data);
         const stylistsWithServices = response.data || [];
         setStylists(stylistsWithServices);
       } catch (err) {
         console.error("Error fetching stylists:", err);
-        // Fall back to public route if protected route fails
-        try {
-          const fallbackResponse = await UserService.getAvailableStylists(
-            companyId
-          );
-          setStylists(fallbackResponse.data || []);
-        } catch (fallbackErr) {
-          console.error("Fallback stylist fetch also failed:", fallbackErr);
-          setStylists([]);
-        }
+        setStylists([]);
       } finally {
         setStylistsLoading(false);
       }
@@ -122,17 +113,8 @@ export default function CompanyPage() {
       setServicesLoading(true);
       setServices([]);
 
-      let response;
-      if (userRole === "customer") {
-        // Use public route for customers
-        response = await UserService.getAvailableServices(stylistId);
-      } else {
-        // Use protected route for authenticated users
-        response = await UserService.getStylistWithServices(stylistId);
-        // Extract services from the stylist response
-        response.data = response.data.services || [];
-      }
-
+      // Use public route for all users to get services
+      const response = await PublicService.getStylistServices(stylistId);
       const stylistServices = response.data || [];
       setServices(stylistServices);
     } catch (err) {
@@ -223,7 +205,14 @@ export default function CompanyPage() {
 
       console.log("Booking appointment:", appointmentData);
 
-      const response = await AppointmentService.create(appointmentData);
+      // Use public service for non-authenticated users
+      let response;
+      if (isAuthenticated) {
+        response = await AppointmentService.create(appointmentData);
+      } else {
+        response = await PublicService.createAppointment(appointmentData);
+      }
+
       console.log("Appointment created:", response);
 
       toast.success("Appointment booked successfully!");
@@ -239,7 +228,6 @@ export default function CompanyPage() {
       setIsBooking(false);
     }
   };
-
   const isBookingReady =
     selectedStylist &&
     selectedService &&

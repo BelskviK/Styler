@@ -5,6 +5,36 @@ const User = require("../models/User");
 class NotificationService {
   constructor(io) {
     this.io = io;
+    this.connectedUsers = new Map(); // Track connected users: userId -> socketId
+  }
+
+  // Add this method to track user connections
+  userConnected(userId, socketId) {
+    this.connectedUsers.set(userId.toString(), socketId);
+    console.log(`✅ User ${userId} connected with socket ${socketId}`);
+    console.log(`📊 Connected users: ${this.connectedUsers.size}`);
+  }
+
+  // Add this method to track user disconnections
+  userDisconnected(socketId) {
+    for (let [userId, userSocketId] of this.connectedUsers.entries()) {
+      if (userSocketId === socketId) {
+        this.connectedUsers.delete(userId);
+        console.log(`📤 User ${userId} disconnected from socket ${socketId}`);
+        console.log(`📊 Connected users: ${this.connectedUsers.size}`);
+        break;
+      }
+    }
+  }
+
+  // Get socket ID for a user
+  getUserSocketId(userId) {
+    return this.connectedUsers.get(userId.toString());
+  }
+
+  // Check if user is connected
+  isUserConnected(userId) {
+    return this.connectedUsers.has(userId.toString());
   }
 
   // Send notification to specific user
@@ -28,12 +58,20 @@ class NotificationService {
 
       await notification.save();
 
-      // Emit to specific user
-      this.io.to(userId.toString()).emit("newNotification", notification);
+      // Check if user is connected and send real-time notification
+      const userSocketId = this.getUserSocketId(userId);
+      if (userSocketId) {
+        this.io.to(userSocketId).emit("newNotification", notification);
+        console.log(`✅ Real-time notification sent to user ${userId}`);
+      } else {
+        console.log(
+          `ℹ️ User ${userId} is not connected, notification saved to database`
+        );
+      }
 
       return notification;
     } catch (error) {
-      console.error("Error sending notification to user:", error);
+      console.error("❌ Error sending notification to user:", error);
       throw error;
     }
   }
@@ -54,13 +92,22 @@ class NotificationService {
 
       // Get all users in company and emit to each
       const users = await User.find({ company: companyId });
+      let sentCount = 0;
+
       users.forEach((user) => {
-        this.io.to(user._id.toString()).emit("newNotification", notification);
+        const userSocketId = this.getUserSocketId(user._id);
+        if (userSocketId) {
+          this.io.to(userSocketId).emit("newNotification", notification);
+          sentCount++;
+        }
       });
 
+      console.log(
+        `✅ Notification sent to ${sentCount} connected users in company ${companyId}`
+      );
       return notification;
     } catch (error) {
-      console.error("Error sending notification to company:", error);
+      console.error("❌ Error sending notification to company:", error);
       throw error;
     }
   }
@@ -80,10 +127,11 @@ class NotificationService {
 
       // Emit to all connected clients
       this.io.emit("newNotification", notification);
+      console.log(`✅ Broadcast notification sent to all connected users`);
 
       return notification;
     } catch (error) {
-      console.error("Error sending broadcast notification:", error);
+      console.error("❌ Error sending broadcast notification:", error);
       throw error;
     }
   }
@@ -112,7 +160,7 @@ class NotificationService {
 
       return notification;
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error("❌ Error marking notification as read:", error);
       throw error;
     }
   }
@@ -136,7 +184,7 @@ class NotificationService {
 
       return notifications;
     } catch (error) {
-      console.error("Error getting user notifications:", error);
+      console.error("❌ Error getting user notifications:", error);
       throw error;
     }
   }
@@ -157,29 +205,10 @@ class NotificationService {
 
       return count;
     } catch (error) {
-      console.error("Error getting unread count:", error);
+      console.error("❌ Error getting unread count:", error);
       throw error;
     }
   }
 }
 
 module.exports = NotificationService;
-// const notificationService = req.app.get("notificationService");
-// await notificationService.sendToUser(
-//   userId,
-//   "Appointment Reminder",
-//   "Your appointment is in 1 hour",
-//   "appointment",
-//   appointmentId
-// );
-// await notificationService.sendToCompany(
-//   companyId,
-//   "Holiday Notice",
-//   "We'll be closed on Christmas Day",
-//   "broadcast"
-// );
-// await notificationService.sendToAll(
-//   "System Update",
-//   "Scheduled maintenance tonight at 2 AM",
-//   "system"
-// );

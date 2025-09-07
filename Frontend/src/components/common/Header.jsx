@@ -10,7 +10,7 @@ const Header = () => {
     if (
       user?.role === "superadmin" ||
       user?.role === "admin" ||
-      user?.role === "stylist"
+      user?.role === "styler"
     ) {
       navigate("/dashboard");
     } else {

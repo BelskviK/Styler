@@ -21,6 +21,9 @@ class AppointmentService {
   static async delete(id) {
     return api.delete(`/appointments/${id}`);
   }
+  static async createPublic(data) {
+    return api.post("/public/appointments", data);
+  }
 }
 
 export default AppointmentService;

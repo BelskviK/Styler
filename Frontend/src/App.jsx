@@ -35,7 +35,7 @@ export default function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "superadmin", "stylist"]}
+                  allowedRoles={["admin", "superadmin", "styler"]}
                 />
               }
             >

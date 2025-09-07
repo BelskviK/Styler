@@ -53,11 +53,9 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
       req.user.role !== "superadmin" &&
       req.user.company.toString() !== companyId
     ) {
-      return res
-        .status(403)
-        .json({
-          message: "Not authorized to access this company's appointments",
-        });
+      return res.status(403).json({
+        message: "Not authorized to access this company's appointments",
+      });
     }
 
     const appointments = await Appointment.find({ company: companyId })
@@ -71,7 +69,7 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
-};
+}; // Backend/controllers/appointment.controller.js
 exports.createAppointment = async (req, res, next) => {
   const {
     stylistId,
@@ -82,6 +80,7 @@ exports.createAppointment = async (req, res, next) => {
     notes,
     customerName,
     customerPhone,
+    customerEmail,
   } = req.body;
 
   try {
@@ -98,23 +97,34 @@ exports.createAppointment = async (req, res, next) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Generate unique email to avoid duplicates
-    const uniqueEmail = `customer${Date.now()}${Math.random()
-      .toString(36)
-      .slice(2, 8)}@temp.com`;
+    let customerId = null;
 
-    // Create a customer
-    const customer = new User({
-      name: customerName,
-      phone: customerPhone,
-      role: "customer",
-      company: "68a10fb0102bc83919e269ac", // Use your default company ID
-      email: uniqueEmail,
-      password: Math.random().toString(36).slice(-8),
-    });
+    // If user is authenticated, use their ID
+    if (req.user) {
+      customerId = req.user._id;
+    } else {
+      // For non-authenticated users, create a temporary customer record
+      const tempCustomer = await User.findOne({
+        role: "customer",
+        email: "guest@example.com",
+      });
 
-    await customer.save();
-    // console.log("✅ Customer created:", customer._id);
+      if (tempCustomer) {
+        customerId = tempCustomer._id;
+      } else {
+        // Create a generic guest customer
+        const guestCustomer = new User({
+          name: "Guest Customer",
+          email: "guest@example.com",
+          phone: "000-000-0000",
+          role: "customer",
+          company: "68a10fb0102bc83919e269ac", // Default company
+          password: Math.random().toString(36).slice(-8),
+        });
+        await guestCustomer.save();
+        customerId = guestCustomer._id;
+      }
+    }
 
     // Find stylist
     const stylist = await User.findById(stylistId);
@@ -154,9 +164,10 @@ exports.createAppointment = async (req, res, next) => {
 
     // Create appointment
     const appointment = new Appointment({
-      customer: customer._id,
+      customer: customerId,
       customerName,
       customerPhone,
+      customerEmail: customerEmail || "",
       stylist: stylistId,
       service: serviceId,
       company: stylist.company,
@@ -165,36 +176,62 @@ exports.createAppointment = async (req, res, next) => {
       endTime,
       notes: notes || "",
       status: "pending",
+      isGuestBooking: !req.user, // Set based on whether user is authenticated
     });
 
     await appointment.save();
-    // console.log("✅ Appointment created:", appointment._id);
-    // Send notification to stylist
-    const notificationService = req.app.get("notificationService");
-    await notificationService.sendToUser(
-      stylistId,
-      "New Appointment",
-      `You have a new appointment with ${customerName} on ${date} at ${startTime}`,
-      "appointment",
-      appointment._id
-    );
 
-    // Send notification to customer (if they have a real account)
-    if (customer.email !== uniqueEmail) {
-      // Check if it's a real user
-      await notificationService.sendToUser(
-        customer._id,
-        "Appointment Confirmed",
-        `Your appointment with ${stylist.name} is confirmed for ${date} at ${startTime}`,
-        "appointment",
-        appointment._id
-      );
+    // Send notification to stylist - FIXED
+    try {
+      const notificationService = req.app.get("notificationService");
+      if (notificationService) {
+        await notificationService.sendToUser(
+          stylistId,
+          "New Appointment Booking",
+          `You have a new appointment with ${customerName} on ${new Date(
+            date
+          ).toLocaleDateString()} at ${startTime} for ${service.name}`,
+          "appointment",
+          appointment._id
+        );
+        console.log("✅ Notification sent to stylist:", stylistId);
+      } else {
+        console.error("❌ Notification service not available");
+      }
+    } catch (notificationError) {
+      console.error("❌ Error sending notification:", notificationError);
+      // Don't fail the appointment creation if notification fails
     }
+
+    // Send notification to customer if they have a real account
+    if (customerId && customerEmail && customerEmail !== "guest@example.com") {
+      try {
+        const notificationService = req.app.get("notificationService");
+        if (notificationService) {
+          await notificationService.sendToUser(
+            customerId,
+            "Appointment Confirmed",
+            `Your appointment with ${stylist.name} is confirmed for ${new Date(
+              date
+            ).toLocaleDateString()} at ${startTime}`,
+            "appointment",
+            appointment._id
+          );
+        }
+      } catch (notificationError) {
+        console.error(
+          "❌ Error sending customer notification:",
+          notificationError
+        );
+      }
+    }
+
     // Populate and return the appointment
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate("customer", "name email phone")
       .populate("stylist", "name email")
-      .populate("service", "name price duration");
+      .populate("service", "name price duration")
+      .populate("company", "name");
 
     res.status(201).json({
       success: true,

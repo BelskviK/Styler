@@ -4,7 +4,9 @@ const appointmentSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: function () {
+      return !this.isGuestBooking; // Only required for non-guest bookings
+    },
   },
   customerName: {
     type: String,
@@ -13,6 +15,10 @@ const appointmentSchema = new mongoose.Schema({
   customerPhone: {
     type: String,
     required: true,
+  },
+  customerEmail: {
+    type: String,
+    default: "",
   },
   stylist: {
     type: mongoose.Schema.Types.ObjectId,
@@ -46,7 +52,14 @@ const appointmentSchema = new mongoose.Schema({
     enum: ["pending", "confirmed", "completed", "cancelled"],
     default: "pending",
   },
-  notes: String,
+  notes: {
+    type: String,
+    default: "",
+  },
+  isGuestBooking: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

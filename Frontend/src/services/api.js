@@ -9,7 +9,6 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Try multiple ways to get the token
     const token =
       localStorage.getItem("token") ||
       localStorage.getItem("authToken") ||
@@ -29,18 +28,37 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     console.error("API Error:", error.response?.status, error.message);
 
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      // Check current path
+      const currentPath = window.location.pathname;
+
+      // List of protected routes
+      const protectedPaths = [
+        "/dashboard",
+        "/appointments",
+        "/services",
+        "/settings",
+        "/stylists",
+        "/bookings",
+      ];
+
+      // Redirect only if the user is in a protected route
+      const isProtected = protectedPaths.some((path) =>
+        currentPath.startsWith(path)
+      );
+
+      if (isProtected) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
     }
+
     return Promise.reject(error);
   }
 );
