@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -78,6 +77,17 @@ export default function Login() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        {/* 👇 Add Register redirect here */}
+        <p className="text-sm text-gray-600 mt-4 text-center">
+          Don’t have an account?{" "}
+          <span
+            onClick={() => navigate("/register/customer")}
+            className="text-blue-600 cursor-pointer hover:underline"
+          >
+            Register
+          </span>
+        </p>
       </div>
     </div>
   );

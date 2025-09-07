@@ -1,3 +1,4 @@
+// Frontend\src\pages\Register.jsx
 import { useState } from "react";
 import AuthService from "@/services/AuthService";
 import { useAuth } from "@/hooks/useAuth";
