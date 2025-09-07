@@ -3,9 +3,12 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CompanyService from "@/services/CompanyService";
 import UserService from "@/services/UserService";
+import AppointmentService from "@/services/AppointmentService";
 import StylistSelector from "@/components/StylistSelector";
 import DateTimePicker from "@/components/DateTimePicker";
 import ServiceSelector from "@/components/ServiceSelector";
+import CustomerInfoForm from "@/components/CustomerInfoForm";
+import toast from "react-hot-toast";
 
 export default function CompanyPage() {
   const { companyName } = useParams();
@@ -17,17 +20,22 @@ export default function CompanyPage() {
   const [selectedStylist, setSelectedStylist] = useState(null);
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
-  const [selectedService, setSelectedService] = useState(null); // Add selected service state
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedDateTime, setSelectedDateTime] = useState({
+    date: null,
+    time: null,
+  });
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
-        // Convert URL-friendly name back to normal name
         const normalizedName = companyName
           .replace(/-/g, " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
 
-        // Fetch company by name or ID
         const response = await CompanyService.getPublicBarbershops();
         const foundCompany = response.data.find(
           (comp) => comp.name.toLowerCase() === normalizedName.toLowerCase()
@@ -35,7 +43,6 @@ export default function CompanyPage() {
 
         if (foundCompany) {
           setCompany(foundCompany);
-          // Fetch stylists for this specific company
           await fetchCompanyStylists(foundCompany.id || foundCompany._id);
         } else {
           setError("Company not found");
@@ -53,7 +60,6 @@ export default function CompanyPage() {
         setStylistsLoading(true);
         const response = await UserService.getCompanyStylists(companyId);
         const stylistsWithServices = response.data || [];
-        console.log("Fetched stylists:", stylistsWithServices);
         setStylists(stylistsWithServices);
       } catch (err) {
         console.error("Error fetching stylists:", err);
@@ -73,18 +79,13 @@ export default function CompanyPage() {
       setServicesLoading(true);
       setServices([]);
 
-      console.log("🔍 Loading services for stylist ID:", stylistId);
-
       const stylistResponse = await UserService.getStylistWithServices(
         stylistId
       );
       const stylistServices = stylistResponse.data.services || [];
-      console.log("📋 Services loaded:", stylistServices);
-
       setServices(stylistServices);
     } catch (err) {
       console.error("❌ Failed to load services:", err);
-      // Set empty services instead of showing error
       setServices([]);
     } finally {
       setServicesLoading(false);
@@ -92,32 +93,107 @@ export default function CompanyPage() {
   };
 
   const handleStylistSelect = async (stylist) => {
-    console.log("Selected stylist:", stylist);
     setSelectedStylist(stylist);
-    setSelectedService(null); // Reset selected service when changing stylist
+    setSelectedService(null);
+    setSelectedDateTime({ date: null, time: null });
+    setShowCustomerForm(false);
 
-    // Check if services exist in the stylist object
     if (
       stylist?.services &&
       Array.isArray(stylist.services) &&
       stylist.services.length > 0
     ) {
-      console.log("Services found in stylist data:", stylist.services);
       setServices(stylist.services);
     } else {
-      // If not, fetch services separately using the same pattern as AppointmentForm
-      console.log(
-        "Fetching services separately for stylist:",
-        stylist.id || stylist._id
-      );
       await loadServices(stylist.id || stylist._id);
     }
   };
 
   const handleServiceSelect = (service) => {
-    console.log("Selected service:", service);
     setSelectedService(service);
+    setShowCustomerForm(false);
   };
+
+  const handleDateTimeSelect = ({ date, time }) => {
+    setSelectedDateTime({ date, time });
+    setShowCustomerForm(false);
+  };
+
+  const handleBookAppointment = () => {
+    if (!selectedStylist) {
+      toast.error("Please select a stylist");
+      return;
+    }
+    if (!selectedService) {
+      toast.error("Please select a service");
+      return;
+    }
+    if (!selectedDateTime.date) {
+      toast.error("Please select a date");
+      return;
+    }
+    if (!selectedDateTime.time) {
+      toast.error("Please select a time");
+      return;
+    }
+
+    setShowCustomerForm(true);
+  };
+
+  const handleCustomerFormCancel = () => {
+    setShowCustomerForm(false);
+  };
+
+  const handleCustomerFormSubmit = async (customerData) => {
+    try {
+      setIsBooking(true);
+
+      // Calculate end time based on service duration
+      const [hours, minutes] = selectedDateTime.time.split(":").map(Number);
+      const startDate = new Date(selectedDateTime.date);
+      startDate.setHours(hours, minutes);
+
+      const endDate = new Date(
+        startDate.getTime() + selectedService.duration * 60000
+      );
+      const endTime = endDate.toTimeString().slice(0, 5);
+
+      const appointmentData = {
+        stylistId: selectedStylist.id || selectedStylist._id,
+        serviceId: selectedService.id || selectedService._id,
+        date: selectedDateTime.date.toISOString().split("T")[0],
+        startTime: selectedDateTime.time,
+        endTime: endTime,
+        customerName: customerData.customerName,
+        customerPhone: customerData.customerPhone,
+        customerEmail: customerData.customerEmail || "",
+        notes: "",
+      };
+
+      console.log("Booking appointment:", appointmentData);
+
+      const response = await AppointmentService.create(appointmentData);
+      console.log("Appointment created:", response);
+
+      toast.success("Appointment booked successfully!");
+
+      // Reset form
+      setSelectedService(null);
+      setSelectedDateTime({ date: null, time: null });
+      setShowCustomerForm(false);
+    } catch (err) {
+      console.error("Booking failed:", err);
+      toast.error(err.response?.data?.message || "Failed to book appointment");
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  const isBookingReady =
+    selectedStylist &&
+    selectedService &&
+    selectedDateTime.date &&
+    selectedDateTime.time;
 
   if (loading) {
     return (
@@ -261,20 +337,56 @@ export default function CompanyPage() {
               onStylistSelect={handleStylistSelect}
               selectedStylist={selectedStylist}
             />
+
             <ServiceSelector
               services={services}
               selectedStylist={selectedStylist}
               loading={servicesLoading}
               onServiceSelect={handleServiceSelect}
-              selectedService={selectedService} // Pass selected service down
+              selectedService={selectedService}
             />
-            <DateTimePicker />
 
-            <div className="flex px-4 py-3 justify-center">
-              <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#0d80f2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em]">
-                <span className="truncate">Book Appointment</span>
-              </button>
-            </div>
+            <DateTimePicker onDateTimeSelect={handleDateTimeSelect} />
+
+            {/* Customer Info Form */}
+            {showCustomerForm && (
+              <CustomerInfoForm
+                onSubmit={handleCustomerFormSubmit}
+                onCancel={handleCustomerFormCancel}
+                isSubmitting={isBooking}
+              />
+            )}
+
+            {/* Book Appointment Button */}
+            {!showCustomerForm && (
+              <div className="flex px-4 py-3 justify-center">
+                <button
+                  onClick={handleBookAppointment}
+                  disabled={!isBookingReady}
+                  className={`flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 text-base font-bold leading-normal tracking-[0.015em] ${
+                    isBookingReady
+                      ? "bg-[#0d80f2] text-slate-50 hover:bg-blue-700"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  <span className="truncate">Book Appointment</span>
+                </button>
+              </div>
+            )}
+
+            {/* Selection Summary */}
+            {(selectedStylist || selectedService || selectedDateTime.date) && (
+              <div className="px-4 py-2 bg-blue-50 rounded-lg mx-4 mt-4">
+                <p className="text-sm text-blue-800">
+                  Selected:{" "}
+                  {selectedStylist && `Stylist: ${selectedStylist.name}`}
+                  {selectedService && ` • Service: ${selectedService.name}`}
+                  {selectedDateTime.date &&
+                    ` • Date: ${selectedDateTime.date.toLocaleDateString()}`}
+                  {selectedDateTime.time && ` • Time: ${selectedDateTime.time}`}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

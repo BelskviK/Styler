@@ -68,7 +68,7 @@ export default function DateTimePicker({ onDateTimeSelect }) {
       day
     );
     setSelectedDate(newDate);
-    setSelectedTime(null); // Reset time when date changes
+    setSelectedTime(null);
 
     if (onDateTimeSelect) {
       onDateTimeSelect({ date: newDate, time: null });
