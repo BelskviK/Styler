@@ -34,6 +34,22 @@ const userSchema = new mongoose.Schema({
     enum: ["customer", "styler", "admin", "superadmin"],
     default: "customer",
   },
+  expertise: {
+    type: String,
+    default: "General Styling",
+  },
+  schedule: {
+    type: String,
+    default: "Available",
+  },
+  rating: {
+    type: Number,
+    default: 0,
+  },
+  description: {
+    type: String,
+    default: "Professional stylist",
+  },
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",

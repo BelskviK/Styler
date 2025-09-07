@@ -14,6 +14,12 @@ export default function StylistSelector({
     }
   };
 
+  // Helper function to get consistent ID
+  const getStylistId = (stylist) => {
+    if (!stylist) return null;
+    return stylist.id || stylist._id;
+  };
+
   // If no stylists are provided (like in BookingPage), show placeholder
   const showPlaceholder = stylists.length === 0 && !loading;
 
@@ -43,14 +49,14 @@ export default function StylistSelector({
       ) : (
         <div className="flex overflow-x-auto gap-8 p-4 scrollbar-hide">
           {stylists.map((stylist) => {
+            const selectedId = getStylistId(selectedStylist);
+            const currentId = getStylistId(stylist);
             const isSelected =
-              selectedStylist &&
-              (selectedStylist.id === stylist.id ||
-                selectedStylist._id === stylist._id);
+              selectedId && currentId && selectedId === currentId;
 
             return (
               <div
-                key={stylist.id || stylist._id}
+                key={currentId}
                 onClick={() => handleStylistClick(stylist)}
                 className={`flex flex-col gap-4 min-w-32 text-center cursor-pointer transition-all duration-200 ${
                   isSelected
@@ -83,11 +89,11 @@ export default function StylistSelector({
                   <p className="text-sm text-[#49739c]">
                     {stylist.description || "Styling specialist"}
                   </p>
-                  {stylist.rating && (
+                  {/* {stylist.rating && (
                     <p className="text-xs text-yellow-600 mt-1">
                       ⭐ {stylist.rating}
                     </p>
-                  )}
+                  )} */}
                 </div>
               </div>
             );

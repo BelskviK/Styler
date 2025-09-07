@@ -281,13 +281,20 @@ exports.getStylistWithServices = async (req, res) => {
 // @desc    Get stylists for a specific company (superadmin only)
 // @route   GET /api/users/company/:companyId/stylists
 // @access  Private (superadmin)
+
 exports.getCompanyStylists = async (req, res, next) => {
   try {
     const { companyId } = req.params;
 
-    // Only superadmin can access other companies' stylists
+    // Allow superadmin OR admin of the same company
     if (req.user.role !== "superadmin") {
-      return res.status(403).json({ message: "Not authorized" });
+      // Check if user is admin of the requested company
+      if (
+        req.user.role !== "admin" ||
+        req.user.company.toString() !== companyId
+      ) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
     }
 
     // Validate company ID
@@ -303,7 +310,7 @@ exports.getCompanyStylists = async (req, res, next) => {
       .select("-password")
       .lean();
 
-    // Format response to match the existing structure
+    // Format response
     const formattedStylists = stylists.map((stylist) => ({
       id: stylist._id,
       _id: stylist._id,

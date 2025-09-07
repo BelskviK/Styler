@@ -27,6 +27,24 @@ export default function CompanyPage() {
   });
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+
+  // Check user role on component mount
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const userResponse = await UserService.getCurrentUser();
+        const user = userResponse.data.user;
+        setUserRole(user.role);
+      } catch (err) {
+        console.error("Error checking user role:", err);
+        // If user is not authenticated, treat as customer
+        setUserRole("customer");
+      }
+    };
+
+    checkUserRole();
+  }, []);
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -54,35 +72,68 @@ export default function CompanyPage() {
         setLoading(false);
       }
     };
-
     const fetchCompanyStylists = async (companyId) => {
       try {
         setStylistsLoading(true);
-        const response = await UserService.getCompanyStylists(companyId);
+
+        let response;
+        if (
+          userRole === "customer" ||
+          userRole === "styler" ||
+          userRole === "admin"
+        ) {
+          // Use public route for customers and company employees
+          response = await UserService.getAvailableStylists(companyId);
+        } else if (userRole === "superadmin") {
+          // Use protected route only for superadmin
+          response = await UserService.getCompanyStylists(companyId);
+        } else {
+          // Default to public route for unauthenticated users
+          response = await UserService.getAvailableStylists(companyId);
+        }
+
+        console.log("Stylists response:", response.data);
         const stylistsWithServices = response.data || [];
         setStylists(stylistsWithServices);
       } catch (err) {
         console.error("Error fetching stylists:", err);
-        setStylists([]);
+        // Fall back to public route if protected route fails
+        try {
+          const fallbackResponse = await UserService.getAvailableStylists(
+            companyId
+          );
+          setStylists(fallbackResponse.data || []);
+        } catch (fallbackErr) {
+          console.error("Fallback stylist fetch also failed:", fallbackErr);
+          setStylists([]);
+        }
       } finally {
         setStylistsLoading(false);
       }
     };
 
-    if (companyName) {
+    if (companyName && userRole !== null) {
       fetchCompanyData();
     }
-  }, [companyName]);
+  }, [companyName, userRole]);
 
   const loadServices = async (stylistId) => {
     try {
       setServicesLoading(true);
       setServices([]);
 
-      const stylistResponse = await UserService.getStylistWithServices(
-        stylistId
-      );
-      const stylistServices = stylistResponse.data.services || [];
+      let response;
+      if (userRole === "customer") {
+        // Use public route for customers
+        response = await UserService.getAvailableServices(stylistId);
+      } else {
+        // Use protected route for authenticated users
+        response = await UserService.getStylistWithServices(stylistId);
+        // Extract services from the stylist response
+        response.data = response.data.services || [];
+      }
+
+      const stylistServices = response.data || [];
       setServices(stylistServices);
     } catch (err) {
       console.error("❌ Failed to load services:", err);

@@ -2,8 +2,11 @@
 import api from "./api";
 
 class UserService {
-  static async getStylists() {
-    return api.get("/users");
+  static async getStylists(companyId = null) {
+    if (companyId) {
+      return api.get(`/users/company/${companyId}/stylists`);
+    }
+    return api.get("/users/stylists");
   }
 
   static async getCurrentUser() {
@@ -32,6 +35,16 @@ class UserService {
 
   static async deleteUser(id) {
     return api.delete(`/users/${id}`);
+  }
+
+  // Add this method for customers to get available stylists
+  static async getAvailableStylists(companyId) {
+    return api.get(`/public/company/${companyId}/stylists`);
+  }
+
+  // Add this method for customers to get available services
+  static async getAvailableServices(stylistId) {
+    return api.get(`/public/stylist/${stylistId}/services`);
   }
 }
 

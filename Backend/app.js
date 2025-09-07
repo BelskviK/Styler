@@ -11,6 +11,8 @@ const userRoutes = require("./routes/user.routes");
 const serviceRoutes = require("./routes/service.routes");
 const appointmentRoutes = require("./routes/appointment.routes");
 const notificationRoutes = require("./routes/notification.routes");
+const publicRoutes = require("./routes/public.routes");
+
 // Initialize app
 const app = express();
 const allowedOrigins = [
@@ -53,6 +55,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/public", publicRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
