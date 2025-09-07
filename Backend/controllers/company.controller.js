@@ -1,3 +1,4 @@
+// Backend\controllers\company.controller.js
 const Company = require("../models/Company");
 const User = require("../models/User");
 

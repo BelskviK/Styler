@@ -120,6 +120,7 @@ export default function StylistsView({
       <SearchInput value={search} onChange={handleSearchChange} />
 
       {/* Add Stylist Modal */}
+
       <Modal
         isOpen={isModalOpen}
         onClose={toggleModal}

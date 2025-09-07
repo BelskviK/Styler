@@ -1,3 +1,4 @@
+// Backend\controllers\appointment.controller.js
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const Service = require("../models/Service");
@@ -9,27 +10,29 @@ exports.getAppointments = async (req, res, next) => {
   try {
     let query = {};
 
-    // For admin, get all appointments for their company
+    // Admin: appointments for their company
     if (req.user.role === "admin") {
-      query = { company: req.user.company };
+      query.company = req.user.company;
     }
-    // For stylist, get their appointments
+    // Stylist: only their appointments
     else if (req.user.role === "styler") {
-      query = { stylist: req.user._id, company: req.user.company };
+      query.stylist = req.user._id;
+      query.company = req.user.company;
     }
-    // For customer, get their appointments
+    // Customer: only their appointments
     else if (req.user.role === "customer") {
-      query = { customer: req.user._id };
+      query.customer = req.user._id;
     }
-    // Superadmin can see all appointments
-    else if (req.user.role !== "superadmin") {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to access this resource" });
+    // Superadmin: optional filter by companyId
+    else if (req.user.role === "superadmin") {
+      const { companyId } = req.query;
+      if (companyId) query.company = companyId;
+    } else {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const appointments = await Appointment.find(query)
-      .populate("customer", "name email")
+      .populate("customer", "name email phone")
       .populate("stylist", "name email")
       .populate("service", "name price duration")
       .populate("company", "name");
@@ -41,6 +44,34 @@ exports.getAppointments = async (req, res, next) => {
   }
 };
 
+exports.getAppointmentsByCompany = async (req, res, next) => {
+  try {
+    const { companyId } = req.params;
+
+    // Verify user has access to this company's data
+    if (
+      req.user.role !== "superadmin" &&
+      req.user.company.toString() !== companyId
+    ) {
+      return res
+        .status(403)
+        .json({
+          message: "Not authorized to access this company's appointments",
+        });
+    }
+
+    const appointments = await Appointment.find({ company: companyId })
+      .populate("customer", "name email phone")
+      .populate("stylist", "name email")
+      .populate("service", "name price duration")
+      .populate("company", "name");
+
+    res.status(200).json(appointments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 exports.createAppointment = async (req, res, next) => {
   const {
     stylistId,

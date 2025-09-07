@@ -6,6 +6,10 @@ class AppointmentService {
     return api.get("/appointments");
   }
 
+  static async getByCompany(companyId) {
+    return api.get(`/appointments/company/${companyId}`);
+  }
+
   static async create(data) {
     return api.post("/appointments", data);
   }

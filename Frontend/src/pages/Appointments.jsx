@@ -40,7 +40,21 @@ export default function Appointments() {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const response = await AppointmentService.getAll();
+      let response;
+
+      // Add company filtering based on user role
+      if (user?.role === "superadmin") {
+        // Superadmin can see all appointments
+        response = await AppointmentService.getAll();
+      } else if (user?.company) {
+        // Admin/styler should only see their company's appointments
+        // If you have a company-specific appointments endpoint
+        response = await AppointmentService.getByCompany(user.company);
+      } else {
+        // For customers or users without company
+        response = await AppointmentService.getAll();
+      }
+
       setAppointments(response.data);
     } catch {
       toast.error("Failed to load appointments");
@@ -48,6 +62,10 @@ export default function Appointments() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAppointments();
+  }, [user]);
 
   const handleSort = (key, direction) => {
     const sorted = [...filteredAppointments].sort((a, b) => {
@@ -152,7 +170,7 @@ export default function Appointments() {
 
 function SearchInput({ value, onChange }) {
   return (
-    <div className="px-4 py-3 z-10">
+    <div className="px-4 py-3">
       <label className="flex flex-col min-w-40 h-12 w-full">
         <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
           <div className="text-[#60758a] flex border-none bg-[#f0f2f5] items-center justify-center pl-4 rounded-l-lg border-r-0">

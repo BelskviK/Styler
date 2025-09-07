@@ -5,7 +5,12 @@ const auth = require("../middleware/auth");
 const appointmentController = require("../controllers/appointment.controller");
 
 router.get("/", auth, appointmentController.getAppointments);
-router.post("/", auth, appointmentController.createAppointment); // Add auth back
+router.get(
+  "/company/:companyId",
+  auth,
+  appointmentController.getAppointmentsByCompany
+);
+router.post("/", auth, appointmentController.createAppointment);
 router.put("/:id/status", auth, appointmentController.updateAppointmentStatus);
 router.delete("/:id", auth, appointmentController.deleteAppointment);
 
