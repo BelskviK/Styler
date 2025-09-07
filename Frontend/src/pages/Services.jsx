@@ -1,6 +1,6 @@
 // Frontend/src/pages/Services.jsx
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import Modal from "@/components/common/Modal";
 import toast from "react-hot-toast";
 import ServiceService from "@/services/ServiceService";

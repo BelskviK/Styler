@@ -1,8 +1,8 @@
 // Frontend/src/context/NotificationProvider.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { io } from "socket.io-client";
-import { NotificationContext } from "./NotificationContext";
+import { NotificationContext } from "@/context/NotificationContext";
 import { SOCKET_URL } from "@/config"; // ⬅ use centralized config
 
 // This file only exports the NotificationProvider component

@@ -1,3 +1,4 @@
+/* Frontend\src\index.css */
 @import "tailwindcss"; /* v4 shorthand */
 /* Add to your global CSS file */
 .scrollbar-hide {
@@ -15,4 +16,35 @@ body {
 
 .sidebar-container {
   overflow-y: auto;
+}
+/* In your global CSS file */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #111418;
+  --text-secondary: #60758a;
+  --border-color: #dbe0e6;
+  --button-primary: #0d80f2;
+  --button-secondary: #f0f2f5;
+}
+
+.dark-mode {
+  --bg-primary: #1a1d21;
+  --bg-secondary: #23272e;
+  --text-primary: #e1e6ed;
+  --text-secondary: #8f9ba8;
+  --border-color: #39414d;
+  --button-primary: #3b99fc;
+  --button-secondary: #2d3748;
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }

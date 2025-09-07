@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { registerUser } from "@/api/auth";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 const RegisterForm = () => {
   const [form, setForm] = useState({ email: "", password: "" });

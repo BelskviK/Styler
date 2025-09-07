@@ -1,6 +1,6 @@
-// Frontend/src/context/useNotifications.js
+// Frontend/src/hooks/useNotifications.js
 import { useContext } from "react";
-import { NotificationContext } from "./NotificationContext";
+import { NotificationContext } from "@/context/NotificationContext";
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);

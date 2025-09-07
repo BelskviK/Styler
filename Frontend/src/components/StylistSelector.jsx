@@ -67,7 +67,7 @@ export default function StylistSelector({
                     src={
                       stylist.profilePicture ||
                       stylist.image ||
-                      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face"
+                      "https://similarpng.com/_next/image?url=https%3A%2F%2Fimage.similarpng.com%2Ffile%2Fsimilarpng%2Fvery-thumbnail%2F2021%2F08%2FBarber-shop-logo-on-transparent-background-PNG.png&w=3840&q=75"
                     }
                     alt={stylist.name}
                     className="aspect-square w-full object-cover"

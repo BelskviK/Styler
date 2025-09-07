@@ -1,6 +1,6 @@
 // src/components/Appointments/AppointmentForm.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import AppointmentService from "@/services/AppointmentService";
 import CompanyService from "@/services/CompanyService";
 import UserService from "@/services/UserService";

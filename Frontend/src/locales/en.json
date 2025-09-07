@@ -1,0 +1,45 @@
+{
+  "common": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "languages": {
+    "en": "English",
+    "ru": "Русский",
+    "ge": "ქართული"
+  },
+  "settings": {
+    "title": "Settings",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "notifications": "Notifications",
+    "appointmentNotifications": "Appointment Notifications",
+    "notificationDesc": "Receive notifications for new appointments, cancellations, and reminders.",
+    "profileImage": "Profile Image",
+    "pasteImageUrl": "Paste image URL",
+    "updateImage": "Update Image",
+    "darkMode": "Dark Mode"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "appointments": "Appointments",
+    "bookings": "Bookings",
+    "stylists": "Stylists",
+    "services": "Services",
+    "settings": "Settings"
+  }
+}

@@ -1,7 +1,7 @@
 // Frontend/src/context/AuthProvider.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { AuthContext } from "./AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 import { API_BASE } from "@/config"; // ⬅ use centralized config
 
 export const AuthProvider = ({ children }) => {

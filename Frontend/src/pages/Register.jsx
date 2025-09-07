@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AuthService from "@/services/AuthService";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 

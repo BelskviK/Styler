@@ -1,6 +1,6 @@
 // Frontend/src/components/common/NotificationDropdown.jsx
 import { useState, useRef, useEffect } from "react";
-import { useNotifications } from "@/context/useNotifications";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);

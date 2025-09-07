@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import StylistsView from "@/components/Stylists/StylistsView";
 import ServiceService from "@/services/ServiceService";
 import UserService from "@/services/UserService";

@@ -1,6 +1,6 @@
 // src/components/common/Sidebar.jsx
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 const commonNavItems = [

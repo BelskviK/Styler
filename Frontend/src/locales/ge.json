@@ -1,0 +1,45 @@
+{
+  "common": {
+    "save": "შენახვა",
+    "cancel": "გაუქმება",
+    "delete": "წაშლა",
+    "edit": "რედაქტირება",
+    "confirm": "დადასტურება",
+    "loading": "იტვირთება...",
+    "error": "შეცდომა",
+    "success": "წარმატება"
+  },
+  "languages": {
+    "en": "English",
+    "ru": "Русский",
+    "ge": "ქართული"
+  },
+  "settings": {
+    "title": "პარამეტრები",
+    "personalInfo": "პირადი ინფორმაცია",
+    "name": "სახელი",
+    "email": "ელ.ფოსტა",
+    "phone": "ტელეფონი",
+    "address": "მისამართი",
+    "notifications": "შეტყობინებები",
+    "appointmentNotifications": "ჩანიშვნების შეტყობინებები",
+    "notificationDesc": "მიიღეთ შეტყობინებები ახალი ჩანიშვნებზე, გაუქმებებსა და შეხსენებებზე.",
+    "profileImage": "პროფილის სურათი",
+    "pasteImageUrl": "ჩასვით სურათის ბმული",
+    "updateImage": "სურათის განახლება",
+    "darkMode": "ბნელი რეჟიმი"
+  },
+  "auth": {
+    "login": "შესვლა",
+    "register": "რეგისტრაცია",
+    "logout": "გასვლა"
+  },
+  "navigation": {
+    "dashboard": "დაფა",
+    "appointments": "ჩანიშვნები",
+    "bookings": "ჯავშნები",
+    "stylists": "სტილისტები",
+    "services": "სერვისები",
+    "settings": "პარამეტრები"
+  }
+}

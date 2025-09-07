@@ -1,0 +1,45 @@
+{
+  "common": {
+    "save": "Сохранить изменения",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "confirm": "Подтвердить",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех"
+  },
+  "languages": {
+    "en": "English",
+    "ru": "Русский",
+    "ge": "ქართული"
+  },
+  "settings": {
+    "title": "Настройки",
+    "personalInfo": "Личная информация",
+    "name": "Имя",
+    "email": "Эл. почта",
+    "phone": "Телефон",
+    "address": "Адрес",
+    "notifications": "Уведомления",
+    "appointmentNotifications": "Уведомления о записях",
+    "notificationDesc": "Получайте уведомления о новых записях, отменах и напоминаниях.",
+    "profileImage": "Изображение профиля",
+    "pasteImageUrl": "Вставить ссылку на изображение",
+    "updateImage": "Обновить изображение",
+    "darkMode": "Тёмный режим"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Зарегистрироваться",
+    "logout": "Выйти"
+  },
+  "navigation": {
+    "dashboard": "Панель",
+    "appointments": "Записи",
+    "bookings": "Бронирования",
+    "stylists": "Стилисты",
+    "services": "Услуги",
+    "settings": "Настройки"
+  }
+}
