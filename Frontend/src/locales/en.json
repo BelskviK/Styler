@@ -24,6 +24,8 @@
     "notifications": "Notifications",
     "appointmentNotifications": "Appointment Notifications",
     "notificationDesc": "Receive notifications for new appointments, cancellations, and reminders.",
+    "darkmodedesc": "Change to DarkMode.",
+
     "profileImage": "Profile Image",
     "pasteImageUrl": "Paste image URL",
     "updateImage": "Update Image",

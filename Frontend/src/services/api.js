@@ -1,4 +1,3 @@
-// src/services/api.js
 import axios from "axios";
 import { API_BASE } from "@/config";
 
@@ -7,18 +6,20 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Single request interceptor that handles both logging and auth
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    console.log(
-      `Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${
-        config.url
-      }`
-    );
+    // Try multiple ways to get the token
+    const token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("authToken") ||
+      getCookie("token") ||
+      getCookie("authToken");
 
-    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log("No token available for authorization");
     }
 
     return config;
@@ -28,15 +29,28 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
+    console.error("API Error:", error.response?.status, error.message);
+
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
+      localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       window.location.href = "/login";
     }
     return Promise.reject(error);
   }
 );
+
+// Helper function to get cookie
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return null;
+}
 
 export default api;

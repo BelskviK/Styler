@@ -65,8 +65,7 @@ export default function StylistSelector({
                 >
                   <AnimatedImage
                     src={
-                      stylist.profilePicture ||
-                      stylist.image ||
+                      stylist.profileImage ||
                       "https://similarpng.com/_next/image?url=https%3A%2F%2Fimage.similarpng.com%2Ffile%2Fsimilarpng%2Fvery-thumbnail%2F2021%2F08%2FBarber-shop-logo-on-transparent-background-PNG.png&w=3840&q=75"
                     }
                     alt={stylist.name}

@@ -24,6 +24,8 @@
     "notifications": "Уведомления",
     "appointmentNotifications": "Уведомления о записях",
     "notificationDesc": "Получайте уведомления о новых записях, отменах и напоминаниях.",
+    "darkmodedesc": "Переключиться на тёмный режим.",
+
     "profileImage": "Изображение профиля",
     "pasteImageUrl": "Вставить ссылку на изображение",
     "updateImage": "Обновить изображение",

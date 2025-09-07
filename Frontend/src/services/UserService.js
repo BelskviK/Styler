@@ -6,6 +6,10 @@ class UserService {
     return api.get("/users");
   }
 
+  static async getCurrentUser() {
+    return api.get("/users/me");
+  }
+
   static async getCompanyUsers() {
     return api.get("/users/company");
   }
