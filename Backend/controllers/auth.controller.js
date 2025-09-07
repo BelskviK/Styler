@@ -118,13 +118,15 @@ exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    // Check for user
-    const user = await User.findOne({ email }).select("+password");
+    // Find user and populate company name
+    const user = await User.findOne({ email })
+      .select("+password")
+      .populate("company", "name"); // ✅ populate only the name field
+
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Check if password matches
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -150,7 +152,8 @@ exports.login = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        company: user.company,
+        company: user.company?._id || null,
+        companyName: user.company?.name || null, // ✅ now this will have the name
       },
     });
   } catch (err) {

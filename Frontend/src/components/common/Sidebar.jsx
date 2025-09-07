@@ -194,7 +194,7 @@ export default function Sidebar() {
         <div className="flex flex-col gap-4">
           {/* Company Name */}
           <h1 className="text-[#111418] text-base font-medium leading-normal">
-            {user?.company || "SalonApp"}
+            {user?.companyName || "SalonApp"}
           </h1>
 
           {/* Nav Items */}
