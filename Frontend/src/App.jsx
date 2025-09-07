@@ -22,17 +22,23 @@ export default function App() {
     <NotificationProvider>
       <Routes>
         {/* Public routes without Layout (they'll handle their own layout) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register/customer" element={<Register />} />
 
         <Route element={<Layout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register/customer" element={<Register />} />
           <Route path="/barbershops" element={<Barbershops />} />
           <Route path="/barbershop/:companyName" element={<CompanyPage />} />
 
           {/* All other routes use Layout with Header */}
           {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AuthenticatedLayout />}>
+          <Route element={<AuthenticatedLayout />}>
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["admin", "superadmin", "stylist"]}
+                />
+              }
+            >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="bookings" element={<Bookings />} />

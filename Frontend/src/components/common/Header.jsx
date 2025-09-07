@@ -6,12 +6,25 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const handleLogoClick = () => {
+    if (
+      user?.role === "superadmin" ||
+      user?.role === "admin" ||
+      user?.role === "stylist"
+    ) {
+      navigate("/dashboard");
+    } else {
+      // customer or not logged in
+      navigate("/barbershops");
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 z-10">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <h1
-            onClick={() => navigate("/")}
+            onClick={handleLogoClick}
             className="text-xl font-semibold text-gray-900 cursor-pointer"
           >
             Styler App

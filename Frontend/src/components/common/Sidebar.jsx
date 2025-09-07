@@ -135,7 +135,7 @@ const commonNavItems = [
         </svg>
       </div>
     ),
-    roles: ["superadmin"],
+    roles: ["superadmin", "styler"],
   },
   {
     label: "Settings",
