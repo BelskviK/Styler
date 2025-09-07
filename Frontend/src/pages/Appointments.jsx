@@ -40,21 +40,7 @@ export default function Appointments() {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      let response;
-
-      // Add company filtering based on user role
-      if (user?.role === "superadmin") {
-        // Superadmin can see all appointments
-        response = await AppointmentService.getAll();
-      } else if (user?.company) {
-        // Admin/styler should only see their company's appointments
-        // If you have a company-specific appointments endpoint
-        response = await AppointmentService.getByCompany(user.company);
-      } else {
-        // For customers or users without company
-        response = await AppointmentService.getAll();
-      }
-
+      let response = await AppointmentService.getByCompany(user.company);
       setAppointments(response.data);
     } catch {
       toast.error("Failed to load appointments");

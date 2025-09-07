@@ -6,6 +6,118 @@ import CompanyService from "@/services/CompanyService";
 import UserService from "@/services/UserService";
 import toast from "react-hot-toast";
 
+// Form Components
+function FormSelect({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  options,
+  optionValue,
+  optionLabel,
+  optionExtra,
+  loading = false,
+  disabled = false,
+  placeholder = `Select ${label}`,
+}) {
+  const getOptionKey = (option, index) => {
+    const possibleKeys = [optionValue, "id", "_id", "value", "key"];
+    for (const key of possibleKeys) {
+      if (option[key]) {
+        return option[key];
+      }
+    }
+    return `option-${index}`;
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        disabled={disabled || loading}
+        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          error ? "border-red-500" : "border-gray-300"
+        } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+      >
+        <option value="">{loading ? "Loading..." : placeholder}</option>
+        {options.map((option, index) => (
+          <option key={getOptionKey(option, index)} value={option[optionValue]}>
+            {option[optionLabel]}
+            {optionExtra && optionExtra(option)}
+          </option>
+        ))}
+      </select>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {loading && <p className="text-gray-500 text-xs mt-1">Loading...</p>}
+    </div>
+  );
+}
+
+function FormInput({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  type = "text",
+  ...props
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          error ? "border-red-500" : "border-gray-300"
+        }`}
+        {...props}
+      />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function FormTextarea({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  rows = 3,
+  ...props
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        rows={rows}
+        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          error ? "border-red-500" : "border-gray-300"
+        }`}
+        {...props}
+      />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
+// Main Component
 export default function AppointmentForm({
   onSuccess,
   onCancel,
@@ -13,7 +125,7 @@ export default function AppointmentForm({
 }) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    companyId: user?.company || "", // Pre-populate if user has company
+    companyId: user?.company || "",
     stylistId: "",
     serviceId: "",
     customerName: "",
@@ -33,6 +145,8 @@ export default function AppointmentForm({
     stylists: false,
     services: false,
   });
+  const [submitting, setSubmitting] = useState(false);
+
   // Function to get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
@@ -76,6 +190,7 @@ export default function AppointmentForm({
       loadStylists(user.company);
     }
   }, [user]);
+
   useEffect(() => {
     if (formData.stylistId && formData.companyId) {
       if (
@@ -216,6 +331,7 @@ export default function AppointmentForm({
   };
 
   const validateForm = () => {
+    console.log("🔍 Validating form with data:", formData);
     const newErrors = {};
 
     if (!formData.companyId) newErrors.companyId = "Company is required";
@@ -228,17 +344,36 @@ export default function AppointmentForm({
     if (!formData.date) newErrors.date = "Date is required";
     if (!formData.startTime) newErrors.startTime = "Start time is required";
 
+    console.log("❌ Validation errors:", newErrors);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log("✅ Form is valid:", isValid);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
+    console.log("🚀 Form submit triggered");
     e.preventDefault();
+    e.stopPropagation();
 
-    if (!validateForm()) return;
+    // Prevent double submission
+    if (submitting || isSubmitting) {
+      console.log("⏸️ Already submitting, preventing double submission");
+      return;
+    }
+
+    console.log("📋 Current form data:", formData);
+    console.log("⏰ End time:", endTime);
+    console.log("🎯 Selected service:", selectedService);
+
+    if (!validateForm()) {
+      console.log("❌ Validation failed, stopping submission");
+      return;
+    }
 
     try {
-      console.log("📤 Submitting appointment data:", formData);
+      console.log("📤 Starting appointment creation...");
+      setSubmitting(true);
 
       const appointmentData = {
         stylistId: formData.stylistId,
@@ -251,19 +386,43 @@ export default function AppointmentForm({
         customerPhone: formData.customerPhone,
       };
 
-      console.log("📦 Final appointment data:", appointmentData);
+      console.log("📦 Final appointment data being sent:", appointmentData);
+
+      // Check if AppointmentService.create exists and is a function
+      if (
+        !AppointmentService ||
+        typeof AppointmentService.create !== "function"
+      ) {
+        throw new Error("AppointmentService.create is not available");
+      }
 
       const response = await AppointmentService.create(appointmentData);
-      console.log("✅ Appointment created successfully:", response.data);
+      console.log("✅ Appointment created successfully:", response);
 
       toast.success("Appointment created successfully");
-      onSuccess();
+
+      // Check if onSuccess is a function before calling
+      if (typeof onSuccess === "function") {
+        onSuccess(response.data);
+      } else {
+        console.warn("⚠️ onSuccess is not a function:", onSuccess);
+      }
     } catch (err) {
       console.error("❌ Appointment creation failed:", err);
-      console.error("📊 Error details:", err.response?.data);
-      toast.error(
-        err.response?.data?.message || "Failed to create appointment"
-      );
+      console.error("📊 Error response:", err.response);
+      console.error("📊 Error message:", err.message);
+
+      let errorMessage = "Failed to create appointment";
+
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -284,14 +443,13 @@ export default function AppointmentForm({
           disabled={loading.companies}
         />
       ) : (
-        // Show the company name as read-only for non-superadmin users
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Company
           </label>
           <input
             type="text"
-            value={user?.companyName || "Your Company"} // You might want to store companyName in your user context
+            value={user?.companyName || "Your Company"}
             disabled
             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
           />
@@ -299,7 +457,7 @@ export default function AppointmentForm({
         </div>
       )}
 
-      {/* Rest of the form remains the same */}
+      {/* Stylist Selection */}
       <FormSelect
         label="Stylist"
         name="stylistId"
@@ -316,6 +474,23 @@ export default function AppointmentForm({
         }
       />
 
+      {/* Service Selection */}
+      <FormSelect
+        label="Service"
+        name="serviceId"
+        value={formData.serviceId}
+        onChange={handleInputChange}
+        error={errors.serviceId}
+        options={services}
+        optionValue="_id"
+        optionLabel="name"
+        loading={loading.services}
+        disabled={!formData.stylistId || loading.services}
+        placeholder={
+          !formData.stylistId ? "Select a stylist first" : "Select service"
+        }
+      />
+
       {selectedService && (
         <div className="p-3 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800">
@@ -325,7 +500,7 @@ export default function AppointmentForm({
         </div>
       )}
 
-      {/* Only show customer fields for admin/styler users */}
+      {/* Customer fields - only show for admin/styler/superadmin users */}
       {(user?.role === "admin" ||
         user?.role === "styler" ||
         user?.role === "superadmin") && (
@@ -358,7 +533,7 @@ export default function AppointmentForm({
         onChange={handleInputChange}
         error={errors.date}
         type="date"
-        min={getTodayDate()} // Set min date to today to prevent past dates
+        min={getTodayDate()}
       />
 
       <FormInput
@@ -368,7 +543,6 @@ export default function AppointmentForm({
         onChange={handleInputChange}
         error={errors.startTime}
         type="time"
-        // Set min time to current time or a reasonable minimum
       />
 
       <FormTextarea
@@ -383,130 +557,19 @@ export default function AppointmentForm({
         <button
           type="button"
           onClick={onCancel}
-          disabled={isSubmitting}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          disabled={submitting || isSubmitting}
+          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={submitting || isSubmitting}
           className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? "Creating..." : "Create Appointment"}
+          {submitting || isSubmitting ? "Creating..." : "Create Appointment"}
         </button>
       </div>
     </form>
-  );
-}
-
-// ... rest of the component (FormSelect, FormInput, FormTextarea) remains the same ...
-function FormSelect({
-  label,
-  name,
-  value,
-  onChange,
-  error,
-  options,
-  optionValue,
-  optionLabel,
-  optionExtra,
-  loading = false,
-  disabled = false,
-  placeholder = `Select ${label}`,
-}) {
-  const getOptionKey = (option, index) => {
-    const possibleKeys = [optionValue, "id", "_id", "value", "key"];
-    for (const key of possibleKeys) {
-      if (option[key]) {
-        return option[key];
-      }
-    }
-    return `option-${index}`;
-  };
-
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        disabled={disabled || loading}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          error ? "border-red-500" : "border-gray-300"
-        } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
-      >
-        <option value="">{loading ? "Loading..." : placeholder}</option>
-        {options.map((option, index) => (
-          <option key={getOptionKey(option, index)} value={option[optionValue]}>
-            {option[optionLabel]}
-            {optionExtra && optionExtra(option)}
-          </option>
-        ))}
-      </select>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-      {loading && <p className="text-gray-500 text-xs mt-1">Loading...</p>}
-    </div>
-  );
-}
-
-function FormInput({
-  label,
-  name,
-  value,
-  onChange,
-  error,
-  type = "text",
-  ...props
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          error ? "border-red-500" : "border-gray-300"
-        }`}
-        {...props}
-      />
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
-  );
-}
-
-function FormTextarea({
-  label,
-  name,
-  value,
-  onChange,
-  error,
-  rows = 3,
-  ...props
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <textarea
-        name={name}
-        value={value}
-        onChange={onChange}
-        rows={rows}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          error ? "border-red-500" : "border-gray-300"
-        }`}
-        {...props}
-      />
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
   );
 }
