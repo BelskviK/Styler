@@ -10,27 +10,28 @@ exports.getServices = async (req, res, next) => {
     let query = {};
 
     if (req.user.role === "superadmin") {
-      // Superadmin can see by query param or own company
+      // Superadmin sees only their own company unless querying another
       if (req.query.companyId) {
         query.company = req.query.companyId;
       } else {
         query.company = req.user.company;
       }
     } else if (req.user.role === "admin") {
-      // Admin: only their company's services
+      // Admins only their own company
       query.company = req.user.company;
     } else if (req.user.role === "styler") {
-      // Styler: only their assigned services within their company
+      // Styler can only see services assigned to them inside their company
       query = {
         _id: { $in: req.user.services },
         company: req.user.company,
       };
     } else if (req.user.role === "customer") {
-      // Customer: only services from their company
       if (!req.user.company) {
-        return res.status(400).json({
-          message: "Customer must belong to a company to view services",
-        });
+        return res
+          .status(400)
+          .json({
+            message: "Customer must belong to a company to view services",
+          });
       }
       query.company = req.user.company;
     }

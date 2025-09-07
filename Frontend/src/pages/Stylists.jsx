@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/useAuth";
 import StylistsView from "@/components/Stylists/StylistsView";
-import StylistService from "@/services/StylistService";
+import ServiceService from "@/services/ServiceService";
+import UserService from "@/services/UserService";
+import AuthService from "@/services/AuthService";
 
 export default function Stylists() {
   const [state, setState] = useState({
@@ -38,8 +40,8 @@ export default function Stylists() {
       try {
         if (user?.company) {
           const [stylistsResponse, servicesResponse] = await Promise.all([
-            StylistService.getAll(),
-            StylistService.getCompanyServices(user.company),
+            UserService.getStylists(),
+            ServiceService.getCompanyServices(user.company),
           ]);
 
           setState((prev) => ({
@@ -91,7 +93,7 @@ export default function Stylists() {
 
     setIsSubmitting(true);
     try {
-      await StylistService.register({
+      await AuthService.registerEmployee({
         ...formData,
         company: user.company,
       });
@@ -121,13 +123,13 @@ export default function Stylists() {
     setIsSubmitting(true);
     try {
       await Promise.all([
-        StylistService.update(state.editingStylist._id, {
+        UserService.updateUser(state.editingStylist._id, {
           name: formData.name,
           email: formData.email,
           password: formData.password || undefined,
           role: formData.role,
         }),
-        StylistService.assignServices(
+        ServiceService.assignServices(
           state.editingStylist._id,
           formData.services
         ),
@@ -203,7 +205,7 @@ export default function Stylists() {
       if (!serviceIds || serviceIds.length === 0)
         throw new Error("Please select at least one service");
 
-      await StylistService.assignServices(
+      await ServiceService.assignServices(
         selectedStylistForServices._id,
         serviceIds
       );
@@ -256,7 +258,8 @@ export default function Stylists() {
         }
 
         try {
-          const res = await StylistService.getWithServices(stylistId);
+          // TODO : check backend endpoint exists
+          const res = await UserService.getStylistWithServices(stylistId);
           // Make sure this function calls: GET `/api/users/${id}` directly
           setSelectedStylistForServices(res.data);
           setAssigningServices(true);

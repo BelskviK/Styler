@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/useAuth";
 import Modal from "@/components/common/Modal";
-import api from "@/services/api";
 import toast from "react-hot-toast";
+import ServiceService from "@/services/ServiceService";
 
 export default function Services() {
   const { user } = useAuth();
@@ -27,7 +27,7 @@ export default function Services() {
     const fetchServices = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get("/services");
+        const response = await ServiceService.getAll();
         setServices(response.data);
         setFilteredServices(response.data);
       } catch (error) {
@@ -71,7 +71,7 @@ export default function Services() {
       if (form._id) {
         // Update existing service
         console.log("asd_____________________");
-        const response = await api.put(`/services/${form._id}`, {
+        const response = await ServiceService.update(form._id, {
           name: form.name,
           description: form.description,
           duration: form.duration,
@@ -84,7 +84,7 @@ export default function Services() {
         toast.success("Service updated successfully");
       } else {
         // Create new service
-        const response = await api.post("/services", {
+        const response = await ServiceService.create({
           name: form.name,
           description: form.description,
           duration: form.duration,
@@ -125,7 +125,7 @@ export default function Services() {
   const handleDelete = async () => {
     try {
       setIsLoading(true);
-      await api.delete(`/services/${serviceToDelete._id}`);
+      await ServiceService.delete(serviceToDelete._id);
       const updatedServices = services.filter(
         (s) => s._id !== serviceToDelete._id
       );

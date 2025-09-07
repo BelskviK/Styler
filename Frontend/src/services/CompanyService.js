@@ -1,4 +1,4 @@
-// Frontend/src/services/CompanyService.js
+// src/services/CompanyService.js
 import api from "./api";
 
 class CompanyService {
@@ -26,7 +26,6 @@ class CompanyService {
     return api.delete(`/companies/${id}`);
   }
 
-  // Add this new method for public barbershop access
   static async getPublicBarbershops() {
     return api.get("/companies/public/barbershops");
   }

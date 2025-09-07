@@ -3,7 +3,8 @@ import Modal from "@/components/common/Modal";
 import StylistForm from "@/components/Stylists/StylistForm";
 import StylistTable from "@/components/Stylists/StylistTable";
 import ServiceAssignment from "@/components/Stylists/ServiceAssignment";
-import StylistService from "@/services/StylistService";
+import UserService from "@/services/UserService";
+import ServiceService from "@/services/ServiceService";
 import toast from "react-hot-toast";
 
 export default function StylistsView({
@@ -48,7 +49,7 @@ export default function StylistsView({
 
       setAssignmentLoading(true);
       // Fetch the stylist with their services populated - use stylist.id
-      const response = await StylistService.getStylistWithServices(stylist.id);
+      const response = await UserService.getStylistWithServices(stylist.id);
       setSelectedStylistForServices(response.data);
       setAssigningServices(true);
     } catch (err) {
@@ -65,7 +66,7 @@ export default function StylistsView({
   const handleAssignServices = async (serviceIds) => {
     try {
       setAssignmentLoading(true);
-      await StylistService.assignServices(
+      await ServiceService.assignServices(
         selectedStylistForServices._id,
         serviceIds
       );
