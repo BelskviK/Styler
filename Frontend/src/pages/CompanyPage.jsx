@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CompanyService from "@/services/CompanyService";
+import UserService from "@/services/UserService";
 import StylistSelector from "@/components/StylistSelector";
 import DateTimePicker from "@/components/DateTimePicker";
 import ServiceSelector from "@/components/ServiceSelector";
@@ -9,8 +10,11 @@ import ServiceSelector from "@/components/ServiceSelector";
 export default function CompanyPage() {
   const { companyName } = useParams();
   const [company, setCompany] = useState(null);
+  const [stylists, setStylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [stylistsLoading, setStylistsLoading] = useState(true);
+  const [selectedStylist, setSelectedStylist] = useState(null);
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -21,7 +25,7 @@ export default function CompanyPage() {
           .replace(/-/g, " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
 
-        // In a real app, you'd fetch by ID or slug, but for demo we'll filter by name
+        // Fetch company by name or ID
         const response = await CompanyService.getPublicBarbershops();
         const foundCompany = response.data.find(
           (comp) => comp.name.toLowerCase() === normalizedName.toLowerCase()
@@ -29,6 +33,8 @@ export default function CompanyPage() {
 
         if (foundCompany) {
           setCompany(foundCompany);
+          // Fetch stylists for this specific company
+          await fetchCompanyStylists(foundCompany.id || foundCompany._id);
         } else {
           setError("Company not found");
         }
@@ -40,10 +46,27 @@ export default function CompanyPage() {
       }
     };
 
+    const fetchCompanyStylists = async (companyId) => {
+      try {
+        setStylistsLoading(true);
+        const response = await UserService.getCompanyStylists(companyId);
+        setStylists(response.data || []);
+      } catch (err) {
+        console.error("Error fetching stylists:", err);
+        setStylists([]);
+      } finally {
+        setStylistsLoading(false);
+      }
+    };
+
     if (companyName) {
       fetchCompanyData();
     }
   }, [companyName]);
+
+  const handleStylistSelect = (stylist) => {
+    setSelectedStylist(stylist);
+  };
 
   if (loading) {
     return (
@@ -154,7 +177,6 @@ export default function CompanyPage() {
       </div>
     );
   }
-
   return (
     <div
       className="relative flex size-full min-h-screen flex-col bg-slate-50 group/design-root overflow-x-hidden"
@@ -181,7 +203,12 @@ export default function CompanyPage() {
               Select Stylist & Time
             </h2>
 
-            <StylistSelector />
+            <StylistSelector
+              stylists={stylists}
+              loading={stylistsLoading}
+              onStylistSelect={handleStylistSelect}
+              selectedStylist={selectedStylist}
+            />
             <DateTimePicker />
             <ServiceSelector />
 

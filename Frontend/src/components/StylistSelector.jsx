@@ -1,58 +1,99 @@
-// Frontend\src\components\StylistSelector.jsx
+// Frontend/src/components/StylistSelector.jsx
 import React from "react";
 import AnimatedImage from "@/components/common/AnimatedImage";
 
-const stylists = [
-  {
-    name: "Ethan",
-    desc: "Specializes in fades",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBQsIlF6VDMWVm6V-gzEYWvpxNvFn2rJUKXMV4-nnd2xRlohBwkG1OcIkj1vQhGiMLJnJiGaHgo2NbtBldP97ev_GipzeY7BbiY3kcXIRG1g3Q1gR0FAmWaVkOjNyMVNH6yT1H-bJUUB21OMqUqS7pzsBSfnqzdPwVZPsdg1QymERpMNqnM1mAKNshm3czU2XxpJxU3YtHviJxGLg_rsuFj_g0kfwxqShaDd5g6TXHUWF663d2uo0MPGZ-ExBG62mqnAnMPuWBPLL4",
-  },
-  {
-    name: "Liam",
-    desc: "Expert in classic cuts",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCUIuh_FWpYUjqUHtSRaEU4OgOn1F35dgna6PfSPnHV1XlFOI-p5UKAWYKbQXmEZ6WxKE6ndpxshuWNXnauNmFAePFLPCYX7Z7QkWzBY6gsKzLqKVDlYkYuZbDbKn0x2t4r3ukedN_DH0xibFcBijIqMcyzjgLlZiT48E-HeVKpYqcrwk_6obQeakCKkc0NdMDm6KwG0MfhCUPytKHNk5Pw84lAHt3WByLX3fU9I1Xh7oVpabQ6LMWN93ZbfcdXh3hwsjk5k0U5zPs",
-  },
-  {
-    name: "Noah",
-    desc: "Master of modern styles",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC2s67VgNiBH2RFFnWW6GkKkFPtC6sClv-RSsELtburB82T8Ro4WmspzEvR5OCZIPZ1j5GZcfuAGAxUraM_uPDvyWcfQtauTvAYXlUrv8DhUeimduu3QTkXDqJcAb9UgoudVYfe3JOq8opLFxuf4MXDehi2PjhkM6gL3A7cGcykf0kSQHIdL34-X66ilYICMFM5btcD42vl6BlFAg-QpeVDKRuWjhO0_8qp9d6Q9kCB6YYbBkuROIPK_Wamq9k6V2qWAIYCdGkW0l4",
-  },
-  {
-    name: "Oliver",
-    desc: "Beard trimming specialist",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDTSfabQDumqfEMs90U3TdgD4zTKcgg2pOKuTt4FpdfuUtsEY4TzzkNHndquAWShMzgWOb1xe5n2mbvqTDSfcp1RAbT7vmkpmVkPsqvNbromVdRoViBkjISAdjiw6lYnY4tkPqtQQqjoIEf_bJJdhbfa6rJmVYSHL7hZP7tJrvrx8-9IfmE1SEcmbpC2Ek4XGgCnQbfVT2wn8QsJ-NPc4Pwr8EF6soJes2B80Id1cXTM19OaULv53s-OFjciWXh-m1rnZA_qTDS9Mw",
-  },
-];
+export default function StylistSelector({
+  stylists = [],
+  loading = false,
+  onStylistSelect,
+  selectedStylist,
+}) {
+  const handleStylistClick = (stylist) => {
+    if (onStylistSelect) {
+      onStylistSelect(stylist);
+    }
+  };
+  // If no stylists are provided (like in BookingPage), show placeholder
+  const showPlaceholder = stylists.length === 0 && !loading;
 
-export default function StylistSelector() {
   return (
-    <section>
+    <section className="mt-6">
       <h3 className="text-lg font-bold text-[#0d141c] px-4 pb-2">
         Select a stylist
       </h3>
-      <div className="flex overflow-x-auto gap-8 p-4 scrollbar-hide">
-        {stylists.map((stylist, i) => (
-          <div
-            key={i}
-            className="flex flex-col gap-4 min-w-32 text-center cursor-pointer"
-          >
-            <AnimatedImage
-              src={stylist.image}
-              alt={stylist.name}
-              className="aspect-square w-full rounded-full object-cover"
-            />
-            <div>
-              <p className="text-base font-medium">{stylist.name}</p>
-              <p className="text-sm text-[#49739c]">{stylist.desc}</p>
+
+      {loading ? (
+        <div className="flex overflow-x-auto gap-8 p-4 scrollbar-hide">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col gap-4 min-w-32 text-center">
+              <div className="aspect-square w-full rounded-full bg-gray-300 animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-300 rounded animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : showPlaceholder ? (
+        <div className="p-4 text-center text-gray-500">
+          <p>No stylists available at this location.</p>
+          <p className="text-sm mt-1">Please select a barbershop first.</p>
+        </div>
+      ) : (
+        <div className="flex overflow-x-auto gap-8 p-4 scrollbar-hide">
+          {stylists.map((stylist) => {
+            const isSelected =
+              selectedStylist &&
+              (selectedStylist.id === stylist.id ||
+                selectedStylist._id === stylist._id);
+
+            return (
+              <div
+                key={stylist.id || stylist._id}
+                onClick={() => handleStylistClick(stylist)}
+                className={`flex flex-col gap-4 min-w-32 text-center cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? "transform scale-105 shadow-lg"
+                    : "hover:opacity-80 hover:transform hover:scale-102"
+                }`}
+              >
+                <div
+                  className={`aspect-square w-full rounded-full overflow-hidden transition-all duration-200 ${
+                    isSelected ? "ring-4 ring-blue-400 ring-opacity-50" : ""
+                  }`}
+                >
+                  <AnimatedImage
+                    src={
+                      stylist.profilePicture ||
+                      stylist.image ||
+                      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face"
+                    }
+                    alt={stylist.name}
+                    className="aspect-square w-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p
+                    className={`text-base font-medium transition-colors ${
+                      isSelected ? "text-blue-600" : "text-[#0d141c]"
+                    }`}
+                  >
+                    {stylist.name}
+                  </p>
+                  <p className="text-sm text-[#49739c]">
+                    {stylist.description || "Styling specialist"}
+                  </p>
+                  {stylist.rating && (
+                    <p className="text-xs text-yellow-600 mt-1">
+                      ⭐ {stylist.rating}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
