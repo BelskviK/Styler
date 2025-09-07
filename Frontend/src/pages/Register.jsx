@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "@/services/api";
+import AuthService from "@/services/AuthService";
 import { useAuth } from "@/context/useAuth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -16,7 +16,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post("/auth/register/customer", form);
+      const res = await AuthService.registerCustomer(form);
       if (res.data.success) {
         // ✅ Call login with email and password, not the response object
         await login(form.email, form.password);
