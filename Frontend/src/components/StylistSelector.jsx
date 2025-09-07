@@ -13,6 +13,7 @@ export default function StylistSelector({
       onStylistSelect(stylist);
     }
   };
+
   // If no stylists are provided (like in BookingPage), show placeholder
   const showPlaceholder = stylists.length === 0 && !loading;
 

@@ -4,21 +4,10 @@ import React, { useState } from "react";
 export default function DateTimePicker() {
   const [selectedDate, setSelectedDate] = useState(5); // Default selected date (5th)
 
-  const timeSlots = [
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-  ];
+  const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00"];
 
   return (
-    <>
+    <div className="flex flex-row">
       <div className="flex flex-wrap items-center justify-center gap-6 p-4">
         <div className="flex min-w-72 max-w-[336px] flex-1 flex-col gap-0.5">
           <div className="flex items-center p-1 justify-between">
@@ -99,22 +88,20 @@ export default function DateTimePicker() {
           </div>
         </div>
       </div>
-
-      <h2 className="text-[#0d141c] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-        Available Times
-      </h2>
-      <div className="flex gap-3 p-3 flex-wrap pr-4">
-        {timeSlots.map((time, i) => (
-          <div
-            key={i}
-            className="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#e7edf4] pl-4 pr-4"
-          >
-            <p className="text-[#0d141c] text-sm font-medium leading-normal">
-              {time}
-            </p>
-          </div>
-        ))}
+      <div>
+        <div className="flex gap-3 p-3 flex-wrap pr-4">
+          {timeSlots.map((time, i) => (
+            <div
+              key={i}
+              className="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#e7edf4] pl-4 pr-4"
+            >
+              <p className="text-[#0d141c] text-sm font-medium leading-normal">
+                {time}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

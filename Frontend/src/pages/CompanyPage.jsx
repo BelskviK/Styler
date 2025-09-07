@@ -15,7 +15,9 @@ export default function CompanyPage() {
   const [error, setError] = useState(null);
   const [stylistsLoading, setStylistsLoading] = useState(true);
   const [selectedStylist, setSelectedStylist] = useState(null);
-
+  const [services, setServices] = useState([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [selectedService, setSelectedService] = useState(null); // Add selected service state
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
@@ -50,7 +52,9 @@ export default function CompanyPage() {
       try {
         setStylistsLoading(true);
         const response = await UserService.getCompanyStylists(companyId);
-        setStylists(response.data || []);
+        const stylistsWithServices = response.data || [];
+        console.log("Fetched stylists:", stylistsWithServices);
+        setStylists(stylistsWithServices);
       } catch (err) {
         console.error("Error fetching stylists:", err);
         setStylists([]);
@@ -64,8 +68,55 @@ export default function CompanyPage() {
     }
   }, [companyName]);
 
-  const handleStylistSelect = (stylist) => {
+  const loadServices = async (stylistId) => {
+    try {
+      setServicesLoading(true);
+      setServices([]);
+
+      console.log("🔍 Loading services for stylist ID:", stylistId);
+
+      const stylistResponse = await UserService.getStylistWithServices(
+        stylistId
+      );
+      const stylistServices = stylistResponse.data.services || [];
+      console.log("📋 Services loaded:", stylistServices);
+
+      setServices(stylistServices);
+    } catch (err) {
+      console.error("❌ Failed to load services:", err);
+      // Set empty services instead of showing error
+      setServices([]);
+    } finally {
+      setServicesLoading(false);
+    }
+  };
+
+  const handleStylistSelect = async (stylist) => {
+    console.log("Selected stylist:", stylist);
     setSelectedStylist(stylist);
+    setSelectedService(null); // Reset selected service when changing stylist
+
+    // Check if services exist in the stylist object
+    if (
+      stylist?.services &&
+      Array.isArray(stylist.services) &&
+      stylist.services.length > 0
+    ) {
+      console.log("Services found in stylist data:", stylist.services);
+      setServices(stylist.services);
+    } else {
+      // If not, fetch services separately using the same pattern as AppointmentForm
+      console.log(
+        "Fetching services separately for stylist:",
+        stylist.id || stylist._id
+      );
+      await loadServices(stylist.id || stylist._id);
+    }
+  };
+
+  const handleServiceSelect = (service) => {
+    console.log("Selected service:", service);
+    setSelectedService(service);
   };
 
   if (loading) {
@@ -177,6 +228,7 @@ export default function CompanyPage() {
       </div>
     );
   }
+
   return (
     <div
       className="relative flex size-full min-h-screen flex-col bg-slate-50 group/design-root overflow-x-hidden"
@@ -209,8 +261,14 @@ export default function CompanyPage() {
               onStylistSelect={handleStylistSelect}
               selectedStylist={selectedStylist}
             />
+            <ServiceSelector
+              services={services}
+              selectedStylist={selectedStylist}
+              loading={servicesLoading}
+              onServiceSelect={handleServiceSelect}
+              selectedService={selectedService} // Pass selected service down
+            />
             <DateTimePicker />
-            <ServiceSelector />
 
             <div className="flex px-4 py-3 justify-center">
               <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#0d80f2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em]">
