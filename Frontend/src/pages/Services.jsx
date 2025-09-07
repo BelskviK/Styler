@@ -70,13 +70,13 @@ export default function Services() {
 
       if (form._id) {
         // Update existing service
+        console.log("asd_____________________");
         const response = await api.put(`/services/${form._id}`, {
           name: form.name,
           description: form.description,
           duration: form.duration,
           price: form.price,
         });
-
         const updatedServices = services.map((s) =>
           s._id === form._id ? response.data : s
         );

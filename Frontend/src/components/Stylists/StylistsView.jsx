@@ -203,7 +203,7 @@ function ErrorView({ message }) {
 
 function SearchInput({ value, onChange }) {
   return (
-    <div className="px-4 py-3">
+    <div className="px-4 py-3  ">
       <label className="flex flex-col min-w-40 h-12 w-full">
         <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
           <div className="text-[#60758a] flex border-none bg-[#f0f2f5] items-center justify-center pl-4 rounded-l-lg border-r-0">

@@ -169,7 +169,7 @@ export default function CompanyPage() {
                   className="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-slate-50 @[480px]:rounded-lg min-h-[218px]"
                   style={{
                     backgroundImage: `url(${
-                      company.image ||
+                      company.banner ||
                       "https://lh3.googleusercontent.com/aida-public/AB6AXuDl4kgoSaG5CThHM7mjDGYZStlmt0vQSEZS6aok_SdOfSg7rySrDNBizl3xKo8FXUskdyfrCCVumcLTsZEA71P1XWZDgnFJN_SOuo2YM9Gc4TyE0pxW4TFN_5JMMig4ScXovwQh-j1dXZQUp4xAS3AsDQza1wcRxI-igMNs-V2n-B8s8mWQS4HIFcktlneDnbskcc8cQmAsRBPHgZzP3ERGeIf-pFmqz-Pc6bfEYpA6ygtNW27UYgRfZSN2R3C9IzjJyrBWNuzTZzM"
                     })`,
                   }}

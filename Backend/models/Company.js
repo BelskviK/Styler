@@ -35,6 +35,10 @@ const companySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  banner: {
+    type: String,
+    default: "",
+  },
   location: String,
   isActive: {
     type: Boolean,

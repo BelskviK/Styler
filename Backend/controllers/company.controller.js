@@ -80,12 +80,6 @@ exports.getMyCompany = async (req, res, next) => {
 // @access  Private (superadmin)
 exports.createCompany = async (req, res, next) => {
   try {
-    if (req.user.role !== "superadmin") {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to create companies" });
-    }
-
     const { name, description } = req.body;
 
     // Check if company already exists
@@ -196,7 +190,7 @@ exports.getPublicBarbershops = async (req, res, next) => {
     const barbershops = await Company.find({
       type: "barbershop",
       isActive: true,
-    }).select("name reviews image location description");
+    }).select("name reviews image banner location description");
 
     res.status(200).json(barbershops);
   } catch (err) {

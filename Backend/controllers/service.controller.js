@@ -48,8 +48,8 @@ exports.getServices = async (req, res, next) => {
 // @access  Private (admin)
 exports.createService = async (req, res, next) => {
   const { name, description, duration, price } = req.body;
-
   try {
+    console.log(`superadmin :_____${req.user.role}`);
     if (req.user.role !== "superadmin") {
       return res
         .status(403)

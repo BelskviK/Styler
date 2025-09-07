@@ -11,7 +11,7 @@ router.get("/", auth, companyController.getCompanies);
 // @route   POST /api/companies
 // @desc    Create a new company (superadmin only)
 // @access  Private (superadmin)
-router.post("/", auth, companyController.createCompany);
+router.post("/", companyController.createCompany);
 
 // @route   GET /api/companies/:id
 // @desc    Get company by ID
