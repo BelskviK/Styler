@@ -1,24 +1,119 @@
 // controllers/user.controller.js
 const mongoose = require("mongoose");
 const User = require("../models/User");
-const Company = require("../models/Company");
 
-// @desc    Get all users (superadmin only)
-// @route   GET /api/users
-// @access  Private (superadmin)
+// @desc    Get current user profile
+// @route   GET /api/users/me
+// @access  Private
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        address: user.address || "",
+        profileImage: user.profileImage || "",
+        role: user.role,
+        company: user.company,
+      },
+    });
+  } catch (err) {
+    console.error("getCurrentUser error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Update user
+// @route   PUT /api/users/:id
+// @access  Private (admin or self)
+exports.updateUser = async (req, res, next) => {
+  // Destructure all fields including profileImage
+  const { name, email, phone, address, profileImage, role } = req.body;
+
+  try {
+    // Validate that the ID is provided and is a valid ObjectId
+    if (!req.params.id || req.params.id === "undefined") {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    let user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if current user is admin of the same company or superadmin or the user themselves
+    if (
+      req.user.role !== "superadmin" &&
+      (req.user.role !== "admin" ||
+        user.company.toString() !== req.user.company.toString()) &&
+      user._id.toString() !== req.user.id
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this user" });
+    }
+
+    // Update fields - allow empty strings to be saved
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    if (profileImage !== undefined) user.profileImage = profileImage;
+
+    // Only admin/superadmin can change role
+    if (
+      (req.user.role === "admin" || req.user.role === "superadmin") &&
+      role !== undefined
+    ) {
+      user.role = role;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        profileImage: user.profileImage,
+        role: user.role,
+        company: user.company,
+      },
+    });
+  } catch (err) {
+    console.error("Update user error:", err);
+
+    if (err.name === "CastError") {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // @desc    Get all stylists for the current user's company
 // @route   GET /api/users/stylists
 // @access  Private (admin/superadmin/styler)
-// Backend/controllers/user.controller.js
 exports.getStylists = async (req, res, next) => {
   try {
     let companyId = req.user.company;
-
-    // console.log("=== BACKEND GET STYLISTS ===");
-    // console.log("User role:", req.user.role);
-    // console.log("User company:", req.user.company);
-    // console.log("Query params:", req.query);
 
     // If superadmin and companyId query parameter is provided, use that
     if (req.user.role === "superadmin" && req.query.companyId) {
@@ -41,8 +136,6 @@ exports.getStylists = async (req, res, next) => {
     })
       .select("-password")
       .lean();
-
-    // console.log("Found stylists:", stylists.length);
 
     // Format response
     const formattedStylists = stylists.map((stylist) => ({
@@ -128,57 +221,6 @@ exports.addEmployee = async (req, res, next) => {
   }
 };
 
-// @desc    Update user
-// @route   PUT /api/users/:id
-// @access  Private (admin or self)
-exports.updateUser = async (req, res, next) => {
-  const { name, email, role } = req.body;
-
-  try {
-    let user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if current user is admin of the same company or superadmin
-    if (
-      req.user.role !== "superadmin" &&
-      (req.user.role !== "admin" ||
-        user.company.toString() !== req.user.company.toString()) &&
-      user._id.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to update this user" });
-    }
-
-    user.name = name || user.name;
-    user.email = email || user.email;
-
-    // Only admin/superadmin can change role
-    if (req.user.role === "admin" || req.user.role === "superadmin") {
-      user.role = role || user.role;
-    }
-
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        company: user.company,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 // @desc    Delete user
 // @route   DELETE /api/users/:id
 // @access  Private (admin or superadmin)
@@ -215,13 +257,9 @@ exports.deleteUser = async (req, res, next) => {
 // Backend/controllers/user.controller.js
 exports.getStylistWithServices = async (req, res) => {
   try {
-    // console.log("📞 getStylistWithServices called with ID:", req.params.id);
-
     const stylist = await User.findById(req.params.id)
       .populate("services", "name description duration price")
       .select("-password");
-
-    // console.log("👤 Found stylist:", stylist);
 
     if (!stylist) {
       return res.status(404).json({ message: "Stylist not found" });
@@ -246,7 +284,6 @@ exports.getStylistWithServices = async (req, res) => {
 exports.getCompanyStylists = async (req, res, next) => {
   try {
     const { companyId } = req.params;
-    // console.log("📞 getCompanyStylists called with companyId:", companyId);
 
     // Only superadmin can access other companies' stylists
     if (req.user.role !== "superadmin") {
@@ -266,8 +303,6 @@ exports.getCompanyStylists = async (req, res, next) => {
       .select("-password")
       .lean();
 
-    // console.log("✅ Found stylists:", stylists.length);
-
     // Format response to match the existing structure
     const formattedStylists = stylists.map((stylist) => ({
       id: stylist._id,
@@ -276,6 +311,7 @@ exports.getCompanyStylists = async (req, res, next) => {
       expertise: stylist.expertise || "General Styling",
       schedule: stylist.schedule || "Available",
       reviews: stylist.reviews || "No reviews yet",
+      profileImage: stylist.profileImage || "",
     }));
 
     res.status(200).json(formattedStylists);

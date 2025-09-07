@@ -1,4 +1,3 @@
-// Backend\middleware\auth.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
@@ -29,8 +28,7 @@ const auth = async (req, res, next) => {
         message: "Invalid token. User not found.",
       });
     }
-
-    next();
+    next(); // This is critical - make sure next() is called
   } catch (err) {
     console.error("Authentication error:", err);
 

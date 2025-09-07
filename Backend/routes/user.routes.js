@@ -11,10 +11,19 @@ const userController = require("../controllers/user.controller");
 // @access  Private (superadmin)
 router.get("/", auth, checkCompany, userController.getStylists);
 
+// @route   GET /api/users/me
+// @desc    Get current user profile
+// @access  Private
+router.get("/me", auth, userController.getCurrentUser);
+
 // @route   GET /api/users/company
 // @desc    Get current company users (admin only)
 // @access  Private (admin)
 router.get("/company", auth, userController.getCompanyUsers);
+// @route   PUT /api/users/:id
+// @desc    Update user
+// @access  Private (admin or self)
+router.put("/:id", auth, userController.updateUser);
 
 // @route   GET /api/users/company/:companyId/stylists
 // @desc    Get stylists for a specific company (superadmin only)
@@ -29,11 +38,6 @@ router.get(
 // @desc    Add employee to company (admin only)
 // @access  Private (admin)
 router.post("/employee", auth, userController.addEmployee);
-
-// @route   PUT /api/users/:id
-// @desc    Update user
-// @access  Private (admin or self)
-router.put("/:id", auth, userController.updateUser);
 
 // @route   GET /api/users/stylist/:id
 // @desc    Get a stylist with services populated
