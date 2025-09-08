@@ -193,9 +193,6 @@ export default function Sidebar() {
       <div className="flex h-full min-h-[700px] flex-col justify-between bg-white p-4 shadow-md">
         <div className="flex flex-col gap-4">
           {/* Company Name */}
-          <h1 className="text-[#111418] text-base font-medium leading-normal">
-            {user?.companyName || "SalonApp"}
-          </h1>
 
           {/* Nav Items */}
           <div className="flex flex-col gap-2">

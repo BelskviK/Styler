@@ -1,6 +1,51 @@
-/* Frontend\src\index.css */
-@import "tailwindcss"; /* v4 shorthand */
-/* Add to your global CSS file */
+/* Frontend/src/index.css */
+
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&family=Noto+Sans+Georgian:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
+/* Import TailwindCSS */
+@import "tailwindcss";
+
+/* Apply Roboto as default for English */
+body {
+  font-family: "Roboto", "Noto Sans Georgian", "Noto Sans Display", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+/* Language-specific font classes */
+.font-english {
+  font-family: "Roboto", sans-serif;
+}
+
+.font-georgian {
+  font-family: "Noto Sans Georgian", sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "wdth" 100;
+}
+
+.font-russian {
+  font-family: "Noto Sans Display", sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "wdth" 100;
+}
+
+/* Language detection and auto-apply */
+[lang="en"],
+[lang="en-US"],
+[lang="en-GB"] {
+  font-family: "Roboto", sans-serif;
+}
+
+[lang="ka"] {
+  font-family: "Noto Sans Georgian", sans-serif;
+}
+
+[lang="ru"] {
+  font-family: "Noto Sans Display", sans-serif;
+}
+
+/* Your existing custom styles */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -9,42 +54,11 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-/* Add to your global CSS */
+
 body {
   overflow-x: hidden;
 }
 
 .sidebar-container {
   overflow-y: auto;
-}
-/* In your global CSS file */
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #111418;
-  --text-secondary: #60758a;
-  --border-color: #dbe0e6;
-  --button-primary: #0d80f2;
-  --button-secondary: #f0f2f5;
-}
-
-.dark-mode {
-  --bg-primary: #1a1d21;
-  --bg-secondary: #23272e;
-  --text-primary: #e1e6ed;
-  --text-secondary: #8f9ba8;
-  --border-color: #39414d;
-  --button-primary: #3b99fc;
-  --button-secondary: #2d3748;
-}
-
-body {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  transition: background-color 0.3s, color 0.3s;
-}
-
-body.dark-mode {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
 }

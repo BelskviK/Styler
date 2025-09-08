@@ -125,26 +125,6 @@ export default function PopularServices() {
               </React.Fragment>
             ))}
           </div>
-
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-            <p className="text-sm font-medium text-gray-700 mb-2">Summary</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <span>Total Appointments:</span>
-              <span className="font-medium">
-                {services.reduce(
-                  (sum, service) => sum + (service.appointments || 0),
-                  0
-                )}
-              </span>
-              <span>Estimated Revenue:</span>
-              <span className="font-medium">
-                $
-                {services
-                  .reduce((sum, service) => sum + (service.revenue || 0), 0)
-                  .toLocaleString()}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </>

@@ -28,7 +28,7 @@ const Header = () => {
             onClick={handleLogoClick}
             className="text-xl font-semibold text-gray-900 cursor-pointer"
           >
-            Styler App
+            {user?.companyName || "SalonApp"}
           </h1>
         </div>
 
