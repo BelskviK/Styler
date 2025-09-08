@@ -2,12 +2,30 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import AppointmentService from "@/services/AppointmentService";
+import { useSortableData } from "@/hooks/useSortableData";
 
 export default function UpcomingAppointments() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Format appointments for sorting
+  const formattedAppointments = appointments.map((appt) => ({
+    ...appt,
+    date: new Date(appt.appointmentTime).getTime(),
+    time: new Date(appt.appointmentTime).getTime(),
+    customerName: appt.customerName.toLowerCase(),
+    stylerName: appt.stylerName.toLowerCase(),
+    serviceName: appt.serviceName.toLowerCase(),
+    status: appt.status.toLowerCase(),
+  }));
+
+  const {
+    items: sortedAppointments,
+    requestSort,
+    sortConfig,
+  } = useSortableData(formattedAppointments);
 
   useEffect(() => {
     fetchUpcomingAppointments();
@@ -27,6 +45,11 @@ export default function UpcomingAppointments() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getClassNamesFor = (name) => {
+    if (!sortConfig) return;
+    return sortConfig.key === name ? sortConfig.direction : undefined;
   };
 
   if (loading) {
@@ -69,30 +92,96 @@ export default function UpcomingAppointments() {
           <table className="flex-1">
             <thead>
               <tr className="bg-white">
-                <th className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-120 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Date
+                <th
+                  className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-120 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("date")}
+                >
+                  <div className="flex items-center">
+                    Date
+                    {getClassNamesFor("date") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("date") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
-                <th className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-240 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Time
+                <th
+                  className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-240 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("time")}
+                >
+                  <div className="flex items-center">
+                    Time
+                    {getClassNamesFor("time") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("time") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
-                <th className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-360 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Client
+                <th
+                  className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-360 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("customerName")}
+                >
+                  <div className="flex items-center">
+                    Client
+                    {getClassNamesFor("customerName") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("customerName") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
                 {user.role === "superadmin" || user.role === "admin" ? (
-                  <th className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-480 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                    Styler
+                  <th
+                    className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-480 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                    onClick={() => requestSort("stylerName")}
+                  >
+                    <div className="flex items-center">
+                      Styler
+                      {getClassNamesFor("stylerName") === "ascending" && (
+                        <span className="ml-1">↑</span>
+                      )}
+                      {getClassNamesFor("stylerName") === "descending" && (
+                        <span className="ml-1">↓</span>
+                      )}
+                    </div>
                   </th>
                 ) : null}
-                <th className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-600 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Service
+                <th
+                  className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-600 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("serviceName")}
+                >
+                  <div className="flex items-center">
+                    Service
+                    {getClassNamesFor("serviceName") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("serviceName") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
-                <th className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-720 px-4 py-3 text-left text-[#111418] w-60 text-sm font-medium leading-normal">
-                  Status
+                <th
+                  className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-720 px-4 py-3 text-left text-[#111418] w-60 text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("status")}
+                >
+                  <div className="flex items-center">
+                    Status
+                    {getClassNamesFor("status") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("status") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {appointments.length === 0 ? (
+              {sortedAppointments.length === 0 ? (
                 <tr>
                   <td
                     colSpan={
@@ -106,7 +195,7 @@ export default function UpcomingAppointments() {
                   </td>
                 </tr>
               ) : (
-                appointments.map((appointment) => (
+                sortedAppointments.map((appointment) => (
                   <tr
                     key={appointment.id}
                     className="border-t border-t-[#dbe0e6]"
@@ -137,9 +226,9 @@ export default function UpcomingAppointments() {
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           appointment.status === "confirmed"
-                            ? "bg-green-100 text-green-800"
-                            : appointment.status === "completed"
                             ? "bg-blue-100 text-blue-800"
+                            : appointment.status === "completed"
+                            ? "bg-green-100 text-green-800"
                             : appointment.status === "cancelled"
                             ? "bg-red-100 text-red-800"
                             : appointment.status === "no-show"

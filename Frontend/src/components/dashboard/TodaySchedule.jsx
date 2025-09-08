@@ -2,12 +2,29 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import AppointmentService from "@/services/AppointmentService";
+import { useSortableData } from "@/hooks/useSortableData";
 
 export default function TodaySchedule() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Format appointments for sorting
+  const formattedAppointments = appointments.map((appt) => ({
+    ...appt,
+    time: new Date(appt.appointmentTime).getTime(),
+    customerName: appt.customerName.toLowerCase(),
+    stylerName: appt.stylerName.toLowerCase(),
+    serviceName: appt.serviceName.toLowerCase(),
+    status: appt.status.toLowerCase(),
+  }));
+
+  const {
+    items: sortedAppointments,
+    requestSort,
+    sortConfig,
+  } = useSortableData(formattedAppointments);
 
   useEffect(() => {
     fetchTodayAppointments();
@@ -36,6 +53,11 @@ export default function TodaySchedule() {
     } catch (err) {
       console.error("Error updating status:", err);
     }
+  };
+
+  const getClassNamesFor = (name) => {
+    if (!sortConfig) return;
+    return sortConfig.key === name ? sortConfig.direction : undefined;
   };
 
   if (loading) {
@@ -78,27 +100,82 @@ export default function TodaySchedule() {
           <table className="flex-1">
             <thead>
               <tr className="bg-white">
-                <th className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-120 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Time
+                <th
+                  className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-120 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("time")}
+                >
+                  <div className="flex items-center">
+                    Time
+                    {getClassNamesFor("time") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("time") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
-                <th className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-240 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Client
+                <th
+                  className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-240 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("customerName")}
+                >
+                  <div className="flex items-center">
+                    Client
+                    {getClassNamesFor("customerName") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("customerName") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
                 {user.role === "superadmin" || user.role === "admin" ? (
-                  <th className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-360 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                    Styler
+                  <th
+                    className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-360 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                    onClick={() => requestSort("stylerName")}
+                  >
+                    <div className="flex items-center">
+                      Styler
+                      {getClassNamesFor("stylerName") === "ascending" && (
+                        <span className="ml-1">↑</span>
+                      )}
+                      {getClassNamesFor("stylerName") === "descending" && (
+                        <span className="ml-1">↓</span>
+                      )}
+                    </div>
                   </th>
                 ) : null}
-                <th className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-480 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal">
-                  Service
+                <th
+                  className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-480 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("serviceName")}
+                >
+                  <div className="flex items-center">
+                    Service
+                    {getClassNamesFor("serviceName") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("serviceName") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
-                <th className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-600 px-4 py-3 text-left text-[#111418] w-60 text-sm font-medium leading-normal">
-                  Status
+                <th
+                  className="table-0253e801-f02c-4984-aa90-8cd6d9edae12-column-600 px-4 py-3 text-left text-[#111418] w-60 text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
+                  onClick={() => requestSort("status")}
+                >
+                  <div className="flex items-center">
+                    Status
+                    {getClassNamesFor("status") === "ascending" && (
+                      <span className="ml-1">↑</span>
+                    )}
+                    {getClassNamesFor("status") === "descending" && (
+                      <span className="ml-1">↓</span>
+                    )}
+                  </div>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {appointments.length === 0 ? (
+              {sortedAppointments.length === 0 ? (
                 <tr>
                   <td
                     colSpan={
@@ -112,7 +189,7 @@ export default function TodaySchedule() {
                   </td>
                 </tr>
               ) : (
-                appointments.map((appointment) => (
+                sortedAppointments.map((appointment) => (
                   <tr
                     key={appointment.id}
                     className="border-t border-t-[#dbe0e6]"

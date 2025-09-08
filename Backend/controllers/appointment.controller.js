@@ -68,6 +68,7 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// Backend\controllers\appointment.controller.js
 
 // Get today's appointments
 exports.getTodayAppointments = async (req, res) => {
@@ -89,15 +90,30 @@ exports.getTodayAppointments = async (req, res) => {
     if (role === "styler") {
       query.stylist = userId;
     } else if (role === "customer") {
-      query.customer = userId;
+      return res.status(503).json({ message: "Service Unavailable" });
     } else if (role === "admin") {
       // For admin, get appointments for their company
       const adminUser = await User.findById(userId);
       if (adminUser && adminUser.company) {
         query.company = adminUser.company;
       }
+    } else if (role === "superadmin") {
+      const adminUser = await User.findById(userId);
+      if (adminUser && adminUser.company) {
+        query.company = adminUser.company;
+      }
+    } else {
+      // Default case for other roles or no role specified
+      return res.status(403).json({ message: "Not authorized" });
     }
-    // superadmin sees all appointments without additional filtering
+
+    // For non-superadmin users, ensure they can only see their company's appointments
+    if (role !== "superadmin" && role !== "customer") {
+      const user = await User.findById(userId);
+      if (user && user.company) {
+        query.company = user.company;
+      }
+    }
 
     const appointments = await Appointment.find(query)
       .populate("customer", "name email phone")
@@ -117,6 +133,8 @@ exports.getTodayAppointments = async (req, res) => {
       date: appt.date,
       startTime: appt.startTime,
       endTime: appt.endTime,
+      companyId: appt.company?._id || null,
+      companyName: appt.company?.name || "Unknown Company",
     }));
 
     res.json(formattedAppointments);
@@ -150,8 +168,23 @@ exports.getUpcomingAppointments = async (req, res) => {
       if (adminUser && adminUser.company) {
         query.company = adminUser.company;
       }
+    } else if (role === "superadmin") {
+      const adminUser = await User.findById(userId);
+      if (adminUser && adminUser.company) {
+        query.company = adminUser.company;
+      }
+    } else {
+      // Default case for other roles or no role specified
+      return res.status(403).json({ message: "Not authorized" });
     }
-    // superadmin sees all appointments without additional filtering
+
+    // For non-superadmin users, ensure they can only see their company's appointments
+    if (role !== "superadmin" && role !== "customer") {
+      const user = await User.findById(userId);
+      if (user && user.company) {
+        query.company = user.company;
+      }
+    }
 
     const appointments = await Appointment.find(query)
       .populate("customer", "name email phone")
@@ -171,6 +204,8 @@ exports.getUpcomingAppointments = async (req, res) => {
       date: appt.date,
       startTime: appt.startTime,
       endTime: appt.endTime,
+      companyId: appt.company?._id || null,
+      companyName: appt.company?.name || "Unknown Company",
     }));
 
     res.json(formattedAppointments);
