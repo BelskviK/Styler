@@ -2,11 +2,8 @@
 import api from "./api";
 
 class UserService {
-  static async getStylists(companyId = null) {
-    if (companyId) {
-      return api.get(`/users/company/${companyId}/stylists`);
-    }
-    return api.get("/users/stylists");
+  static async getStylists() {
+    return api.get("/users");
   }
 
   static async getCurrentUser() {
