@@ -551,3 +551,204 @@ exports.getEmployeePerformance = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+// Backend/controllers/analytics.controller.js
+exports.getPopularServices = async (req, res) => {
+  try {
+    console.log("getPopularServices called by user:", req.user._id);
+    console.log("User company:", req.user.company);
+
+    const { timeframe = "monthly", limit = 5, startDate, endDate } = req.query;
+    const userCompany = req.user.company;
+
+    if (!userCompany) {
+      console.log("No company found for user");
+      return res.status(403).json({
+        success: false,
+        message: "Company access not authorized",
+      });
+    }
+
+    let query = {
+      company: new mongoose.Types.ObjectId(userCompany),
+      status: "completed",
+    };
+
+    console.log("Base query:", query);
+
+    // Date range filtering - simplify for debugging
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate).toISOString().split("T")[0],
+        $lte: new Date(endDate).toISOString().split("T")[0],
+      };
+      console.log("With date range:", query.date);
+    } else {
+      // Remove date filtering temporarily for debugging
+      console.log("No date range provided, skipping date filter");
+    }
+
+    // Debug: Check if there are any appointments at all
+    const totalAppointments = await Appointment.countDocuments(query);
+    console.log("Total appointments matching query:", totalAppointments);
+
+    const popularServicesPipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: "services",
+          localField: "service",
+          foreignField: "_id",
+          as: "serviceData",
+        },
+      },
+      { $unwind: "$serviceData" },
+      {
+        $group: {
+          _id: "$service",
+          name: { $first: "$serviceData.name" },
+          appointmentCount: { $sum: 1 },
+          totalRevenue: { $sum: "$serviceData.price" },
+          avgRating: { $avg: "$rating" },
+        },
+      },
+      { $sort: { appointmentCount: -1 } },
+      { $limit: parseInt(limit) },
+      {
+        $project: {
+          _id: 0,
+          serviceId: "$_id",
+          name: 1,
+          appointments: "$appointmentCount",
+          revenue: "$totalRevenue",
+          avgRating: { $ifNull: ["$avgRating", 0] },
+        },
+      },
+    ];
+
+    const popularServices = await Appointment.aggregate(
+      popularServicesPipeline
+    );
+    console.log("Aggregation result:", popularServices);
+
+    // Always return the expected format, even if empty
+    res.json({
+      success: true,
+      data: popularServices,
+      total: popularServices.length,
+    });
+  } catch (error) {
+    console.error("Error fetching popular services:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+// @desc    Get service performance analytics
+// @route   GET /api/analytics/services/:serviceId
+// @access  Private (Admin/SuperAdmin only)
+exports.getServicePerformance = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    const { timeframe = "monthly", startDate, endDate } = req.query;
+    const userCompany = req.user.company;
+
+    if (!userCompany) {
+      return res.status(403).json({ message: "Company access not authorized" });
+    }
+
+    let query = {
+      service: new mongoose.Types.ObjectId(serviceId),
+      company: new mongoose.Types.ObjectId(userCompany),
+      status: "completed",
+    };
+
+    // Date range filtering
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate).toISOString().split("T")[0],
+        $lte: new Date(endDate).toISOString().split("T")[0],
+      };
+    }
+
+    let groupByFormat;
+    switch (timeframe) {
+      case "daily":
+        groupByFormat = "%Y-%m-%d";
+        break;
+      case "weekly":
+        groupByFormat = "%Y-%U";
+        break;
+      case "monthly":
+        groupByFormat = "%Y-%m";
+        break;
+      case "yearly":
+        groupByFormat = "%Y";
+        break;
+      default:
+        groupByFormat = "%Y-%m";
+    }
+
+    const servicePerformancePipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: "services",
+          localField: "service",
+          foreignField: "_id",
+          as: "serviceData",
+        },
+      },
+      { $unwind: "$serviceData" },
+      {
+        $group: {
+          _id: {
+            period: {
+              $dateToString: {
+                format: groupByFormat,
+                date: { $toDate: { $concat: ["$date", "T00:00:00"] } },
+              },
+            },
+          },
+          appointmentCount: { $sum: 1 },
+          totalRevenue: { $sum: "$serviceData.price" },
+          avgRating: { $avg: "$rating" },
+        },
+      },
+      { $sort: { "_id.period": 1 } },
+      {
+        $project: {
+          period: "$_id.period",
+          appointmentCount: 1,
+          totalRevenue: 1,
+          avgRating: { $ifNull: ["$avgRating", 0] },
+          _id: 0,
+        },
+      },
+    ];
+
+    const servicePerformance = await Appointment.aggregate(
+      servicePerformancePipeline
+    );
+
+    // Get service details
+    const service = await Service.findById(serviceId);
+
+    res.json({
+      service: {
+        _id: service._id,
+        name: service.name,
+        price: service.price,
+        duration: service.duration,
+        category: service.category,
+      },
+      performance: servicePerformance,
+      timeframe,
+      filters: { startDate, endDate },
+    });
+  } catch (error) {
+    console.error("Error fetching service performance:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

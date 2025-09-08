@@ -19,4 +19,20 @@ router.get("/customers", auth, analyticsController.getCustomerAnalytics);
 // Employee performance analytics
 router.get("/employees", auth, analyticsController.getEmployeePerformance);
 
+// Popular services analytics - only for admins and superadmins
+router.get(
+  "/services/popular",
+  auth,
+  auth.authorize("superadmin", "admin"),
+  analyticsController.getPopularServices
+);
+
+// Service performance analytics - only for admins and superadmins
+router.get(
+  "/services/:serviceId",
+  auth,
+  auth.authorize("superadmin", "admin"),
+  analyticsController.getServicePerformance
+);
+
 module.exports = router;
