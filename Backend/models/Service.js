@@ -14,6 +14,10 @@ const serviceSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  imageUrl: {
+    type: String,
+    default: "",
+  },
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",

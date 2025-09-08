@@ -12,6 +12,7 @@ const ServiceCard = ({ service, user, onEdit, onDelete }) => {
       <td className="px-4 py-4 text-sm text-[#60758a]">
         ${service.price.toFixed(2)}
       </td>
+      <td className="px-4 py-4 text-sm text-[#60758a]">${service.imageUrl}</td>
       {user?.role === "superadmin" && (
         <td className="px-4 py-4 text-sm text-[#60758a] space-x-2">
           <button

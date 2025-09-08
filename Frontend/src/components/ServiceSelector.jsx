@@ -110,7 +110,7 @@ export default function ServiceSelector({
                     className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex-1"
                     style={{
                       backgroundImage: `url(${
-                        service.image || defaultServiceImage
+                        service.imageUrl || defaultServiceImage
                       })`,
                     }}
                   ></div>

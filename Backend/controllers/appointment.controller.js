@@ -34,7 +34,7 @@ exports.getAppointments = async (req, res, next) => {
     const appointments = await Appointment.find(query)
       .populate("customer", "name email phone")
       .populate("stylist", "name email")
-      .populate("service", "name price duration")
+      .populate("service", "name price duration imageUrl")
       .populate("company", "name");
 
     res.status(200).json(appointments);
@@ -61,7 +61,7 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
     const appointments = await Appointment.find({ company: companyId })
       .populate("customer", "name email phone")
       .populate("stylist", "name email")
-      .populate("service", "name price duration")
+      .populate("service", "name price duration imageUrl")
       .populate("company", "name");
 
     res.status(200).json(appointments);
@@ -231,7 +231,7 @@ exports.createAppointment = async (req, res, next) => {
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate("customer", "name email phone")
       .populate("stylist", "name email")
-      .populate("service", "name price duration")
+      .populate("service", "name price duration imageUrl")
       .populate("company", "name");
 
     res.status(201).json({
@@ -276,7 +276,7 @@ exports.getAppointments = async (req, res, next) => {
     const appointments = await Appointment.find(query)
       .populate("customer", "name email phone")
       .populate("stylist", "name email")
-      .populate("service", "name price duration")
+      .populate("service", "name price duration imageUrl")
       .populate("company", "name");
 
     res.status(200).json(appointments);
@@ -347,7 +347,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       appointment: await Appointment.findById(appointment._id)
         .populate("customer", "name email")
         .populate("stylist", "name email")
-        .populate("service", "name price duration"),
+        .populate("service", "name price duration imageUrl"),
     });
   } catch (err) {
     console.error(err);
@@ -382,7 +382,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       appointment: await Appointment.findById(appointment._id)
         .populate("customer", "name email")
         .populate("stylist", "name email")
-        .populate("service", "name price duration"),
+        .populate("service", "name price duration imageUrl"),
     });
   } catch (err) {
     console.error(err);

@@ -19,6 +19,7 @@ export default function Services() {
     description: "",
     duration: 30,
     price: 0,
+    imageUrl: "",
     _id: null,
   });
 
@@ -76,6 +77,7 @@ export default function Services() {
           description: form.description,
           duration: form.duration,
           price: form.price,
+          imageUrl: form.imageUrl,
         });
         const updatedServices = services.map((s) =>
           s._id === form._id ? response.data : s
@@ -112,6 +114,7 @@ export default function Services() {
       description: service.description,
       duration: service.duration,
       price: service.price,
+      imageUrl: service.imageUrl || "",
       _id: service._id,
     });
     setIsModalOpen(true);
@@ -146,6 +149,7 @@ export default function Services() {
       description: "",
       duration: 30,
       price: 0,
+      imageUrl: "",
       _id: null,
     });
   };
@@ -214,6 +218,9 @@ export default function Services() {
               <thead className="bg-white">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-[#111418]">
+                    Image
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#111418]">
                     Service
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-[#111418]">
@@ -236,6 +243,23 @@ export default function Services() {
                 {filteredServices.length > 0 ? (
                   filteredServices.map((service) => (
                     <tr key={service._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 text-sm text-[#60758a]">
+                        {service.imageUrl ? (
+                          <img
+                            src={service.imageUrl}
+                            alt={service.name}
+                            className="h-12 w-12 object-cover rounded-md"
+                            onError={(e) => (e.target.style.display = "none")}
+                          />
+                        ) : (
+                          <img
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4JrxqjHUJttfVSVceaQjQ_n2dLygvmGjxeA&s"
+                            alt={service.name}
+                            className="h-12 w-12 object-cover rounded-md"
+                            onError={(e) => (e.target.style.display = "none")}
+                          />
+                        )}
+                      </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-[#111418]">
                         {service.name}
                       </td>
@@ -308,7 +332,33 @@ export default function Services() {
               required
             />
           </div>
-
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Image URL
+            </label>
+            <div className="flex items-center gap-3">
+              {form.imageUrl && (
+                <div className="mt-2">
+                  <img
+                    src={form.imageUrl}
+                    alt="Service preview"
+                    className="h-20 w-20 object-cover rounded-md"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}{" "}
+              <input
+                type="url"
+                name="imageUrl"
+                value={form.imageUrl}
+                onChange={handleChange}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Description

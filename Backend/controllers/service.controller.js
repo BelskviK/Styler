@@ -27,11 +27,9 @@ exports.getServices = async (req, res, next) => {
       };
     } else if (req.user.role === "customer") {
       if (!req.user.company) {
-        return res
-          .status(400)
-          .json({
-            message: "Customer must belong to a company to view services",
-          });
+        return res.status(400).json({
+          message: "Customer must belong to a company to view services",
+        });
       }
       query.company = req.user.company;
     }
@@ -43,12 +41,9 @@ exports.getServices = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-// @desc    Create a service (admin only)
-// @route   POST /api/services
-// @access  Private (admin)
+// In createService function
 exports.createService = async (req, res, next) => {
-  const { name, description, duration, price } = req.body;
+  const { name, description, duration, price, imageUrl } = req.body;
   try {
     console.log(`superadmin :_____${req.user.role}`);
     if (req.user.role !== "superadmin") {
@@ -62,6 +57,7 @@ exports.createService = async (req, res, next) => {
       description,
       duration,
       price,
+      imageUrl: imageUrl || "",
       company: req.user.company,
     });
 
@@ -74,11 +70,9 @@ exports.createService = async (req, res, next) => {
   }
 };
 
-// @desc    Update a service (admin only)
-// @route   PUT /api/services/:id
-// @access  Private (admin)
+// In updateService function
 exports.updateService = async (req, res, next) => {
-  const { name, description, duration, price } = req.body;
+  const { name, description, duration, price, imageUrl } = req.body;
 
   try {
     if (req.user.role !== "superadmin") {
@@ -104,6 +98,7 @@ exports.updateService = async (req, res, next) => {
     service.description = description || service.description;
     service.duration = duration || service.duration;
     service.price = price || service.price;
+    service.imageUrl = imageUrl || service.imageUrl;
 
     await service.save();
 
@@ -214,7 +209,7 @@ exports.assignServicesToStylist = async (req, res, next) => {
 
     // Return populated response
     const result = await User.findById(stylist._id)
-      .populate("services", "name description duration price")
+      .populate("services", "name description duration price ")
       .select("-password");
 
     res.status(200).json({

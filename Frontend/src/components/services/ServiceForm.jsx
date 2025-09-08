@@ -17,11 +17,13 @@ export default function Services() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     description: "",
     duration: 30,
     price: 0,
+    imageUrl: "",
     _id: null,
   });
 
@@ -82,6 +84,7 @@ export default function Services() {
           description: form.description,
           duration: form.duration,
           price: form.price,
+          imageUrl: form.imageUrl,
         });
         const updatedServices = services.map((s) =>
           s._id === form._id ? response.data : s
@@ -95,6 +98,7 @@ export default function Services() {
           description: form.description,
           duration: form.duration,
           price: form.price,
+          imageUrl: form.imageUrl,
         });
 
         const updatedServices = [...services, response.data];
@@ -118,6 +122,7 @@ export default function Services() {
       description: service.description,
       duration: service.duration,
       price: service.price,
+      imageUrl: service.imageUrl,
       _id: service._id,
     });
     setIsModalOpen(true);
@@ -152,6 +157,7 @@ export default function Services() {
       description: "",
       duration: 30,
       price: 0,
+      imageUrl: "",
       _id: null,
     });
   };
@@ -211,6 +217,9 @@ export default function Services() {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-[#111418]">
                     Price ($)
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#111418]">
+                    Image
                   </th>
                   {user?.role === "superadmin" && (
                     <th className="px-4 py-3 text-left text-sm font-medium text-[#60758a]">

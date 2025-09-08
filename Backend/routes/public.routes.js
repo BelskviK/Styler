@@ -17,7 +17,7 @@ router.get("/company/:companyId/stylists", async (req, res) => {
       role: "styler",
     })
       .select("name profileImage expertise schedule description rating")
-      .populate("services", "name description duration price image");
+      .populate("services", "name description duration price imageUrl");
 
     res.status(200).json(stylists);
   } catch (err) {
@@ -159,7 +159,7 @@ router.post("/appointments", async (req, res) => {
       success: true,
       appointment: await Appointment.findById(appointment._id)
         .populate("stylist", "name email")
-        .populate("service", "name price duration")
+        .populate("service", "name price duration imageUrl")
         .populate("company", "name"),
     });
   } catch (err) {
