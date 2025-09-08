@@ -68,7 +68,39 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-// Backend\controllers\appointment.controller.js
+// @desc    Get appointments by styler within a company
+// @route   GET /api/appointments/company/:companyId/styler/:stylerId
+// @access  Private
+exports.getAppointmentsByStyler = async (req, res, next) => {
+  try {
+    // Verify user has access to this company's data
+    if (req.user.role !== "styler") {
+      return res.status(403).json({
+        message: "Access denied. Only stylers can view their appointments",
+      });
+    }
+    const stylerId = req.user._id;
+    const companyId = req.user.company;
+
+    console.log(
+      `Fetching appointments for styler: ${stylerId} in company: ${companyId}`
+    );
+    const appointments = await Appointment.find({
+      company: companyId,
+      stylist: stylerId,
+    })
+      .populate("customer", "name email phone")
+      .populate("stylist", "name email")
+      .populate("service", "name price duration imageUrl")
+      .populate("company", "name")
+      .sort({ date: -1, startTime: -1 });
+
+    res.status(200).json(appointments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // Get today's appointments
 exports.getTodayAppointments = async (req, res) => {
@@ -90,7 +122,7 @@ exports.getTodayAppointments = async (req, res) => {
     if (role === "styler") {
       query.stylist = userId;
     } else if (role === "customer") {
-      return res.status(503).json({ message: "Service Unavailable" });
+      return res.status(503).json({ message: "Not authorized" });
     } else if (role === "admin") {
       // For admin, get appointments for their company
       const adminUser = await User.findById(userId);

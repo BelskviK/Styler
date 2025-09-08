@@ -10,6 +10,12 @@ router.get(
   auth,
   appointmentController.getAppointmentsByCompany
 );
+router.get(
+  "/styler/:companyId",
+  auth,
+  appointmentController.getAppointmentsByStyler
+);
+
 router.get("/today", auth, appointmentController.getTodayAppointments); // Add this route
 router.get("/upcoming", auth, appointmentController.getUpcomingAppointments); // Add this route
 router.post("/", auth, appointmentController.createAppointment);

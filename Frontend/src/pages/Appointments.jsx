@@ -15,17 +15,31 @@ export default function Appointments() {
   const [loading, setLoading] = useState(true);
 
   // Memoized load function
+
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      let response = await AppointmentService.getByCompany(user.company);
+      let response;
+
+      // Check user role to determine which endpoint to call
+      if (user.role === "superadmin" || user.role === "admin") {
+        // Admins and superadmins get all appointments for their company
+        response = await AppointmentService.getByCompany(user.company);
+      } else if (user.role === "styler") {
+        // Stylers only get their own appointments
+        response = await AppointmentService.getByStyler(user.id);
+      } else {
+        // Customers only get their own appointments
+        response = await AppointmentService.getByCustomer(user.id);
+      }
       setAppointments(response.data);
-    } catch {
+    } catch (error) {
+      console.error("Error loading appointments:", error);
       toast.error("Failed to load appointments");
     } finally {
       setLoading(false);
     }
-  }, [user.company]);
+  }, [user.role, user.company, user.id]);
 
   useEffect(() => {
     loadAppointments();

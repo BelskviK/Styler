@@ -10,8 +10,8 @@ class AppointmentService {
     return api.get(`/appointments/company/${companyId}`);
   }
 
-  static async getByStyler(stylerId) {
-    return api.get(`/appointments/styler/${stylerId}`);
+  static async getByStyler(companyId) {
+    return api.get(`/appointments/styler/${companyId}`);
   }
 
   static async getByCustomer(customerId) {
