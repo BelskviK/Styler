@@ -362,24 +362,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
   const { status } = req.body;
 
   try {
-    if (req.user.role !== "admin" && req.user.role !== "styler") {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to update appointment status" });
-    }
-
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) {
       return res.status(404).json({ message: "Appointment not found" });
     }
 
     // Check if admin belongs to the same company or if stylist is the one assigned
-    if (
-      (req.user.role === "admin" &&
-        appointment.company.toString() !== req.user.company.toString()) ||
-      (req.user.role === "styler" &&
-        appointment.stylist.toString() !== req.user._id.toString())
-    ) {
+    if (appointment.company.toString() !== req.user.company.toString()) {
       return res
         .status(403)
         .json({ message: "Not authorized to update this appointment" });
