@@ -12,6 +12,8 @@ import Services from "@/pages/Services";
 import Settings from "@/pages/Settings";
 import CompanyPage from "@/pages/CompanyPage";
 import Register from "@/pages/Register";
+import ForBusiness from "@/pages/ForBusiness";
+import Pricing from "@/pages/Pricing";
 
 import { NotificationProvider } from "@/context/NotificationProvider";
 
@@ -27,6 +29,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register/customer" element={<Register />} />
           <Route path="/barbershops" element={<Barbershops />} />
+          <Route path="/forbusiness" element={<ForBusiness />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/barbershop/:companyName" element={<CompanyPage />} />
 
           {/* All other routes use Layout with Header */}
