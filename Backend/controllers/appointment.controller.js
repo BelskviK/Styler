@@ -10,25 +10,23 @@ exports.getAppointments = async (req, res, next) => {
   try {
     let query = {};
 
-    // Admin: appointments for their company
+    // For admin, get all appointments for their company
     if (req.user.role === "admin") {
-      query.company = req.user.company;
+      query = { company: req.user.company };
     }
-    // Stylist: only their appointments
+    // For stylist, get their appointments
     else if (req.user.role === "styler") {
-      query.stylist = req.user._id;
-      query.company = req.user.company;
+      query = { stylist: req.user._id, company: req.user.company };
     }
-    // Customer: only their appointments
+    // For customer, get their appointments
     else if (req.user.role === "customer") {
-      query.customer = req.user._id;
+      query = { customer: req.user._id };
     }
-    // Superadmin: optional filter by companyId
-    else if (req.user.role === "superadmin") {
-      const { companyId } = req.query;
-      if (companyId) query.company = companyId;
-    } else {
-      return res.status(403).json({ message: "Not authorized" });
+    // Superadmin can see all appointments
+    else if (req.user.role !== "superadmin") {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to access this resource" });
     }
 
     const appointments = await Appointment.find(query)
@@ -68,6 +66,117 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get today's appointments
+exports.getTodayAppointments = async (req, res) => {
+  try {
+    const { userId, role } = req.query;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let query = {
+      date: {
+        $gte: today.toISOString().split("T")[0],
+        $lt: tomorrow.toISOString().split("T")[0],
+      },
+    };
+
+    // Filter based on role and user ID
+    if (role === "styler") {
+      query.stylist = userId;
+    } else if (role === "customer") {
+      query.customer = userId;
+    } else if (role === "admin") {
+      // For admin, get appointments for their company
+      const adminUser = await User.findById(userId);
+      if (adminUser && adminUser.company) {
+        query.company = adminUser.company;
+      }
+    }
+    // superadmin sees all appointments without additional filtering
+
+    const appointments = await Appointment.find(query)
+      .populate("customer", "name email phone")
+      .populate("stylist", "name email")
+      .populate("service", "name price duration")
+      .populate("company", "name")
+      .sort({ startTime: 1 });
+
+    const formattedAppointments = appointments.map((appt) => ({
+      id: appt._id,
+      appointmentTime: new Date(`${appt.date}T${appt.startTime}`),
+      customerName:
+        appt.customer?.name || appt.customerName || "Unknown Customer",
+      stylerName: appt.stylist?.name || "Unknown Styler",
+      serviceName: appt.service?.name || "Unknown Service",
+      status: appt.status,
+      date: appt.date,
+      startTime: appt.startTime,
+      endTime: appt.endTime,
+    }));
+
+    res.json(formattedAppointments);
+  } catch (error) {
+    console.error("Error fetching today's appointments:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get upcoming appointments
+exports.getUpcomingAppointments = async (req, res) => {
+  try {
+    const { userId, role } = req.query;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let query = {
+      date: {
+        $gte: today.toISOString().split("T")[0],
+      },
+    };
+
+    // Filter based on role and user ID
+    if (role === "styler") {
+      query.stylist = userId;
+    } else if (role === "customer") {
+      query.customer = userId;
+    } else if (role === "admin") {
+      // For admin, get appointments for their company
+      const adminUser = await User.findById(userId);
+      if (adminUser && adminUser.company) {
+        query.company = adminUser.company;
+      }
+    }
+    // superadmin sees all appointments without additional filtering
+
+    const appointments = await Appointment.find(query)
+      .populate("customer", "name email phone")
+      .populate("stylist", "name email")
+      .populate("service", "name price duration")
+      .populate("company", "name")
+      .sort({ date: 1, startTime: 1 });
+
+    const formattedAppointments = appointments.map((appt) => ({
+      id: appt._id,
+      appointmentTime: new Date(`${appt.date}T${appt.startTime}`),
+      customerName:
+        appt.customer?.name || appt.customerName || "Unknown Customer",
+      stylerName: appt.stylist?.name || "Unknown Styler",
+      serviceName: appt.service?.name || "Unknown Service",
+      status: appt.status,
+      date: appt.date,
+      startTime: appt.startTime,
+      endTime: appt.endTime,
+    }));
+
+    res.json(formattedAppointments);
+  } catch (error) {
+    console.error("Error fetching upcoming appointments:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -182,7 +291,7 @@ exports.createAppointment = async (req, res, next) => {
 
     await appointment.save();
 
-    // Send notification to stylist - FIXED
+    // Send notification to stylist
     try {
       const notificationService = req.app.get("notificationService");
       if (notificationService) {
@@ -247,45 +356,6 @@ exports.createAppointment = async (req, res, next) => {
   }
 };
 
-// @desc    Get all appointments
-// @route   GET /api/appointments
-// @access  Private
-exports.getAppointments = async (req, res, next) => {
-  try {
-    let query = {};
-
-    // For admin, get all appointments for their company
-    if (req.user.role === "admin") {
-      query = { company: req.user.company };
-    }
-    // For stylist, get their appointments
-    else if (req.user.role === "styler") {
-      query = { stylist: req.user._id, company: req.user.company };
-    }
-    // For customer, get their appointments
-    else if (req.user.role === "customer") {
-      query = { customer: req.user._id };
-    }
-    // Superadmin can see all appointments
-    else if (req.user.role !== "superadmin") {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to access this resource" });
-    }
-
-    const appointments = await Appointment.find(query)
-      .populate("customer", "name email phone")
-      .populate("stylist", "name email")
-      .populate("service", "name price duration imageUrl")
-      .populate("company", "name");
-
-    res.status(200).json(appointments);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 // @desc    Update appointment status
 // @route   PUT /api/appointments/:id/status
 // @access  Private (admin or stylist)
@@ -319,63 +389,36 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     appointment.status = status;
     await appointment.save();
 
-    const notificationService = req.app.get("notificationService");
+    // Send notifications if notification service is available
+    try {
+      const notificationService = req.app.get("notificationService");
+      if (notificationService) {
+        // Notify customer about status change
+        if (appointment.customer.toString() !== req.user._id.toString()) {
+          await notificationService.sendToUser(
+            appointment.customer,
+            "Appointment Status Updated",
+            `Your appointment status has been changed to ${status}`,
+            "appointment",
+            appointment._id
+          );
+        }
 
-    // Notify customer about status change
-    if (appointment.customer.toString() !== req.user._id.toString()) {
-      await notificationService.sendToUser(
-        appointment.customer,
-        "Appointment Status Updated",
-        `Your appointment status has been changed to ${status}`,
-        "appointment",
-        appointment._id
-      );
+        // Notify stylist about status change (if not the one making the change)
+        if (appointment.stylist.toString() !== req.user._id.toString()) {
+          await notificationService.sendToUser(
+            appointment.stylist,
+            "Appointment Status Updated",
+            `Appointment with ${appointment.customerName} status changed to ${status}`,
+            "appointment",
+            appointment._id
+          );
+        }
+      }
+    } catch (notificationError) {
+      console.error("❌ Error sending notifications:", notificationError);
+      // Don't fail the status update if notifications fail
     }
-
-    // Notify stylist about status change (if not the one making the change)
-    if (appointment.stylist.toString() !== req.user._id.toString()) {
-      await notificationService.sendToUser(
-        appointment.stylist,
-        "Appointment Status Updated",
-        `Appointment with ${appointment.customerName} status changed to ${status}`,
-        "appointment",
-        appointment._id
-      );
-    }
-    res.status(200).json({
-      success: true,
-      appointment: await Appointment.findById(appointment._id)
-        .populate("customer", "name email")
-        .populate("stylist", "name email")
-        .populate("service", "name price duration imageUrl"),
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// @desc    Update appointment status
-// @route   PUT /api/appointments/:id/status
-// @access  Private (admin or stylist)
-exports.updateAppointmentStatus = async (req, res, next) => {
-  const { status } = req.body;
-
-  try {
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
-    }
-
-    // Check if admin belongs to the same company or if stylist is the one assigned
-    if (appointment.company.toString() !== req.user.company.toString()) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to update this appointment" });
-    }
-
-    appointment.status = status;
-    await appointment.save();
 
     res.status(200).json({
       success: true,
@@ -412,7 +455,6 @@ exports.deleteAppointment = async (req, res, next) => {
         .json({ message: "Not authorized to delete this appointment" });
     }
 
-    // Use deleteOne() instead of remove() - remove() is deprecated in newer Mongoose versions
     await Appointment.deleteOne({ _id: req.params.id });
 
     res.status(200).json({

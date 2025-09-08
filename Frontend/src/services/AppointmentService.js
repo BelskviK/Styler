@@ -10,6 +10,22 @@ class AppointmentService {
     return api.get(`/appointments/company/${companyId}`);
   }
 
+  static async getByStyler(stylerId) {
+    return api.get(`/appointments/styler/${stylerId}`);
+  }
+
+  static async getByCustomer(customerId) {
+    return api.get(`/appointments/customer/${customerId}`);
+  }
+
+  static async getTodayAppointments(userId, role) {
+    return api.get(`/appointments/today?userId=${userId}&role=${role}`);
+  }
+
+  static async getUpcomingAppointments(userId, role) {
+    return api.get(`/appointments/upcoming?userId=${userId}&role=${role}`);
+  }
+
   static async create(data) {
     return api.post("/appointments", data);
   }
@@ -21,6 +37,7 @@ class AppointmentService {
   static async delete(id) {
     return api.delete(`/appointments/${id}`);
   }
+
   static async createPublic(data) {
     return api.post("/public/appointments", data);
   }

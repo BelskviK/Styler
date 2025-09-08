@@ -5,6 +5,8 @@ import PopularServices from "@/components/dashboard/PopularServices";
 import StylistPerformance from "@/components/dashboard/StylistPerformance";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import CustomerFeedbackSummary from "@/components/dashboard/CustomerFeedbackSummary";
+import TodaySchedule from "@/components/dashboard/TodaySchedule";
+import UpcomingAppointments from "@/components/dashboard/UpcomingAppointments";
 
 export default function SuperadminDashboard() {
   return (
@@ -23,6 +25,8 @@ export default function SuperadminDashboard() {
       <SuperadminMetrics />
       <PopularServices />
       <StylistPerformance />
+      <TodaySchedule />
+      <UpcomingAppointments />
       <RecentActivity />
       <CustomerFeedbackSummary />
     </div>
