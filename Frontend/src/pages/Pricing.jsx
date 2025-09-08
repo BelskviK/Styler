@@ -1,5 +1,16 @@
+import { subscribe } from "@/services/subscriptionService";
+
 // src/pages/Pricing.jsx
 export default function Pricing() {
+  const handleSubscribe = async (planId) => {
+    try {
+      const result = await subscribe(planId);
+      alert(result.message);
+    } catch (err) {
+      alert("Subscription failed: " + err.message);
+    }
+  };
+
   return (
     <div className="px-40 flex flex-1 justify-center py-5">
       <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
@@ -29,7 +40,10 @@ export default function Pricing() {
                 </span>
               </p>
             </div>
-            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-bold leading-normal tracking-[0.015em]">
+            <button
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-bold leading-normal tracking-[0.015em]"
+              onClick={() => handleSubscribe("basic")}
+            >
               <span className="truncate">Choose Basic</span>
             </button>
             <div className="flex flex-col gap-2">
@@ -106,7 +120,11 @@ export default function Pricing() {
                 </span>
               </p>
             </div>
-            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-bold leading-normal tracking-[0.015em]">
+            <button
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-bold leading-normal tracking-[0.015em]"
+              button
+              onClick={() => handleSubscribe("pro")}
+            >
               <span className="truncate">Choose Pro</span>
             </button>
             <div className="flex flex-col gap-2">
