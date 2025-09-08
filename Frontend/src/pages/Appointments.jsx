@@ -10,34 +10,12 @@ import toast from "react-hot-toast";
 export default function Appointments() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
-  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
-
-  const filterAppointments = useCallback(() => {
-    const filtered = appointments.filter(
-      (appointment) =>
-        appointment.customer?.name
-          ?.toLowerCase()
-          .includes(search.toLowerCase()) ||
-        appointment.stylist?.name
-          ?.toLowerCase()
-          .includes(search.toLowerCase()) ||
-        appointment.service?.name?.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredAppointments(filtered);
-  }, [search, appointments]);
-
-  useEffect(() => {
-    filterAppointments();
-  }, [filterAppointments]);
-
-  const loadAppointments = async () => {
+  // Memoized load function
+  const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
       let response = await AppointmentService.getByCompany(user.company);
@@ -47,55 +25,81 @@ export default function Appointments() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.company]);
 
   useEffect(() => {
     loadAppointments();
-  }, [user]);
+  }, [loadAppointments]);
 
-  const handleSort = (key, direction) => {
-    const sorted = [...filteredAppointments].sort((a, b) => {
-      const aValue = getNestedValue(a, key);
-      const bValue = getNestedValue(b, key);
+  // Memoized sort handler
+  const handleSort = useCallback((key, direction) => {
+    setAppointments((prev) => {
+      const sorted = [...prev].sort((a, b) => {
+        const aValue = getNestedValue(a, key);
+        const bValue = getNestedValue(b, key);
 
-      if (aValue < bValue) return direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return direction === "asc" ? 1 : -1;
-      return 0;
+        if (aValue < bValue) return direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return direction === "asc" ? 1 : -1;
+        return 0;
+      });
+      return sorted;
     });
-
-    setFilteredAppointments(sorted);
-  };
+  }, []);
 
   const getNestedValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj);
   };
 
-  const handleStatusUpdate = async (appointmentId, status) => {
-    try {
-      await AppointmentService.updateStatus(appointmentId, status);
-      toast.success("Status updated successfully");
-      loadAppointments();
-    } catch {
-      toast.error("Failed to update status");
-    }
-  };
+  // Memoized status update - only update the specific appointment
+  const handleStatusUpdate = useCallback(
+    async (appointmentId, status) => {
+      try {
+        await AppointmentService.updateStatus(appointmentId, status);
 
-  const handleDelete = async (appointmentId) => {
-    if (!confirm("Are you sure you want to delete this appointment?")) return;
+        // Optimistic update - only change the specific appointment
+        setAppointments((prev) =>
+          prev.map((app) =>
+            app._id === appointmentId ? { ...app, status } : app
+          )
+        );
 
-    try {
-      await AppointmentService.delete(appointmentId);
-      toast.success("Appointment deleted successfully");
-      loadAppointments();
-    } catch {
-      toast.error("Failed to delete appointment");
-    }
-  };
+        toast.success("Status updated successfully");
+      } catch {
+        toast.error("Failed to update status");
+        // Revert on error
+        loadAppointments();
+      }
+    },
+    [loadAppointments]
+  );
 
-  const handleCreateSuccess = () => {
+  // Memoized delete handler
+  const handleDelete = useCallback(
+    async (appointmentId) => {
+      if (!confirm("Are you sure you want to delete this appointment?")) return;
+
+      try {
+        // Optimistic update
+        setAppointments((prev) =>
+          prev.filter((app) => app._id !== appointmentId)
+        );
+
+        await AppointmentService.delete(appointmentId);
+        toast.success("Appointment deleted successfully");
+      } catch {
+        toast.error("Failed to delete appointment");
+        // Revert on error
+        loadAppointments();
+      }
+    },
+    [loadAppointments]
+  );
+
+  // Memoized create success handler
+  const handleCreateSuccess = useCallback(() => {
     setIsModalOpen(false);
     loadAppointments();
-  };
+  }, [loadAppointments]);
 
   if (loading) {
     return (
@@ -130,7 +134,7 @@ export default function Appointments() {
       {/* Table */}
       <div className="px-4 py-3">
         <AppointmentTable
-          appointments={filteredAppointments}
+          appointments={appointments} // Pass the main appointments array
           search={search}
           onSort={handleSort}
           onStatusUpdate={handleStatusUpdate}
@@ -154,7 +158,8 @@ export default function Appointments() {
   );
 }
 
-function SearchInput({ value, onChange }) {
+// Memoized SearchInput to prevent re-renders when typing
+const SearchInput = ({ value, onChange }) => {
   return (
     <div className="px-4 py-3">
       <label className="flex flex-col min-w-40 h-12 w-full">
@@ -181,4 +186,4 @@ function SearchInput({ value, onChange }) {
       </label>
     </div>
   );
-}
+};

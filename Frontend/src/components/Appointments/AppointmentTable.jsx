@@ -1,7 +1,7 @@
 // src/components/Appointments/AppointmentTable.jsx
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 
-export default function AppointmentTable({
+function AppointmentTable({
   appointments,
   search,
   onSort,
@@ -21,14 +21,18 @@ export default function AppointmentTable({
     onSort(key, direction);
   };
 
-  const filteredAppointments = appointments.filter(
-    (appointment) =>
-      appointment.customer?.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase()) ||
-      appointment.stylist?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      appointment.service?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter(
+      (appointment) =>
+        appointment.customer?.name
+          ?.toLowerCase()
+          .includes(search.toLowerCase()) ||
+        appointment.stylist?.name
+          ?.toLowerCase()
+          .includes(search.toLowerCase()) ||
+        appointment.service?.name?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [appointments, search]);
 
   const SortableHeader = ({ children, sortKey }) => (
     <th
@@ -87,7 +91,7 @@ export default function AppointmentTable({
       <div className={`flex-1 overflow-y-auto ${maxHeight}`}>
         <div className="divide-y divide-gray-200">
           {filteredAppointments.map((appointment) => (
-            <AppointmentRow
+            <MemoizedAppointmentRow
               key={appointment._id}
               appointment={appointment}
               onStatusUpdate={onStatusUpdate}
@@ -101,7 +105,13 @@ export default function AppointmentTable({
   );
 }
 
-function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
+// Memoized AppointmentRow component
+const AppointmentRow = memo(function AppointmentRow({
+  appointment,
+  onStatusUpdate,
+  onDelete,
+  userRole,
+}) {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -114,6 +124,14 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
       cancelled: "bg-red-100 text-red-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const handleStatusChange = (e) => {
+    onStatusUpdate(appointment._id, e.target.value);
+  };
+
+  const handleDelete = () => {
+    onDelete(appointment._id);
   };
 
   return (
@@ -187,7 +205,7 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
           {(userRole === "admin" || userRole === "styler") && (
             <select
               value={appointment.status}
-              onChange={(e) => onStatusUpdate(appointment._id, e.target.value)}
+              onChange={handleStatusChange}
               className="text-sm border rounded px-2 py-1 hover:border-gray-300 transition-colors duration-150 w-full"
             >
               <option value="pending">Pending</option>
@@ -198,7 +216,7 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
           )}
           {(userRole === "admin" || userRole === "superadmin") && (
             <button
-              onClick={() => onDelete(appointment._id)}
+              onClick={handleDelete}
               className="text-red-600 hover:text-red-800 text-sm transition-colors duration-150 w-full text-left"
             >
               Delete
@@ -208,4 +226,9 @@ function AppointmentRow({ appointment, onStatusUpdate, onDelete, userRole }) {
       </div>
     </div>
   );
-}
+});
+
+// Create memoized version
+const MemoizedAppointmentRow = memo(AppointmentRow);
+
+export default memo(AppointmentTable);
