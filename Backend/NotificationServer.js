@@ -71,37 +71,31 @@ class NotificationServer {
     console.log("✅ Notification service initialized");
     return this.notificationService;
   }
-
+  // Backend/NotificationServer.js - setupSocketHandlers method
   setupSocketHandlers() {
     this.io.on("connection", (socket) => {
       console.log(
         `✅ User ${socket.userId} connected with socket ${socket.id}`
       );
 
-      // Track user connection in notification service
-      if (
-        this.notificationService &&
-        typeof this.notificationService.userConnected === "function"
-      ) {
-        this.notificationService.userConnected(socket.userId, socket.id);
-      } else {
-        console.error(
-          "❌ Notification service or userConnected method not available"
-        );
-      }
-
       // Join user to their personal room
       socket.join(socket.userId.toString());
+      console.log(`🚪 User ${socket.userId} joined room: ${socket.userId}`);
 
-      this.setupNotificationHandlers(socket);
-      this.setupConnectionCleanup(socket);
+      // Track user connection
+      if (this.notificationService) {
+        this.notificationService.userConnected(socket.userId, socket.id);
+      }
 
-      // Send welcome message
+      // Send immediate confirmation
       socket.emit("connected", {
         message: "Connected to notification server",
         userId: socket.userId,
         timestamp: new Date().toISOString(),
       });
+
+      this.setupNotificationHandlers(socket);
+      this.setupConnectionCleanup(socket);
     });
   }
 

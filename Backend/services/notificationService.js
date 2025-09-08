@@ -61,8 +61,12 @@ class NotificationService {
       // Check if user is connected and send real-time notification
       const userSocketId = this.getUserSocketId(userId);
       if (userSocketId) {
+        // Send to specific socket AND to the user's room for redundancy
         this.io.to(userSocketId).emit("newNotification", notification);
-        console.log(`✅ Real-time notification sent to user ${userId}`);
+        this.io.to(userId.toString()).emit("newNotification", notification);
+        console.log(
+          `✅ Real-time notification sent to user ${userId} via socket ${userSocketId} and room ${userId}`
+        );
       } else {
         console.log(
           `ℹ️ User ${userId} is not connected, notification saved to database`

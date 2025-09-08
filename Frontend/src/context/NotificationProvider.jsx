@@ -11,23 +11,43 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [socket, setSocket] = useState(null);
   const { token, user } = useAuth();
+  // Frontend/src/context/NotificationProvider.jsx
   useEffect(() => {
     if (token && user) {
-      const newSocket = io(SOCKET_URL, { auth: { token } });
+      const newSocket = io(SOCKET_URL, {
+        auth: { token },
+        transports: ["websocket", "polling"],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
 
-      newSocket.on("connect", () =>
-        console.log("Connected to notification server")
-      );
+      newSocket.on("connect", () => {
+        console.log("✅ Connected to notification server");
+        // Immediately fetch notifications after connection
+        fetchNotifications();
+        fetchUnreadCount();
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.log("❌ Disconnected from notification server:", reason);
+      });
+
+      newSocket.on("connect_error", (error) => {
+        console.error("❌ Connection error:", error);
+      });
+
       newSocket.on("newNotification", (notification) => {
+        console.log("📩 New notification received:", notification);
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
       });
-      newSocket.on("disconnect", () =>
-        console.log("Disconnected from notification server")
-      );
 
       setSocket(newSocket);
-      return () => newSocket.close();
+
+      return () => {
+        newSocket.close();
+      };
     }
   }, [token, user]);
 

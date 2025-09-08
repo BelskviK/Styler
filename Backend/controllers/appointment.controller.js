@@ -69,7 +69,8 @@ exports.getAppointmentsByCompany = async (req, res, next) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
-}; // Backend/controllers/appointment.controller.js
+};
+
 exports.createAppointment = async (req, res, next) => {
   const {
     stylistId,

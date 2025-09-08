@@ -1,3 +1,4 @@
+// Frontend\src\components\common\Header.jsx
 import NotificationDropdown from "./NotificationDropdown";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
