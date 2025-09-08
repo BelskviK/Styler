@@ -10,7 +10,7 @@ import Bookings from "@/pages/Bookings";
 import Stylists from "@/pages/Stylists";
 import Services from "@/pages/Services";
 import Settings from "@/pages/Settings";
-import CompanyPage from "./pages/CompanyPage";
+import CompanyPage from "@/pages/CompanyPage";
 import Register from "@/pages/Register";
 
 import { NotificationProvider } from "@/context/NotificationProvider";

@@ -1,6 +1,6 @@
 // Frontend/src/components/common/AuthenticatedLayout.jsx
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
+import Sidebar from "@/components/common/Sidebar";
 
 export default function AuthenticatedLayout() {
   return (

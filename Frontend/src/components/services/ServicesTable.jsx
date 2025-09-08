@@ -1,5 +1,5 @@
 // Frontend/src/components/services/ServicesTable.jsx
-import ServiceCard from "./ServiceCard";
+import ServiceCard from "@/components/services/ServiceCard";
 
 const ServicesTable = ({ services, user, onEdit, onDelete, searchTerm }) => {
   if (services.length === 0) {

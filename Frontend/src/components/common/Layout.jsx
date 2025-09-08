@@ -1,6 +1,6 @@
 // Frontend/src/components/common/Layout.jsx
 import { Outlet } from "react-router-dom";
-import Header from "./Header";
+import Header from "@/components/common/Header";
 
 export default function Layout() {
   return (
