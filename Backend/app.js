@@ -14,6 +14,7 @@ const appointmentRoutes = require("./routes/appointment.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const publicRoutes = require("./routes/public.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
+const reviewRoutes = require("./routes/review.routes");
 
 // Initialize app
 const app = express();
@@ -59,6 +60,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

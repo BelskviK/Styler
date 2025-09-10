@@ -50,6 +50,22 @@ class AnalyticsService {
 
     return api.get(`/analytics/services/${serviceId}`, { params });
   }
+  // Update the method names to be consistent
+  static async getReviewStats(companyId = null) {
+    const params = companyId ? { companyId } : {};
+    return api.get("/analytics/reviews", { params });
+  }
+
+  static async getReviewAnalytics(timeframe = "monthly", companyId = null) {
+    const params = { timeframe };
+    if (companyId) params.companyId = companyId;
+    return api.get("/analytics/reviews/analytics", { params });
+  } // src/services/AnalyticsService.js
+  static async getReviewStatistics(companyId = null) {
+    // ← This is the correct method name
+    const params = companyId ? { companyId } : {};
+    return api.get("/analytics/reviews", { params });
+  }
 }
 
 export default AnalyticsService;

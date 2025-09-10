@@ -2,7 +2,7 @@
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const Service = require("../models/Service");
-const Company = require("../models/Company");
+const Review = require("../models/Review");
 const mongoose = require("mongoose");
 
 // @desc    Get dashboard statistics
@@ -750,5 +750,187 @@ exports.getServicePerformance = async (req, res) => {
   } catch (error) {
     console.error("Error fetching service performance:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+}; // Get review statistics for dashboard
+// Backend/controllers/analytics.controller.js
+// Backend/controllers/analytics.controller.js
+exports.getReviewStatistics = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    // If companyId is not provided and user is company-specific, use user's company
+    const effectiveCompanyId =
+      companyId || (req.user.company ? req.user.company.toString() : null);
+
+    if (!effectiveCompanyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const stats = await Review.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(effectiveCompanyId), // ← FIXED: added 'new'
+          status: "approved",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalReviews: { $sum: 1 },
+          averageRating: { $avg: "$rating" },
+          ratingDistribution: {
+            $push: "$rating",
+          },
+        },
+      },
+    ]);
+
+    // Calculate rating distribution
+    const distribution = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    };
+
+    if (stats[0]?.ratingDistribution) {
+      stats[0].ratingDistribution.forEach((rating) => {
+        distribution[rating] = (distribution[rating] || 0) + 1;
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalReviews: stats[0]?.totalReviews || 0,
+        averageRating: stats[0]?.averageRating
+          ? parseFloat(stats[0].averageRating.toFixed(1))
+          : 0,
+        ratingDistribution: distribution,
+        percentageDistribution: {
+          5: stats[0]?.totalReviews
+            ? Math.round((distribution[5] / stats[0].totalReviews) * 100)
+            : 0,
+          4: stats[0]?.totalReviews
+            ? Math.round((distribution[4] / stats[0].totalReviews) * 100)
+            : 0,
+          3: stats[0]?.totalReviews
+            ? Math.round((distribution[3] / stats[0].totalReviews) * 100)
+            : 0,
+          2: stats[0]?.totalReviews
+            ? Math.round((distribution[2] / stats[0].totalReviews) * 100)
+            : 0,
+          1: stats[0]?.totalReviews
+            ? Math.round((distribution[1] / stats[0].totalReviews) * 100)
+            : 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error in getReviewStatistics:", error);
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+// Optional: Add comprehensive review analytics with time series
+exports.getReviewAnalytics = async (req, res) => {
+  try {
+    const { companyId, startDate, endDate } = req.query;
+    const effectiveCompanyId =
+      companyId || (req.user.company ? req.user.company.toString() : null);
+
+    if (!effectiveCompanyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const matchStage = {
+      company: mongoose.Types.ObjectId(effectiveCompanyId),
+      status: "approved",
+    };
+
+    // Add date filter if provided
+    if (startDate || endDate) {
+      matchStage.createdAt = {};
+      if (startDate) matchStage.createdAt.$gte = new Date(startDate);
+      if (endDate) matchStage.createdAt.$lte = new Date(endDate);
+    }
+
+    const analytics = await Review.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: null,
+          totalReviews: { $sum: 1 },
+          averageRating: { $avg: "$rating" },
+          monthlyData: {
+            $push: {
+              month: { $month: "$createdAt" },
+              year: { $year: "$createdAt" },
+              rating: "$rating",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          totalReviews: 1,
+          averageRating: { $round: ["$averageRating", 1] },
+          monthlyBreakdown: {
+            $map: {
+              input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+              as: "month",
+              in: {
+                month: "$$month",
+                reviews: {
+                  $size: {
+                    $filter: {
+                      input: "$monthlyData",
+                      as: "data",
+                      cond: { $eq: ["$$data.month", "$$month"] },
+                    },
+                  },
+                },
+                averageRating: {
+                  $avg: {
+                    $filter: {
+                      input: "$monthlyData",
+                      as: "data",
+                      cond: { $eq: ["$$data.month", "$$month"] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: analytics[0] || {
+        totalReviews: 0,
+        averageRating: 0,
+        monthlyBreakdown: Array.from({ length: 12 }, (_, i) => ({
+          month: i + 1,
+          reviews: 0,
+          averageRating: 0,
+        })),
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
