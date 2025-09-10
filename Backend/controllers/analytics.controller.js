@@ -752,11 +752,10 @@ exports.getServicePerformance = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 }; // Get review statistics for dashboard
-// Backend/controllers/analytics.controller.js
-// Backend/controllers/analytics.controller.js
+// Backend/controllers/analytics.controller.jsc
 exports.getReviewStatistics = async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const { companyId } = req.user.company;
 
     // If companyId is not provided and user is company-specific, use user's company
     const effectiveCompanyId =
@@ -773,7 +772,6 @@ exports.getReviewStatistics = async (req, res) => {
       {
         $match: {
           company: new mongoose.Types.ObjectId(effectiveCompanyId), // ← FIXED: added 'new'
-          status: "approved",
         },
       },
       {

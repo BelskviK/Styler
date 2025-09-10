@@ -4,6 +4,8 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 const analyticsController = require("../controllers/analytics.controller");
 
+// Review statistics analytics
+router.get("/reviews", auth, analyticsController.getReviewStatistics);
 // Dashboard overview statistics
 router.get("/dashboard", auth, analyticsController.getDashboardStats);
 
@@ -19,8 +21,6 @@ router.get("/customers", auth, analyticsController.getCustomerAnalytics);
 // Employee performance analytics
 router.get("/employees", auth, analyticsController.getEmployeePerformance);
 
-// Review statistics analytics
-router.get("/reviews", auth, analyticsController.getReviewStatistics);
 router.get("/reviews/analytics", auth, analyticsController.getReviewAnalytics);
 
 // Popular services analytics - only for admins and superadmins
@@ -41,7 +41,7 @@ router.get(
 
 // Review statistics for specific company (optional)
 router.get(
-  "/reviews/company/:companyId",
+  "/reviews/company",
   auth,
   auth.authorize("superadmin", "admin"),
   analyticsController.getReviewStatistics

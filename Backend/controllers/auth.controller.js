@@ -116,7 +116,7 @@ exports.registerCustomer = async (req, res) => {
 // @access  Public
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
-
+  console.log(`req.body ----------${req.body}`);
   try {
     // Find user and populate company name
     const user = await User.findOne({ email })

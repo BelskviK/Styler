@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const reviewController = require("../controllers/review.controller");
+const auth = require("../middleware/auth");
 
 // Public routes
 router.get("/company/:companyId", reviewController.getReviewsByCompany);
@@ -13,8 +14,8 @@ router.get(
 router.get("/recent", reviewController.getRecentReviews);
 router.get("/:reviewId", reviewController.getReview);
 
-//  d routes (require authentication)
-router.post("/", reviewController.createReview);
+//  d routes
+router.post("/", auth, reviewController.createReview);
 router.get(
   "/customer/my-reviews",
 

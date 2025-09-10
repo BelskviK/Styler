@@ -8,8 +8,7 @@ const User = require("../models/User");
 exports.createReview = async (req, res) => {
   try {
     const { appointmentId, rating, comment } = req.body;
-    const customerId = req.user.id;
-
+    const customerId = req.user._id;
     // Check if appointment exists and is valid for review
     const appointment = await Appointment.findById(appointmentId)
       .populate("customer")
@@ -21,7 +20,10 @@ exports.createReview = async (req, res) => {
     }
 
     // Check if user is the customer who made the appointment
-    if (appointment.customer._id.toString() !== customerId) {
+    if (appointment.customer._id.toString() !== customerId.toString()) {
+      console.log(
+        `appointment.customer._id. ${appointment.customer._id.toString()} customerId ${customerId.toString()}`
+      );
       return res
         .status(403)
         .json({ message: "Not authorized to review this appointment" });
