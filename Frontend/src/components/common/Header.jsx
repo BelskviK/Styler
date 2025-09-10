@@ -33,6 +33,16 @@ const Header = () => {
         </div>
 
         <div className="flex items-center space-x-4">
+          {user?.role === "customer" && (
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => navigate("/history")}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                My Appointments
+              </button>
+            </div>
+          )}
           <NotificationDropdown />
 
           {user ? (
