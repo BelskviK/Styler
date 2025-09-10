@@ -628,7 +628,6 @@ exports.getPopularServices = async (req, res) => {
     const popularServices = await Appointment.aggregate(
       popularServicesPipeline
     );
-    console.log("Aggregation result:", popularServices);
 
     // Always return the expected format, even if empty
     res.json({

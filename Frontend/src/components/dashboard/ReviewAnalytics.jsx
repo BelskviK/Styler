@@ -46,8 +46,8 @@ const ReviewAnalytics = ({ companyId = null }) => {
   }, [companyId]);
 
   const RatingBar = ({ stars, count, percentage }) => (
-    <div className="flex items-center gap-3 mb-2">
-      <div className="flex items-center w-16">
+    <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center w-8">
         <span className="text-sm font-medium text-gray-600 w-4">{stars}</span>
         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 ml-1" />
       </div>
@@ -57,7 +57,7 @@ const ReviewAnalytics = ({ companyId = null }) => {
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-sm text-gray-600 w-12 text-right">
+      <span className="text-sm text-gray-600 w-14 text-right truncate">
         {count} ({percentage}%)
       </span>
     </div>

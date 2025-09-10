@@ -1,5 +1,5 @@
 // src/components/dashboard/UpcomingAppointments.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import AppointmentService from "@/services/AppointmentService";
 import { useSortableData } from "@/hooks/useSortableData";
@@ -9,23 +9,6 @@ export default function UpcomingAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Format appointments for sorting
-  const formattedAppointments = appointments.map((appt) => ({
-    ...appt,
-    date: new Date(appt.appointmentTime).getTime(),
-    time: new Date(appt.appointmentTime).getTime(),
-    customerName: appt.customerName.toLowerCase(),
-    stylerName: appt.stylerName.toLowerCase(),
-    serviceName: appt.serviceName.toLowerCase(),
-    status: appt.status.toLowerCase(),
-  }));
-
-  const {
-    items: sortedAppointments,
-    requestSort,
-    sortConfig,
-  } = useSortableData(formattedAppointments);
 
   useEffect(() => {
     fetchUpcomingAppointments();
@@ -38,7 +21,7 @@ export default function UpcomingAppointments() {
         user.id,
         user.role
       );
-      setAppointments(response.data);
+      setAppointments(response.data || []);
     } catch (err) {
       setError("Failed to fetch upcoming appointments");
       console.error("Error fetching appointments:", err);
@@ -46,6 +29,104 @@ export default function UpcomingAppointments() {
       setLoading(false);
     }
   };
+
+  // Helpers: parse date/time more defensively
+  const tryParseDate = (val) => {
+    if (val == null) return null;
+
+    // If numeric-ish, treat as timestamp (seconds or ms)
+    if (typeof val === "number" || /^\d+$/.test(String(val))) {
+      let n = Number(val);
+      // If it's seconds (10-digit), convert to ms
+      if (n > 0 && n < 1e12) n = n * 1000;
+      const d = new Date(n);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    // Try native parse for strings (ISO, "YYYY-MM-DD", etc.)
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) return d;
+
+    return null;
+  };
+
+  const parseTimeParts = (rawTime) => {
+    if (!rawTime) return null;
+    // matches: "9:00", "09:00", "09:00:00", "9.00", "9h00"
+    const m = String(rawTime).match(/(\d{1,2})(?::|\.|h)?(\d{2})?/);
+    if (!m) return null;
+    const hours = parseInt(m[1], 10);
+    const minutes = m[2] ? parseInt(m[2], 10) : 0;
+    if (Number.isFinite(hours) && Number.isFinite(minutes)) {
+      return { hours, minutes };
+    }
+    return null;
+  };
+
+  // Build formatted appointments once (useMemo for mild perf)
+  const formattedAppointments = useMemo(
+    () =>
+      (appointments || []).map((appt, idx) => {
+        // Keep unique id where possible
+        const id = appt._id ?? appt.id ?? `fallback-${idx}`;
+
+        // Prefer an explicit appointmentTime if backend provides it
+        let appointmentDateObj =
+          tryParseDate(appt.appointmentTime) || tryParseDate(appt.date);
+
+        // If we have a separate startTime, apply it (common case: date stored without time)
+        const timeParts = parseTimeParts(appt.startTime ?? appt.time);
+        if (timeParts && appointmentDateObj) {
+          // Only set hours/minutes if it changes something or date lacked time
+          appointmentDateObj.setHours(timeParts.hours, timeParts.minutes, 0, 0);
+        } else if (!appointmentDateObj && appt.date && timeParts) {
+          // If date couldn't be parsed alone, try combining into an ISO-ish string
+          const dateStr = String(appt.date).trim();
+          // If dateStr looks like YYYY-MM-DD, combine into YYYY-MM-DDTHH:MM:00
+          const hoursPadded = String(timeParts.hours).padStart(2, "0");
+          const minsPadded = String(timeParts.minutes).padStart(2, "0");
+          const combined = `${dateStr}T${hoursPadded}:${minsPadded}:00`;
+          appointmentDateObj = tryParseDate(combined);
+        }
+
+        const appointmentISO =
+          appointmentDateObj && !isNaN(appointmentDateObj.getTime())
+            ? appointmentDateObj.toISOString()
+            : null;
+
+        return {
+          id,
+          appointmentTime: appointmentISO, // may be null if unparseable
+          customerName:
+            appt.customer?.name ??
+            appt.customerName ??
+            appt.customer_name ??
+            "Unknown Customer",
+          stylerName:
+            appt.stylist?.name ??
+            appt.stylerName ??
+            appt.stylistName ??
+            "Unknown Styler",
+          serviceName:
+            appt.service?.name ?? appt.serviceName ?? "Unknown Service",
+          status: (appt.status ?? "pending").toString(),
+          date: appt.date ?? null,
+          startTime: appt.startTime ?? appt.time ?? null,
+          endTime: appt.endTime ?? null,
+          companyId: appt.company?._id ?? null,
+          companyName: appt.company?.name ?? "Unknown Company",
+          // keep original raw object if needed later
+          raw: appt,
+        };
+      }),
+    [appointments]
+  );
+
+  const {
+    items: sortedAppointments,
+    requestSort,
+    sortConfig,
+  } = useSortableData(formattedAppointments);
 
   const getClassNamesFor = (name) => {
     if (!sortConfig) return;
@@ -108,14 +189,14 @@ export default function UpcomingAppointments() {
                 </th>
                 <th
                   className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-240 px-4 py-3 text-left text-[#111418] w-[400px] text-sm font-medium leading-normal cursor-pointer hover:bg-gray-50"
-                  onClick={() => requestSort("time")}
+                  onClick={() => requestSort("appointmentTime")}
                 >
                   <div className="flex items-center">
                     Time
-                    {getClassNamesFor("time") === "ascending" && (
+                    {getClassNamesFor("appointmentTime") === "ascending" && (
                       <span className="ml-1">↑</span>
                     )}
-                    {getClassNamesFor("time") === "descending" && (
+                    {getClassNamesFor("appointmentTime") === "descending" && (
                       <span className="ml-1">↓</span>
                     )}
                   </div>
@@ -195,52 +276,61 @@ export default function UpcomingAppointments() {
                   </td>
                 </tr>
               ) : (
-                sortedAppointments.map((appointment) => (
-                  <tr
-                    key={appointment.id}
-                    className="border-t border-t-[#dbe0e6]"
-                  >
-                    <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-120 h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
-                      {new Date(
-                        appointment.appointmentTime
-                      ).toLocaleDateString()}
-                    </td>
-                    <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-240 h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
-                      {new Date(appointment.appointmentTime).toLocaleTimeString(
-                        [],
-                        { hour: "2-digit", minute: "2-digit" }
-                      )}
-                    </td>
-                    <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-360 h-[72px] px-4 py-2 w-[400px] text-[#111418] text-sm font-normal leading-normal">
-                      {appointment.customerName}
-                    </td>
-                    {user.role === "superadmin" || user.role === "admin" ? (
-                      <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-480 h-[72px] px-4 py-2 w-[400px] text-[#111418] text-sm font-normal leading-normal">
-                        {appointment.stylerName}
+                sortedAppointments.map((appointment) => {
+                  // Safely create display date/time
+                  const apptDate = appointment.appointmentTime
+                    ? new Date(appointment.appointmentTime)
+                    : null;
+                  const validDate =
+                    apptDate && !isNaN(apptDate.getTime()) ? apptDate : null;
+
+                  return (
+                    <tr
+                      key={appointment.id}
+                      className="border-t border-t-[#dbe0e6]"
+                    >
+                      <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-120 h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
+                        {validDate ? validDate.toLocaleDateString() : "—"}
                       </td>
-                    ) : null}
-                    <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-600 h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
-                      {appointment.serviceName}
-                    </td>
-                    <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-720 h-[72px] px-4 py-2 w-60 text-sm font-normal leading-normal">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          appointment.status === "confirmed"
-                            ? "bg-blue-100 text-blue-800"
-                            : appointment.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : appointment.status === "cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : appointment.status === "no-show"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-240 h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
+                        {validDate
+                          ? validDate.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </td>
+                      <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-360 h-[72px] px-4 py-2 w-[400px] text-[#111418] text-sm font-normal leading-normal">
+                        {appointment.customerName}
+                      </td>
+                      {user.role === "superadmin" || user.role === "admin" ? (
+                        <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-480 h-[72px] px-4 py-2 w-[400px] text-[#111418] text-sm font-normal leading-normal">
+                          {appointment.stylerName}
+                        </td>
+                      ) : null}
+                      <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-600 h-[72px] px-4 py-2 w-[400px] text-[#60758a] text-sm font-normal leading-normal">
+                        {appointment.serviceName}
+                      </td>
+                      <td className="table-bc0b9d91-e581-4355-abc2-2b41e8056cad-column-720 h-[72px] px-4 py-2 w-60 text-sm font-normal leading-normal">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            appointment.status === "confirmed"
+                              ? "bg-blue-100 text-blue-800"
+                              : appointment.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : appointment.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : appointment.status === "no-show"
+                              ? "bg-gray-100 text-gray-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {appointment.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

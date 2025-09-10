@@ -143,6 +143,7 @@ exports.getStylists = async (req, res, next) => {
       id: stylist._id, // Keep this for compatibility
       name: stylist.name,
       expertise: stylist.expertise || "General Styling",
+      profileImage: stylist.profileImage || "",
       schedule: stylist.schedule || "Available",
       reviews: stylist.reviews || "No reviews yet",
     }));

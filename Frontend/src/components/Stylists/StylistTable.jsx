@@ -23,6 +23,7 @@ export default function StylistTable({
         <table className="flex-1">
           <thead>
             <tr className="bg-white">
+              <TableHeader> </TableHeader>
               <TableHeader>Name</TableHeader>
               <TableHeader>Expertise</TableHeader>
               <TableHeader>Schedule</TableHeader>
@@ -82,6 +83,16 @@ function TableRow({ stylist, onEditClick, onAssignServicesClick, userRole }) {
 
   return (
     <tr className="border-t border-t-[#dbe0e6]">
+      <TableCell>
+        <img
+          src={
+            stylist.profileImage ||
+            "https://similarpng.com/_next/image?url=https%3A%2F%2Fimage.similarpng.com%2Ffile%2Fsimilarpng%2Fvery-thumbnail%2F2021%2F08%2FBarber-shop-logo-on-transparent-background-PNG.png&w=3840&q=75"
+          }
+          alt={stylist.name || "Stylist profile"}
+          className="w-10 h-10 rounded-[50%] object-cover"
+        />
+      </TableCell>
       <TableCell>{stylist.name}</TableCell>
       <TableCell className="text-[#60758a]">
         {stylist.expertise || "N/A"}

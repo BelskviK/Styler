@@ -6,14 +6,16 @@
 
 ✅ companies shouldnot see other companies services
 
-review system
+    review system
 
-i18n everything
-dark mode
+    i18n everything
+    dark mode
 
-ensure that when logedin admin is registering appointment for customer, appointment is registering for himself
+    ensure that when logedin admin is registering appointment for customer, appointment is registering for himself
 
-tabales do 1/1/1970 for appointment dates
+    tabales do 1/1/1970 for appointment dates
 
-subscription plan content
-subscription plan APi
+    ubscription plan content
+    subscription plan APi
+
+    model pre post save
