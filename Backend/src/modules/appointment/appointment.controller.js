@@ -4,19 +4,6 @@ import AppointmentService from "./appointment.service.js";
 // Initialize service (will be set with notification service in routes)
 export const appointmentService = new AppointmentService();
 
-// @desc    Get all appointments
-// @route   GET /api/appointments
-// @access  Private
-export async function getAppointments(req, res) {
-  try {
-    const appointments = await appointmentService.getAppointments(req.user);
-    res.status(200).json(appointments);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
-  }
-}
-
 export async function getAppointmentsByCompany(req, res) {
   try {
     const { companyId } = req.params;
@@ -30,6 +17,57 @@ export async function getAppointmentsByCompany(req, res) {
     res
       .status(err.message.includes("Not authorized") ? 403 : 500)
       .json({ message: err.message });
+  }
+}
+// Get today's appointments
+export async function getTodayAppointments(req, res) {
+  try {
+    const { userId, role } = req.query;
+    const appointments = await appointmentService.getTodayAppointments(
+      userId,
+      role
+    );
+    res.json(appointments);
+  } catch (error) {
+    console.error("Error fetching today's appointments:", error);
+    res
+      .status(error.message.includes("Not authorized") ? 403 : 500)
+      .json({ message: error.message });
+  }
+}
+// Get upcoming appointments
+export async function getUpcomingAppointments(req, res) {
+  try {
+    const { userId, role } = req.query;
+    const appointments = await appointmentService.getUpcomingAppointments(
+      userId,
+      role
+    );
+    res.json(appointments);
+  } catch (error) {
+    console.error("Error fetching upcoming appointments:", error);
+    res
+      .status(error.message.includes("Not authorized") ? 403 : 500)
+      .json({ message: error.message });
+  }
+}
+// TODO
+// @desc    Get availability
+// @route   GET /api/appointments/availability
+// @access  Private
+export async function checkAppountmantAvailability(req, res) {
+  try {
+    const { stylistId, date, startTime, endTime } = req.query;
+    const availability = await appointmentService.checkAvailability(
+      stylistId,
+      date,
+      startTime,
+      endTime
+    );
+    res.status(200).json(availability);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
   }
 }
 
@@ -54,37 +92,15 @@ export async function getAppointmentsByStyler(req, res) {
   }
 }
 
-// Get today's appointments
-export async function getTodayAppointments(req, res) {
+// TODO
+export async function getAppointmentsByCustomer(req, res) {
   try {
-    const { userId, role } = req.query;
-    const appointments = await appointmentService.getTodayAppointments(
-      userId,
-      role
-    );
-    res.json(appointments);
+    res.status(503).json({
+      message: "Service will be coming soon",
+    });
   } catch (error) {
-    console.error("Error fetching today's appointments:", error);
-    res
-      .status(error.message.includes("Not authorized") ? 403 : 500)
-      .json({ message: error.message });
-  }
-}
-
-// Get upcoming appointments
-export async function getUpcomingAppointments(req, res) {
-  try {
-    const { userId, role } = req.query;
-    const appointments = await appointmentService.getUpcomingAppointments(
-      userId,
-      role
-    );
-    res.json(appointments);
-  } catch (error) {
-    console.error("Error fetching upcoming appointments:", error);
-    res
-      .status(error.message.includes("Not authorized") ? 403 : 500)
-      .json({ message: error.message });
+    console.error("Error in getAppointmentsByCustomer:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
@@ -167,24 +183,5 @@ export async function deleteAppointment(req, res) {
           : 500
       )
       .json({ message: err.message });
-  }
-}
-
-// @desc    Get availability
-// @route   GET /api/appointments/availability
-// @access  Private
-export async function checkAvailability(req, res) {
-  try {
-    const { stylistId, date, startTime, endTime } = req.query;
-    const availability = await appointmentService.checkAvailability(
-      stylistId,
-      date,
-      startTime,
-      endTime
-    );
-    res.status(200).json(availability);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
   }
 }

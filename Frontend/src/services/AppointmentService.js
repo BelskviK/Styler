@@ -2,42 +2,56 @@
 import api from "./api";
 
 class AppointmentService {
-  static async getAll() {
-    return api.get("/appointments");
-  }
-
-  static async getByCompany(companyId) {
+  // TODO IN USE {}
+  // ✅ used by Appointments.jsx
+  static async getAppointmentsByCompany(companyId) {
     return api.get(`/appointments/company/${companyId}`);
-  }
-
-  static async getByStyler(companyId) {
-    return api.get(`/appointments/styler/${companyId}`);
-  }
-
-  static async getByCustomer(customerId) {
-    return api.get(`/appointments/customer/${customerId}`);
-  }
-
+  } // ✅ used by TodaySchedule.jsx
   static async getTodayAppointments(userId, role) {
     return api.get(`/appointments/today?userId=${userId}&role=${role}`);
   }
 
+  // ✅ used by UpcomingAppointments.jsx
   static async getUpcomingAppointments(userId, role) {
     return api.get(`/appointments/upcoming?userId=${userId}&role=${role}`);
   }
 
-  static async create(data) {
+  // TODO END-POIND
+  static async checkAppountmantAvailability(companyId) {
+    return api.get(`/appointments/styler/${companyId}`);
+  }
+
+  // ✅ used by Appointments.jsx
+  // TODO END-POIND
+  static async getAppointmentsByStyler(companyId) {
+    return api.get(`/appointments/styler/${companyId}`);
+  }
+
+  // ✅ used by Appointments.jsx
+  // TODO END-POIND
+  static async getAppointmentsByCustomer(customerId) {
+    return api.get(`/appointments/customer/${customerId}`);
+  }
+
+  // ✅ used by AppointmentForm.jsx
+  // ✅ used by CompanyPage.jsx
+  static async createAppointment(data) {
     return api.post("/appointments", data);
   }
 
-  static async updateStatus(id, status) {
+  // ✅ used by TodaySchedule.jsx
+  // ✅ used by Appointments.jsx
+  static async updateAppointmentStatus(id, status) {
     return api.put(`/appointments/${id}/status`, { status });
   }
 
-  static async delete(id) {
+  // ✅ used by Appointments.jsx
+  static async deleteAppointment(id) {
     return api.delete(`/appointments/${id}`);
   }
 
+  // TODO NOT IN USE
+  // ❌ Not in use
   static async createPublic(data) {
     return api.post("/public/appointments", data);
   }

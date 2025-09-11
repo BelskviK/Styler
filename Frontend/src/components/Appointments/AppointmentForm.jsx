@@ -388,15 +388,19 @@ export default function AppointmentForm({
 
       console.log("📦 Final appointment data being sent:", appointmentData);
 
-      // Check if AppointmentService.create exists and is a function
+      // Check if AppointmentService.AppointmentService.creat exists and is a function
       if (
         !AppointmentService ||
-        typeof AppointmentService.create !== "function"
+        typeof AppointmentService.createAppointment !== "function"
       ) {
-        throw new Error("AppointmentService.create is not available");
+        throw new Error(
+          "AppointmentService.createAppointment is not available"
+        );
       }
 
-      const response = await AppointmentService.create(appointmentData);
+      const response = await AppointmentService.createAppointment(
+        appointmentData
+      );
       console.log("✅ Appointment created successfully:", response);
 
       toast.success("Appointment created successfully");

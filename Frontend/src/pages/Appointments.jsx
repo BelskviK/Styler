@@ -24,7 +24,9 @@ export default function Appointments() {
       // Check user role to determine which endpoint to call
       if (user.role === "superadmin" || user.role === "admin") {
         // Admins and superadmins get all appointments for their company
-        response = await AppointmentService.getByCompany(user.company);
+        response = await AppointmentService.getAppointmentsByCompany(
+          user.company
+        );
       } else if (user.role === "styler") {
         // Stylers only get their own appointments
         response = await AppointmentService.getByStyler(user.id);
@@ -68,7 +70,7 @@ export default function Appointments() {
   const handleStatusUpdate = useCallback(
     async (appointmentId, status) => {
       try {
-        await AppointmentService.updateStatus(appointmentId, status);
+        await AppointmentService.updateAppointmentStatus(appointmentId, status);
 
         // Optimistic update - only change the specific appointment
         setAppointments((prev) =>
@@ -98,7 +100,7 @@ export default function Appointments() {
           prev.filter((app) => app._id !== appointmentId)
         );
 
-        await AppointmentService.delete(appointmentId);
+        await AppointmentService.deleteAppointment(appointmentId);
         toast.success("Appointment deleted successfully");
       } catch {
         toast.error("Failed to delete appointment");

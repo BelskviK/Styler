@@ -48,7 +48,10 @@ export default function TodaySchedule() {
 
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
-      await AppointmentService.updateStatus(appointmentId, newStatus);
+      await AppointmentService.updateAppointmentStatus(
+        appointmentId,
+        newStatus
+      );
       fetchTodayAppointments(); // Refresh the list
     } catch (err) {
       console.error("Error updating status:", err);

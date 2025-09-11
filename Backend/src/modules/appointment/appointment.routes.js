@@ -2,15 +2,15 @@
 import express from "express";
 import auth from "../../middleware/auth.js";
 import {
-  getAppointments,
   getAppointmentsByCompany,
-  getAppointmentsByStyler,
   getTodayAppointments,
   getUpcomingAppointments,
+  checkAppountmantAvailability,
+  getAppointmentsByStyler,
+  getAppointmentsByCustomer,
   createAppointment,
   updateAppointmentStatus,
   deleteAppointment,
-  checkAvailability,
   appointmentService,
 } from "./appointment.controller.js";
 
@@ -21,19 +21,25 @@ export function setAppointmentNotificationService(notificationService) {
   appointmentService.setNotificationService(notificationService);
 }
 
-// Routes
-router.get("/", auth, getAppointments);
-router.get("/company/:companyId", auth, getAppointmentsByCompany);
-router.get(
-  "/company/:companyId/styler/:stylerId",
-  auth,
-  getAppointmentsByStyler
-);
-router.get("/today", auth, getTodayAppointments);
-router.get("/upcoming", auth, getUpcomingAppointments);
-router.post("/", createAppointment); // Note: This can be public for guest bookings
-router.put("/:id/status", auth, updateAppointmentStatus);
-router.delete("/:id", auth, deleteAppointment);
-router.get("/availability", auth, checkAvailability);
+/**
+ * Appointment Routes
+ */
+
+// ---- READ ----
+router.get("/company/:companyId", auth, getAppointmentsByCompany); // ✅
+router.get("/today/:userId/:role", auth, getTodayAppointments); // ✅
+router.get("/upcoming/:userId/:role", auth, getUpcomingAppointments); // ✅
+router.get("/availability", auth, checkAppountmantAvailability); // TODO
+router.get("/styler", auth, getAppointmentsByStyler);
+router.get("/customer", auth, getAppointmentsByCustomer); // TODO
+
+// ---- CREATE ----
+router.post("/", createAppointment); // ✅ (public for guest bookings)
+
+// ---- UPDATE ----
+router.put("/:id/status", auth, updateAppointmentStatus); // ✅
+
+// ---- DELETE ----
+router.delete("/:id", auth, deleteAppointment); // ✅
 
 export default router;

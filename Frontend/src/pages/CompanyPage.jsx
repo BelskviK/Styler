@@ -208,7 +208,7 @@ export default function CompanyPage() {
       // Use public service for non-authenticated users
       let response;
       if (isAuthenticated) {
-        response = await AppointmentService.create(appointmentData);
+        response = await AppointmentService.createAppointment(appointmentData);
       } else {
         response = await PublicService.createAppointment(appointmentData);
       }
