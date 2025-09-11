@@ -1,6 +1,6 @@
 // Backend/services/notificationService.js
-const Notification = require("../models/Notification");
-const User = require("../models/User");
+import Notification from "../models/Notification.js";
+import User from "../models/User.js";
 
 class NotificationService {
   constructor(io) {
@@ -214,5 +214,4 @@ class NotificationService {
     }
   }
 }
-
-module.exports = NotificationService;
+export default NotificationService;

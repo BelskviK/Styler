@@ -1,7 +1,7 @@
 // Backend/models/Review.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const reviewSchema = new mongoose.Schema({
+export const reviewSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -101,4 +101,4 @@ reviewSchema.post("save", async function () {
   }
 });
 
-module.exports = mongoose.model("Review", reviewSchema);
+export default mongoose.model("Review", reviewSchema);

@@ -1,6 +1,3 @@
-// middleware/checkCompany.js
-const User = require("../models/User");
-
 const checkCompany = async (req, res, next) => {
   try {
     if (req.user.role === "superadmin" && !req.user.company) {
@@ -14,5 +11,4 @@ const checkCompany = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-module.exports = checkCompany;
+export default checkCompany;

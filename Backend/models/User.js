@@ -1,8 +1,8 @@
 // Backend\models\User.js?
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const userSchema = new mongoose.Schema({
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+export const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -85,4 +85,4 @@ userSchema.methods.getSignedJwtToken = function () {
   });
 };
 
-module.exports = mongoose.model("User", userSchema);
+export default mongoose.model("User", userSchema);

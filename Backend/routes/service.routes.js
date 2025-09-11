@@ -1,8 +1,9 @@
 // Backend/routes/service.routes.js
-const express = require("express");
-const router = express.Router();
-const auth = require("../middleware/auth");
-const serviceController = require("../controllers/service.controller");
+import express from "express";
+const ServiceRouter = express.Router();
+import auth from "../middleware/auth.js";
+
+import serviceController from "../controllers/service.controller.js";
 
 /**
  * @route   GET /api/services
@@ -11,38 +12,37 @@ const serviceController = require("../controllers/service.controller");
  *          - Admin/Styler/Customer: only services from their company
  * @access  Private
  */
-router.get("/", auth, serviceController.getServices);
+ServiceRouter.get("/", auth, serviceController.getServices);
 
 /**
  * @route   POST /api/services
  * @desc    Create a new service (admin only)
  * @access  Private
  */
-router.post("/", auth, serviceController.createService);
+ServiceRouter.post("/", auth, serviceController.createService);
 
 /**
  * @route   PUT /api/services/:id
  * @desc    Update a service (admin only)
  * @access  Private
  */
-router.put("/:id", auth, serviceController.updateService);
+ServiceRouter.put("/:id", auth, serviceController.updateService);
 
 /**
  * @route   DELETE /api/services/:id
  * @desc    Delete a service (admin only)
  * @access  Private
  */
-router.delete("/:id", auth, serviceController.deleteService);
+ServiceRouter.delete("/:id", auth, serviceController.deleteService);
 
 /**
  * @route   PUT /api/services/assign/:stylistId
  * @desc    Assign services to a stylist (admin only)
  * @access  Private
  */
-router.put(
+ServiceRouter.put(
   "/assign/:stylistId",
   auth,
   serviceController.assignServicesToStylist
 );
-
-module.exports = router;
+export default ServiceRouter;

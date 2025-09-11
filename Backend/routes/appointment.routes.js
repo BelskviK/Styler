@@ -1,25 +1,37 @@
 // Backend\routes\appointment.routes.js
-const express = require("express");
-const router = express.Router();
-const auth = require("../middleware/auth");
-const appointmentController = require("../controllers/appointment.controller");
+import express from "express";
+const AppointmentRouter = express.Router();
+import auth from "../middleware/auth.js";
 
-router.get("/", auth, appointmentController.getAppointments);
-router.get(
+import appointmentController from "../controllers/appointment.controller.js";
+
+AppointmentRouter.get("/", auth, appointmentController.getAppointments);
+AppointmentRouter.get(
   "/company/:companyId",
   auth,
   appointmentController.getAppointmentsByCompany
 );
-router.get(
+AppointmentRouter.get(
   "/styler/:companyId",
   auth,
   appointmentController.getAppointmentsByStyler
 );
 
-router.get("/today", auth, appointmentController.getTodayAppointments); // Add this route
-router.get("/upcoming", auth, appointmentController.getUpcomingAppointments); // Add this route
-router.post("/", auth, appointmentController.createAppointment);
-router.put("/:id/status", auth, appointmentController.updateAppointmentStatus);
-router.delete("/:id", auth, appointmentController.deleteAppointment);
-
-module.exports = router;
+AppointmentRouter.get(
+  "/today",
+  auth,
+  appointmentController.getTodayAppointments
+); // Add this route
+AppointmentRouter.get(
+  "/upcoming",
+  auth,
+  appointmentController.getUpcomingAppointments
+); // Add this route
+AppointmentRouter.post("/", auth, appointmentController.createAppointment);
+AppointmentRouter.put(
+  "/:id/status",
+  auth,
+  appointmentController.updateAppointmentStatus
+);
+AppointmentRouter.delete("/:id", auth, appointmentController.deleteAppointment);
+export default AppointmentRouter;

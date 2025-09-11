@@ -1,10 +1,10 @@
 // Backend/routes/notification.routes.js
-const express = require("express");
-const router = express.Router();
-const auth = require("../middleware/auth");
+import express from "express";
+const NotificationRouter = express.Router();
+import auth from "../middleware/auth.js";
 
 // Get user notifications
-router.get("/", auth, async (req, res) => {
+NotificationRouter.get("/", auth, async (req, res) => {
   try {
     const notificationService = req.app.get("notificationService");
     const notifications = await notificationService.getUserNotifications(
@@ -17,7 +17,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // Mark notification as read
-router.put("/:id/read", auth, async (req, res) => {
+NotificationRouter.put("/:id/read", auth, async (req, res) => {
   try {
     const notificationService = req.app.get("notificationService");
     const notification = await notificationService.markAsRead(
@@ -31,7 +31,7 @@ router.put("/:id/read", auth, async (req, res) => {
 });
 
 // Get unread count
-router.get("/unread/count", auth, async (req, res) => {
+NotificationRouter.get("/unread/count", auth, async (req, res) => {
   try {
     const notificationService = req.app.get("notificationService");
     const count = await notificationService.getUnreadCount(req.user.id);
@@ -42,7 +42,7 @@ router.get("/unread/count", auth, async (req, res) => {
 });
 
 // Send broadcast notification (admin only)
-router.post("/broadcast", auth, async (req, res) => {
+NotificationRouter.post("/broadcast", auth, async (req, res) => {
   try {
     if (req.user.role !== "admin" && req.user.role !== "superadmin") {
       return res.status(403).json({ message: "Not authorized" });
@@ -69,4 +69,4 @@ router.post("/broadcast", auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default NotificationRouter;

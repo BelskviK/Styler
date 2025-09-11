@@ -1,23 +1,24 @@
 // Backend\routes\auth.routes.js
-const express = require("express");
-const router = express.Router();
-const authController = require("../controllers/auth.controller");
-const auth = require("../middleware/auth");
+import express from "express";
+const AuthRouter = express.Router();
+import auth from "../middleware/auth.js";
+
+import AuthController from "../controllers/auth.controller.js";
 
 // ✅ Public self-registration (customers)
-router.post("/register/customer", authController.registerCustomer);
+AuthRouter.post("/register/customer", AuthController.registerCustomer);
 
 // ✅ Employee registration (admin/superadmin only)
-router.post(
+AuthRouter.post(
   "/register",
   auth,
   auth.authorize("admin", "superadmin"),
-  authController.register
+  AuthController.register
 );
+AuthRouter.get("/me", auth, AuthController.getMe);
 
 // Login / Me / Logout
-router.post("/login", authController.login);
-router.get("/me", auth, authController.getMe);
-router.get("/logout", auth, authController.logout);
-
-module.exports = router;
+AuthRouter.post("/login", AuthController.login);
+AuthRouter.get("/me", auth, AuthController.getMe);
+AuthRouter.get("/logout", auth, AuthController.logout);
+export default AuthRouter;

@@ -1,8 +1,8 @@
 // Backend/NotificationServer.js
-const http = require("http");
-const socketIo = require("socket.io");
-const jwt = require("jsonwebtoken");
-const NotificationService = require("./services/notificationService");
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
+import jwt from "jsonwebtoken";
+import NotificationService from "./services/notificationService.js";
 
 class NotificationServer {
   constructor(app) {
@@ -21,12 +21,10 @@ class NotificationServer {
       "https://stylerb.onrender.com",
     ];
 
-    const io = socketIo(this.server, {
+    const io = new SocketIOServer(this.server, {
       cors: {
         origin: function (origin, callback) {
-          // Allow requests with no origin (like mobile apps or curl requests)
           if (!origin) return callback(null, true);
-
           if (allowedOrigins.indexOf(origin) === -1) {
             const msg =
               "The CORS policy for this site does not allow access from the specified Origin.";
@@ -37,10 +35,9 @@ class NotificationServer {
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE"],
       },
-      transports: ["websocket", "polling"], // Add fallback transports
+      transports: ["websocket", "polling"],
     });
 
-    // Socket.io authentication middleware
     io.use(this.authenticateSocket.bind(this));
 
     return io;
@@ -236,5 +233,4 @@ class NotificationServer {
     return this.io.engine.clientsCount;
   }
 }
-
-module.exports = NotificationServer;
+export default NotificationServer;

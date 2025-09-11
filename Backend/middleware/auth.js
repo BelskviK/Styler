@@ -1,7 +1,8 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+// Backend/middleware/auth.js
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-const auth = async (req, res, next) => {
+const Auth = async (req, res, next) => {
   try {
     // Get token from cookies, Authorization header, or query
     const token =
@@ -28,11 +29,11 @@ const auth = async (req, res, next) => {
         message: "Invalid token. User not found.",
       });
     }
-    next(); // This is critical - make sure next() is called
+
+    next(); // Important: allow request to proceed
   } catch (err) {
     console.error("Authentication error:", err);
 
-    // Specific error handling
     if (err.name === "JsonWebTokenError") {
       return res.status(401).json({
         success: false,
@@ -54,8 +55,8 @@ const auth = async (req, res, next) => {
   }
 };
 
-// Role authorization
-auth.authorize = (...roles) => {
+// ✅ Fix: attach `authorize` correctly
+Auth.authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
@@ -67,4 +68,4 @@ auth.authorize = (...roles) => {
   };
 };
 
-module.exports = auth;
+export default Auth;

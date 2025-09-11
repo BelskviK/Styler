@@ -1,30 +1,47 @@
 // Backend/routes/analytics.routes.js
-const express = require("express");
-const router = express.Router();
-const auth = require("../middleware/auth");
-const analyticsController = require("../controllers/analytics.controller");
+import express from "express";
+const AnalyticsRouter = express.Router();
+import auth from "../middleware/auth.js";
+
+import analyticsController from "../controllers/analytics.controller.js";
 
 // Review statistics analytics
-router.get("/reviews", auth, analyticsController.getReviewStatistics);
+AnalyticsRouter.get("/reviews", auth, analyticsController.getReviewStatistics);
 // Dashboard overview statistics
-router.get("/dashboard", auth, analyticsController.getDashboardStats);
+AnalyticsRouter.get("/dashboard", auth, analyticsController.getDashboardStats);
 
 // Revenue analytics
-router.get("/revenue", auth, analyticsController.getRevenueAnalytics);
+AnalyticsRouter.get("/revenue", auth, analyticsController.getRevenueAnalytics);
 
 // Appointment analytics
-router.get("/appointments", auth, analyticsController.getAppointmentAnalytics);
+AnalyticsRouter.get(
+  "/appointments",
+  auth,
+  analyticsController.getAppointmentAnalytics
+);
 
 // Customer analytics
-router.get("/customers", auth, analyticsController.getCustomerAnalytics);
+AnalyticsRouter.get(
+  "/customers",
+  auth,
+  analyticsController.getCustomerAnalytics
+);
 
 // Employee performance analytics
-router.get("/employees", auth, analyticsController.getEmployeePerformance);
+AnalyticsRouter.get(
+  "/employees",
+  auth,
+  analyticsController.getEmployeePerformance
+);
 
-router.get("/reviews/analytics", auth, analyticsController.getReviewAnalytics);
+AnalyticsRouter.get(
+  "/reviews/analytics",
+  auth,
+  analyticsController.getReviewAnalytics
+);
 
 // Popular services analytics - only for admins and superadmins
-router.get(
+AnalyticsRouter.get(
   "/services/popular",
   auth,
   auth.authorize("superadmin", "admin"),
@@ -32,7 +49,7 @@ router.get(
 );
 
 // Service performance analytics - only for admins and superadmins
-router.get(
+AnalyticsRouter.get(
   "/services/:serviceId",
   auth,
   auth.authorize("superadmin", "admin"),
@@ -40,11 +57,11 @@ router.get(
 );
 
 // Review statistics for specific company (optional)
-router.get(
+AnalyticsRouter.get(
   "/reviews/company",
   auth,
   auth.authorize("superadmin", "admin"),
   analyticsController.getReviewStatistics
 );
-
-module.exports = router;
+export default AnalyticsRouter;
+// Backend

@@ -1,20 +1,21 @@
 // Backend/app.js
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const cookieParser = require("cookie-parser");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
 
 // Import routes
-const authRoutes = require("./routes/auth.routes");
-const companyRoutes = require("./routes/company.routes");
-const userRoutes = require("./routes/user.routes");
-const serviceRoutes = require("./routes/service.routes");
-const appointmentRoutes = require("./routes/appointment.routes");
-const notificationRoutes = require("./routes/notification.routes");
-const publicRoutes = require("./routes/public.routes");
-const analyticsRoutes = require("./routes/analytics.routes");
-const reviewRoutes = require("./routes/review.routes");
+import AuthRouter from "./routes/auth.routes.js";
+import companyRouter from "./routes/company.routes.js";
+import UserRouter from "./routes/user.routes.js";
+import ServiceRouter from "./routes/service.routes.js";
+import AppointmentRouter from "./routes/appointment.routes.js";
+import NotificationRouter from "./routes/notification.routes.js";
+import PublicRouter from "./routes/public.routes.js";
+import AnalyticsRouter from "./routes/analytics.routes.js";
+import ReviewRouter from "./routes/review.routes.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Initialize app
 const app = express();
@@ -52,15 +53,15 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/companies", companyRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/services", serviceRoutes);
-app.use("/api/appointments", appointmentRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/public", publicRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/reviews", reviewRoutes);
+app.use("/api/auth", AuthRouter);
+app.use("/api/companies", companyRouter);
+app.use("/api/users", UserRouter);
+app.use("/api/services", ServiceRouter);
+app.use("/api/appointments", AppointmentRouter);
+app.use("/api/notifications", NotificationRouter);
+app.use("/api/public", PublicRouter);
+app.use("/api/analytics", AnalyticsRouter);
+app.use("/api/reviews", ReviewRouter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -84,5 +85,4 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
-
-module.exports = app;
+export default app;

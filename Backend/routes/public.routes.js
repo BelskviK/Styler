@@ -1,14 +1,15 @@
 // routes/public.routes.js
-const express = require("express");
-const router = express.Router();
-const Appointment = require("../models/Appointment");
-const User = require("../models/User");
-const Service = require("../models/Service");
+import express from "express";
+const PublicRouter = express.Router();
+
+import Appointment from "../models/Appointment.js";
+import User from "../models/User.js";
+import Service from "../models/Service.js";
 
 // @route   GET /api/public/company/:companyId/stylists
 // @desc    Get available stylists for a company (public)
 // @access  Public
-router.get("/company/:companyId/stylists", async (req, res) => {
+PublicRouter.get("/company/:companyId/stylists", async (req, res) => {
   try {
     const { companyId } = req.params;
 
@@ -29,7 +30,7 @@ router.get("/company/:companyId/stylists", async (req, res) => {
 // @route   GET /api/public/stylist/:stylistId/services
 // @desc    Get available services for a stylist (public)
 // @access  Public
-router.get("/stylist/:stylistId/services", async (req, res) => {
+PublicRouter.get("/stylist/:stylistId/services", async (req, res) => {
   try {
     const { stylistId } = req.params;
 
@@ -52,7 +53,7 @@ router.get("/stylist/:stylistId/services", async (req, res) => {
 // @route   POST /api/public/appointments
 // @desc    Create appointment for non-authenticated users
 // @access  Public
-router.post("/appointments", async (req, res) => {
+PublicRouter.post("/appointments", async (req, res) => {
   try {
     const {
       stylistId,
@@ -171,4 +172,4 @@ router.post("/appointments", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default PublicRouter;

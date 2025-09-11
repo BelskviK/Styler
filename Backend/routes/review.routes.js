@@ -1,25 +1,27 @@
 // Backend\routes\review.routes.js
-const express = require("express");
-const router = express.Router();
-const reviewController = require("../controllers/review.controller");
-const auth = require("../middleware/auth");
+
+import express from "express";
+const ReviewRouter = express.Router();
+import auth from "../middleware/auth.js";
+
+import reviewController from "../controllers/review.controller.js";
 
 // Public routes
-router.get("/company/:companyId", reviewController.getReviewsByCompany);
-router.get("/stylist/:stylistId", reviewController.getReviewsByStylist);
-router.get(
+ReviewRouter.get("/company/:companyId", reviewController.getReviewsByCompany);
+ReviewRouter.get("/stylist/:stylistId", reviewController.getReviewsByStylist);
+ReviewRouter.get(
   "/appointment/:appointmentId",
   reviewController.getReviewsByAppointment
 );
-router.get("/recent", reviewController.getRecentReviews);
-router.get("/:reviewId", reviewController.getReview);
+ReviewRouter.get("/recent", reviewController.getRecentReviews);
+ReviewRouter.get("/:reviewId", reviewController.getReview);
 
 //  d routes
-router.post("/", auth, reviewController.createReview);
-router.get(
+ReviewRouter.post("/", auth, reviewController.createReview);
+ReviewRouter.get(
   "/customer/my-reviews",
 
   reviewController.getReviewsByCustomer
 );
 
-module.exports = router;
+export default ReviewRouter;

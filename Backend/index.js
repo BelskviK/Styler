@@ -1,9 +1,9 @@
 // Backend/index.js - Make sure this is your entry point
-const app = require("./app");
-const NotificationServer = require("./NotificationServer");
+import app from "./app.js";
+import NotificationServer from "./NotificationServer.js";
 
 // Create and start the server with Socket.IO support
-const server = new NotificationServer(app);
+export const server = new NotificationServer(app);
 
 const PORT = process.env.PORT || 10000;
 
@@ -14,5 +14,3 @@ try {
   console.error("❌ Failed to start server:", error);
   process.exit(1);
 }
-
-module.exports = server;
