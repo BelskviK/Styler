@@ -2,12 +2,9 @@
 import api from "./api";
 
 class AuthService {
+  // Register.jsx
   static async registerCustomer(data) {
     return api.post("/auth/register/customer", data);
-  }
-
-  static async registerEmployee(data) {
-    return api.post("/auth/register", data);
   }
 
   static async login(credentials) {
@@ -20,6 +17,10 @@ class AuthService {
 
   static async logout() {
     return api.get("/auth/logout");
+  }
+
+  static async registerEmployee(data) {
+    return api.post("/auth/register", data);
   }
 }
 

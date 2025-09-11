@@ -16,6 +16,13 @@ import {
 } from "./analytics.controller.js";
 // Review statistics analytics
 AnalyticsRouter.get("/reviews", auth, getReviewStatistics);
+// Popular services analytics - only for admins and superadmins
+AnalyticsRouter.get(
+  "/services/popular",
+  auth,
+  auth.authorize("superadmin", "admin"),
+  getPopularServices
+);
 // Dashboard overview statistics
 AnalyticsRouter.get("/dashboard", auth, getDashboardStats);
 
@@ -32,14 +39,6 @@ AnalyticsRouter.get("/customers", auth, getCustomerAnalytics);
 AnalyticsRouter.get("/employees", auth, getEmployeePerformance);
 
 AnalyticsRouter.get("/reviews/analytics", auth, getReviewAnalytics);
-
-// Popular services analytics - only for admins and superadmins
-AnalyticsRouter.get(
-  "/services/popular",
-  auth,
-  auth.authorize("superadmin", "admin"),
-  getPopularServices
-);
 
 // Service performance analytics - only for admins and superadmins
 AnalyticsRouter.get(

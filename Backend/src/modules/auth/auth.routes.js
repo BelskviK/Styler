@@ -1,6 +1,7 @@
-// Backend\routes\auth.routes.js
+// Backend/routes/auth.routes.js
 import express from "express";
 const AuthRouter = express.Router();
+
 import auth from "../../middleware/auth.js";
 import {
   register,
@@ -10,10 +11,21 @@ import {
   registerCustomer,
 } from "./auth.controller.js";
 
-// ✅ Public self-registration (customers)
+/**
+ * Authentication & User Management Routes
+ */
+
+// ---- PUBLIC ROUTES ----
+
+// ✅ Customer self-registration (no auth required)
 AuthRouter.post("/register/customer", registerCustomer);
 
-// ✅ Employee registration (admin/superadmin only)
+// ✅ Login (no auth required)
+AuthRouter.post("/login", login);
+
+// ---- PROTECTED ROUTES ----
+
+// ✅ Employee registration (only admin/superadmin can create employees)
 AuthRouter.post(
   "/register",
   auth,
@@ -21,8 +33,10 @@ AuthRouter.post(
   register
 );
 
-// Login / Me / Logout
-AuthRouter.post("/login", login);
+// ✅ Get current user info
 AuthRouter.get("/me", auth, getMe);
+
+// ✅ Logout
 AuthRouter.get("/logout", auth, logout);
+
 export default AuthRouter;

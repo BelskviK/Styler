@@ -2,10 +2,16 @@
 import api from "./api";
 
 class CompanyService {
-  static async getAll() {
+  // AppointmentForm
+  static async getCompanies() {
     return api.get("/companies");
   }
-
+  //BarberShopSelector.jsx
+  //CompanyPage.jsx
+  static async getPublicBarbershops() {
+    return api.get("/companies/public/barbershops");
+  }
+  // TODO NOT IN USE IN FRONTEND
   static async getById(id) {
     return api.get(`/companies/${id}`);
   }
@@ -24,10 +30,6 @@ class CompanyService {
 
   static async delete(id) {
     return api.delete(`/companies/${id}`);
-  }
-
-  static async getPublicBarbershops() {
-    return api.get("/companies/public/barbershops");
   }
 }
 

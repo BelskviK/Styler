@@ -1,51 +1,47 @@
-// Backend\routes\company.routes.js
+// Backend/routes/company.routes.js
 import express from "express";
 const CompanyRouter = express.Router();
-import auth from "../../middleware/auth.js";
 
+import auth from "../../middleware/auth.js";
 import {
+  getPublicBarbershops,
+  getMyCompany,
+  getCompany,
+  updateCompany,
   getCompanies,
   createCompany,
-  getCompany,
-  getMyCompany,
-  updateCompany,
   deleteCompany,
-  getPublicBarbershops,
 } from "./company.controller.js";
 
-// @route   GET /api/companies
-// @desc    Get all companies (superadmin only)
-// @access  Private (superadmin)
-CompanyRouter.get("/", auth, getCompanies);
+/**
+ * Company Routes
+ */
 
-// @route   POST /api/companies
-// @desc    Create a new company (superadmin only)
-// @access  Private (superadmin)
-CompanyRouter.post("/", createCompany);
+// ---- PUBLIC ROUTES ----
 
-// @route   GET /api/companies/:id
-// @desc    Get company by ID
-// @access  Private (admin of the company or superadmin)
-CompanyRouter.get("/:id", auth, getCompany);
+// ✅ Get all active barbershops (public access)
+CompanyRouter.get("/public/barbershops", getPublicBarbershops);
 
-// @route   GET /api/companies/me
-// @desc    Get my company (for admin)
-// @access  Private (admin)
+// ---- PROTECTED ROUTES ----
+
+// ✅ Get my company (admin of the company)
 CompanyRouter.get("/me", auth, getMyCompany);
 
-// @route   PUT /api/companies/:id
-// @desc    Update a company
-// @access  Private (superadmin or admin of the company)
+// ✅ Get company by ID (admin of the company or superadmin)
+CompanyRouter.get("/:id", auth, getCompany);
+
+// ✅ Update a company (admin of the company or superadmin)
 CompanyRouter.put("/:id", auth, updateCompany);
 
-// @route   DELETE /api/companies/:id
-// @desc    Delete a company
-// @access  Private (superadmin only)
-CompanyRouter.delete("/:id", auth, deleteCompany);
+// ---- SUPERADMIN ROUTES ----
 
-// @route   GET /api/companies/public/barbershops
-// @desc    Get all active barbershops (public access)
-// @access  Public
-CompanyRouter.get("/public/barbershops", getPublicBarbershops);
+// ✅ Get all companies (superadmin only)
+CompanyRouter.get("/", auth, getCompanies);
+
+// ✅ Create a new company (superadmin only)
+CompanyRouter.post("/", auth, createCompany);
+
+// ✅ Delete a company (superadmin only)
+CompanyRouter.delete("/:id", auth, deleteCompany);
 
 export default CompanyRouter;

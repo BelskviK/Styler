@@ -2,6 +2,7 @@
 import api from "@/services/api";
 
 class ReviewService {
+  //TODO NOT IN USE WITH FRONTEND
   // Create a new review
   static async createReview(reviewData) {
     return api.post("/reviews", reviewData);

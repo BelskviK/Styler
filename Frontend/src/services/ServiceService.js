@@ -2,27 +2,34 @@
 import api from "./api";
 
 class ServiceService {
-  static async getAll() {
+  // Services.jsx
+  // ServiceForm.jsx
+  // Stylist.jsx
+  static async getServices() {
     return api.get("/services");
   }
 
-  static async getCompanyServices(companyId) {
-    return api.get("/services", { params: { companyId } });
-  }
-
-  static async create(data) {
+  // Services.jsx
+  // ServiceForm.jsx
+  static async createService(data) {
     return api.post("/services", data);
   }
 
-  static async update(id, data) {
+  // Services.jsx
+  // ServiceForm.jsx
+  static async updateService(id, data) {
     return api.put(`/services/${id}`, data);
   }
 
-  static async delete(id) {
+  // Services.jsx
+  // ServiceForm.jsx
+  static async deleteService(id) {
     return api.delete(`/services/${id}`);
   }
 
-  static async assignServices(stylistId, serviceIds) {
+  // Stylist.jsx
+  // StylistsView.jsx
+  static async assignServicesToStylist(stylistId, serviceIds) {
     return api.put(`/services/assign/${stylistId}`, { serviceIds });
   }
 }

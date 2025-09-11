@@ -2,32 +2,40 @@
 import api from "./api";
 
 class UserService {
+  // Stilists.jsx
   static async getStylists() {
     return api.get("/users");
   }
-
+  // Settings.jsx
+  // CompanyPage.jsx
   static async getCurrentUser() {
     return api.get("/users/me");
   }
-
+  // AppointmentForm.jsx
   static async getCompanyUsers() {
     return api.get("/users/company");
   }
 
+  // Settings.jsx
+  // Stilists.jsx
+  static async updateUser(id, data) {
+    return api.put(`/users/${id}`, data);
+  }
+
+  // Stilists.jsx
+  // StylistsView.jsx
+  // AppointmentForm.jsx
+  static async getStylistWithServices(stylistId) {
+    return api.get(`/users/stylist/${stylistId}`);
+  }
+
+  // TODO NOT IN USE WITH FRONTEND {}
   static async getCompanyStylists(companyId) {
     return api.get(`/users/company/${companyId}/stylists`);
   }
 
   static async addEmployee(data) {
     return api.post("/users/employee", data);
-  }
-
-  static async updateUser(id, data) {
-    return api.put(`/users/${id}`, data);
-  }
-
-  static async getStylistWithServices(stylistId) {
-    return api.get(`/users/stylist/${stylistId}`);
   }
 
   static async deleteUser(id) {

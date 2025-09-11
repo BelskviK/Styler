@@ -32,7 +32,7 @@ export default function Services() {
     const fetchServices = async () => {
       try {
         setIsLoading(true);
-        const response = await ServiceService.getAll();
+        const response = await ServiceService.getServices();
         setServices(response.data);
         setFilteredServices(response.data);
       } catch (error) {
@@ -79,7 +79,7 @@ export default function Services() {
 
       if (form._id) {
         // Update existing service
-        const response = await ServiceService.update(form._id, {
+        const response = await ServiceService.updateService(form._id, {
           name: form.name,
           description: form.description,
           duration: form.duration,
@@ -93,7 +93,7 @@ export default function Services() {
         toast.success("Service updated successfully");
       } else {
         // Create new service
-        const response = await ServiceService.create({
+        const response = await ServiceService.createService({
           name: form.name,
           description: form.description,
           duration: form.duration,
@@ -136,7 +136,7 @@ export default function Services() {
   const handleDelete = async () => {
     try {
       setIsLoading(true);
-      await ServiceService.delete(serviceToDelete._id);
+      await ServiceService.deleteService(serviceToDelete._id);
       const updatedServices = services.filter(
         (s) => s._id !== serviceToDelete._id
       );

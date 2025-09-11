@@ -66,7 +66,7 @@ export default function StylistsView({
   const handleAssignServices = async (serviceIds) => {
     try {
       setAssignmentLoading(true);
-      await ServiceService.assignServices(
+      await ServiceService.assignServicesToStylist(
         selectedStylistForServices._id,
         serviceIds
       );

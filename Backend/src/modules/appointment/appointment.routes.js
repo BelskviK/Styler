@@ -27,8 +27,8 @@ export function setAppointmentNotificationService(notificationService) {
 
 // ---- READ ----
 router.get("/company/:companyId", auth, getAppointmentsByCompany); // ✅
-router.get("/today/:userId/:role", auth, getTodayAppointments); // ✅
-router.get("/upcoming/:userId/:role", auth, getUpcomingAppointments); // ✅
+router.get("/today", auth, getTodayAppointments); // ✅
+router.get("/upcoming", auth, getUpcomingAppointments); // ✅
 router.get("/availability", auth, checkAppountmantAvailability); // TODO
 router.get("/styler", auth, getAppointmentsByStyler);
 router.get("/customer", auth, getAppointmentsByCustomer); // TODO

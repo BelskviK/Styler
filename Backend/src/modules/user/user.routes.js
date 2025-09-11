@@ -16,43 +16,40 @@ import {
   getCompanyStylists,
 } from "./user.controller.js";
 
-// @route   GET /api/users
-// @desc    Get all users (superadmin only)
-// @access  Private (superadmin)
-UserRouter.get("/", auth, checkCompany, getStylists);
+/**
+ * User Routes
+ */
 
-// @route   GET /api/users/me
-// @desc    Get current user profile
-// @access  Private
+// ---- USER / SELF ROUTES ----
+
+// ✅ Get current authenticated user profile
 UserRouter.get("/me", auth, getCurrentUser);
 
-// @route   GET /api/users/company
-// @desc    Get current company users (admin only)
-// @access  Private (admin)
-UserRouter.get("/company", auth, getCompanyUsers);
-// @route   PUT /api/users/:id
-// @desc    Update user
-// @access  Private (admin or self)
+// ✅ Update user (admin or self)
 UserRouter.put("/:id", auth, updateUser);
 
-// @route   GET /api/users/company/:companyId/stylists
-// @desc    Get stylists for a specific company (superadmin only)
-// @access  Private (superadmin)
-UserRouter.get("/company/:companyId/stylists", auth, getCompanyStylists);
+// ---- COMPANY / ADMIN ROUTES ----
 
-// @route   POST /api/users/employee
-// @desc    Add employee to company (admin only)
-// @access  Private (admin)
+// ✅ Get all users in current company (admin only)
+UserRouter.get("/company", auth, getCompanyUsers);
+
+// ✅ Add employee to company (admin only)
 UserRouter.post("/employee", auth, addEmployee);
 
-// @route   GET /api/users/stylist/:id
-// @desc    Get a stylist with services populated
-// @access  Private (admin or superadmin)
+// ✅ Get a stylist with services populated (admin or superadmin)
 UserRouter.get("/stylist/:id", auth, getStylistWithServices);
 
-// @route   DELETE /api/users/:id
-// @desc    Delete user
-// @access  Private (admin or superadmin)
+// ---- SUPERADMIN ROUTES ----
+
+// ✅ Get all stylists (superadmin only)
+UserRouter.get("/", auth, checkCompany, getStylists);
+
+// ✅ Get stylists for a specific company (superadmin only)
+UserRouter.get("/company/:companyId/stylists", auth, getCompanyStylists);
+
+// ---- DELETE ----
+
+// ✅ Delete user (admin or superadmin)
 UserRouter.delete("/:id", auth, deleteUser);
 
 export default UserRouter;

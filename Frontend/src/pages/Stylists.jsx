@@ -41,7 +41,7 @@ export default function Stylists() {
         if (user?.company) {
           const [stylistsResponse, servicesResponse] = await Promise.all([
             UserService.getStylists(),
-            ServiceService.getCompanyServices(user.company),
+            ServiceService.getServices(),
           ]);
 
           setState((prev) => ({
@@ -129,7 +129,7 @@ export default function Stylists() {
           password: formData.password || undefined,
           role: formData.role,
         }),
-        ServiceService.assignServices(
+        ServiceService.assignServicesToStylist(
           state.editingStylist._id,
           formData.services
         ),
@@ -205,7 +205,7 @@ export default function Stylists() {
       if (!serviceIds || serviceIds.length === 0)
         throw new Error("Please select at least one service");
 
-      await ServiceService.assignServices(
+      await ServiceService.assignServicesToStylist(
         selectedStylistForServices._id,
         serviceIds
       );

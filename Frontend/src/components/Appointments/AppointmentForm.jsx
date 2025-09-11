@@ -235,7 +235,7 @@ export default function AppointmentForm({
   const loadCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await CompanyService.getAll();
+      const response = await CompanyService.getCompanies();
       setCompanies(response.data);
 
       // After companies load, pre-select the user's company if they have one

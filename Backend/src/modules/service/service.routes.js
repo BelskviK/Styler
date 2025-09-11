@@ -1,6 +1,7 @@
 // Backend/routes/service.routes.js
 import express from "express";
 const ServiceRouter = express.Router();
+
 import auth from "../../middleware/auth.js";
 import {
   getServices,
@@ -11,39 +12,34 @@ import {
 } from "./service.controller.js";
 
 /**
- * @route   GET /api/services
- * @desc    Get all services for a company
- *          - Superadmin: can filter by companyId query param
- *          - Admin/Styler/Customer: only services from their company
- * @access  Private
+ * Service Routes
  */
+
+// ---- READ ----
+
+// ✅ Get all services for a company
+// - Superadmin: can filter by ?companyId
+// - Admin/Styler/Customer: only services from their company
 ServiceRouter.get("/", auth, getServices);
 
-/**
- * @route   POST /api/services
- * @desc    Create a new service (admin only)
- * @access  Private
- */
+// ---- CREATE ----
+
+// ✅ Create a new service (admin only)
 ServiceRouter.post("/", auth, createService);
 
-/**
- * @route   PUT /api/services/:id
- * @desc    Update a service (admin only)
- * @access  Private
- */
+// ---- UPDATE ----
+
+// ✅ Update a service (admin only)
 ServiceRouter.put("/:id", auth, updateService);
 
-/**
- * @route   DELETE /api/services/:id
- * @desc    Delete a service (admin only)
- * @access  Private
- */
+// ---- DELETE ----
+
+// ✅ Delete a service (admin only)
 ServiceRouter.delete("/:id", auth, deleteService);
 
-/**
- * @route   PUT /api/services/assign/:stylistId
- * @desc    Assign services to a stylist (admin only)
- * @access  Private
- */
+// ---- SPECIAL ACTION ----
+
+// ✅ Assign services to a stylist (admin only)
 ServiceRouter.put("/assign/:stylistId", auth, assignServicesToStylist);
+
 export default ServiceRouter;
