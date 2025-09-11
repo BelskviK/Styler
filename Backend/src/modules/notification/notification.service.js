@@ -1,7 +1,6 @@
-//Backend\src\modules\notification\notificationService.js
+// Backend/src/modules/notification/notification.service.js
 import Notification from "./notification.model.js";
 import User from "../user/user.model.js";
-
 class NotificationService {
   constructor(io) {
     this.io = io;
@@ -214,4 +213,5 @@ class NotificationService {
     }
   }
 }
+
 export default NotificationService;

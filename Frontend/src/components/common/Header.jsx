@@ -43,7 +43,7 @@ const Header = () => {
               </button>
             </div>
           )}
-          <NotificationDropdown />
+          {user && <NotificationDropdown />}
 
           {user ? (
             <div className="flex items-center space-x-2">

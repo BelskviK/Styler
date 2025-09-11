@@ -1,11 +1,11 @@
-import ServiceService from "./service.service.js";
+import serviceService from "./service.service.js";
 
 // @desc    Get all services for a company
 // @route   GET /api/services
 // @access  Private (admin, styler, customer of the company)
 export async function getServices(req, res) {
   try {
-    const result = await ServiceService.getCompanyServices(
+    const result = await serviceService.getCompanyServices(
       req.user,
       req.query.companyId
     );

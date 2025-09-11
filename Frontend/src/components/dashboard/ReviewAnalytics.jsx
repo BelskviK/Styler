@@ -98,7 +98,7 @@ const ReviewAnalytics = ({ companyId = null }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="  rounded-lg shadow p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-800">

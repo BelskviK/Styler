@@ -18,6 +18,6 @@
     ensure that when logedin admin is registering appointment for customer, appointment is registering for himself
 
 
-    ubscription plan content
+    subscription plan content
 
     subscription plan APi

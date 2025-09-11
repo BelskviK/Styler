@@ -2,8 +2,9 @@
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import jwt from "jsonwebtoken";
-import NotificationService from "./modules/notification/notificationService.js";
-
+import NotificationService from "./modules/notification/notification.service.js";
+import { setNotificationService } from "./modules/notification/notification.controller.js";
+import { setAppointmentNotificationService } from "./modules/appointment/appointment.routes.js";
 class NotificationServer {
   constructor(app) {
     this.app = app;
@@ -65,6 +66,13 @@ class NotificationServer {
   initializeNotificationService() {
     this.notificationService = new NotificationService(this.io);
     this.app.set("notificationService", this.notificationService);
+
+    // Set the notification service in the controller
+    setNotificationService(this.notificationService);
+
+    // Set the notification service in the appointment service
+    setAppointmentNotificationService(this.notificationService);
+
     return this.notificationService;
   }
   // Backend/NotificationServer.js - setupSocketHandlers method
