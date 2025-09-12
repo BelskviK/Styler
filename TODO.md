@@ -8,6 +8,11 @@
 
 ✅ tabales do 1/1/1970 for appointment dates
 
+    post middlaware to push appointment document to user
+
+    post request with auth['customer'] to create review to each appointment
+
+    get request from styler, company
     model pre post save
 
     review system

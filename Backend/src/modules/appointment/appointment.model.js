@@ -1,4 +1,12 @@
 import mongoose from "mongoose";
+import {
+  updateCompanyAppointments,
+  updateCustomerAppointments,
+  updateStylistAppointments,
+  removeCompanyAppointmentRef,
+  removeCustomerAppointmentRef,
+  removeStylistAppointmentRef,
+} from "../../middleware/appointment.middlewares.js";
 export const appointmentSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -65,4 +73,29 @@ export const appointmentSchema = new mongoose.Schema({
   },
 });
 
+// Post-save middleware to update Company
+appointmentSchema.post("save", { document: true }, updateCompanyAppointments);
+
+// Post-save middleware to update Customer (user with role 'customer')
+appointmentSchema.post("save", { document: true }, updateCustomerAppointments);
+
+// Post-save middleware to update Stylist (user with role 'styler')
+appointmentSchema.post("save", { document: true }, updateStylistAppointments);
+
+// Post-remove middleware
+appointmentSchema.post(
+  "remove",
+  { document: true },
+  removeCompanyAppointmentRef
+);
+appointmentSchema.post(
+  "remove",
+  { document: true },
+  removeCustomerAppointmentRef
+);
+appointmentSchema.post(
+  "remove",
+  { document: true },
+  removeStylistAppointmentRef
+);
 export default mongoose.model("Appointment", appointmentSchema);
