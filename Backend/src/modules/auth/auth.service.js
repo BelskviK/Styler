@@ -22,22 +22,31 @@ class AuthService {
   }
 
   // Public self-registration (customers)
+  // In your authService.js, add more detailed error handling
   async registerCustomer(customerData) {
     const { name, email, password } = customerData;
 
-    // Check for existing user
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new Error("User already exists");
-    }
+    try {
+      // Check for existing user
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        throw new Error("User already exists");
+      }
 
-    // Create user with role = customer
-    return await User.create({
-      name,
-      email,
-      password,
-      role: "customer",
-    });
+      // Create user with role = customer
+      const user = await User.create({
+        name,
+        email,
+        password,
+        role: "customer",
+      });
+
+      console.log("User created successfully:", user._id);
+      return user;
+    } catch (error) {
+      console.error("Registration error details:", error);
+      throw error; // Re-throw to see the actual error
+    }
   }
 
   // Login user

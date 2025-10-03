@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CompanyService from "@/services/CompanyService";
 import UserService from "@/services/UserService";
-import PublicService from "@/services/PublicService"; // Add this import
+import PublicService from "@/services/PublicService";
 import AppointmentService from "@/services/AppointmentService";
 import StylistSelector from "@/components/StylistSelector";
 import DateTimePicker from "@/components/DateTimePicker";
 import ServiceSelector from "@/components/ServiceSelector";
 import CustomerInfoForm from "@/components/CustomerInfoForm";
+import AnimatedImage from "@/components/common/AnimatedImage";
 import toast from "react-hot-toast";
 
 export default function CompanyPage() {
@@ -38,19 +39,16 @@ export default function CompanyPage() {
         const token =
           localStorage.getItem("token") || localStorage.getItem("authToken");
         if (token) {
-          // Try to get user info to verify token is valid
           const userResponse = await UserService.getCurrentUser();
           const user = userResponse.data.user;
           setUserRole(user.role);
           setIsAuthenticated(true);
         } else {
-          // Not authenticated, treat as customer
           setUserRole("customer");
           setIsAuthenticated(false);
         }
       } catch (err) {
         console.error("Auth check failed:", err);
-        // If authentication fails, treat as non-authenticated customer
         setUserRole("customer");
         setIsAuthenticated(false);
       }
@@ -89,8 +87,6 @@ export default function CompanyPage() {
     const fetchCompanyStylists = async (companyId) => {
       try {
         setStylistsLoading(true);
-
-        // Always use public route for non-authenticated users
         const response = await PublicService.getCompanyStylists(companyId);
         console.log("Stylists response:", response.data);
         const stylistsWithServices = response.data || [];
@@ -112,8 +108,6 @@ export default function CompanyPage() {
     try {
       setServicesLoading(true);
       setServices([]);
-
-      // Use public route for all users to get services
       const response = await PublicService.getStylistServices(stylistId);
       const stylistServices = response.data || [];
       setServices(stylistServices);
@@ -181,7 +175,6 @@ export default function CompanyPage() {
     try {
       setIsBooking(true);
 
-      // Calculate end time based on service duration
       const [hours, minutes] = selectedDateTime.time.split(":").map(Number);
       const startDate = new Date(selectedDateTime.date);
       startDate.setHours(hours, minutes);
@@ -205,7 +198,6 @@ export default function CompanyPage() {
 
       console.log("Booking appointment:", appointmentData);
 
-      // Use public service for non-authenticated users
       let response;
       if (isAuthenticated) {
         response = await AppointmentService.createAppointment(appointmentData);
@@ -217,7 +209,6 @@ export default function CompanyPage() {
 
       toast.success("Appointment booked successfully!");
 
-      // Reset form
       setSelectedService(null);
       setSelectedDateTime({ date: null, time: null });
       setShowCustomerForm(false);
@@ -228,6 +219,7 @@ export default function CompanyPage() {
       setIsBooking(false);
     }
   };
+
   const isBookingReady =
     selectedStylist &&
     selectedService &&
@@ -354,15 +346,15 @@ export default function CompanyPage() {
           <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
             <div className="@container">
               <div className="@[480px]:px-4 @[480px]:py-3">
-                <div
-                  className="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-slate-50 @[480px]:rounded-lg min-h-[218px]"
-                  style={{
-                    backgroundImage: `url(${
-                      company.banner ||
-                      "https://lh3.googleusercontent.com/aida-public/AB6AXuDl4kgoSaG5CThHM7mjDGYZStlmt0vQSEZS6aok_SdOfSg7rySrDNBizl3xKo8FXUskdyfrCCVumcLTsZEA71P1XWZDgnFJN_SOuo2YM9Gc4TyE0pxW4TFN_5JMMig4ScXovwQh-j1dXZQUp4xAS3AsDQza1wcRxI-igMNs-V2n-B8s8mWQS4HIFcktlneDnbskcc8cQmAsRBPHgZzP3ERGeIf-pFmqz-Pc6bfEYpA6ygtNW27UYgRfZSN2R3C9IzjJyrBWNuzTZzM"
-                    })`,
-                  }}
-                ></div>
+                <AnimatedImage
+                  src={
+                    company.banner ||
+                    "https://lh3.googleusercontent.com/aida-public/AB6AXuDl4kgoSaG5CThHM7mjDGYZStlmt0vQSEZS6aok_SdOfSg7rySrDNBizl3xKo8FXUskdyfrCCVumcLTsZEA71P1XWZDgnFJN_SOuo2YM9Gc4TyE0pxW4TFN_5JMMig4ScXovwQh-j1dXZQUp4xAS3AsDQza1wcRxI-igMNs-V2n-B8s8mWQS4HIFcktlneDnbskcc8cQmAsRBPHgZzP3ERGeIf-pFmqz-Pc6bfEYpA6ygtNW27UYgRfZSN2R3C9IzjJyrBWNuzTZzM"
+                  }
+                  alt={`${company.name} banner`}
+                  className="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-slate-50 @[480px]:rounded-lg min-h-[218px] aspect-auto"
+                  style={{ aspectRatio: "auto" }}
+                />
               </div>
             </div>
 

@@ -71,7 +71,6 @@ export default function Services() {
 
       if (form._id) {
         // Update existing service
-        console.log("asd_____________________");
         const response = await ServiceService.updateService(form._id, {
           name: form.name,
           description: form.description,

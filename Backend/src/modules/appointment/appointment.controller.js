@@ -95,12 +95,16 @@ export async function getAppointmentsByStyler(req, res) {
 // TODO
 export async function getAppointmentsByCustomer(req, res) {
   try {
-    res.status(503).json({
-      message: "Service will be coming soon",
-    });
+    const user = req.user;
+    const appointments = await appointmentService.getAppointmentsByCustomer(
+      user
+    );
+    res.status(200).json(appointments);
   } catch (error) {
-    console.error("Error in getAppointmentsByCustomer:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error(error);
+    res.status(500).json({
+      message: error.message,
+    });
   }
 }
 

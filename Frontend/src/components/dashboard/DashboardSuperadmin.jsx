@@ -26,11 +26,11 @@ export default function SuperadminDashboard() {
       <SuperadminMetrics />
       <ReviewAnalytics />
       <PopularServices />
-      <StylistPerformance />
+      {/* <StylistPerformance /> */}
       <TodaySchedule />
       <UpcomingAppointments />
-      <RecentActivity />
-      <CustomerFeedbackSummary />
+      {/* <RecentActivity /> */}
+      {/* <CustomerFeedbackSummary /> */}
     </div>
   );
 }

@@ -177,7 +177,11 @@ class UserService {
       // Check if user exists
       let user = await User.findOne({ email });
       if (user) {
-        return { success: false, status: 400, message: "User already exists" };
+        return {
+          success: false,
+          status: 400,
+          message: "Employee already exists",
+        };
       }
 
       // Create employee

@@ -8,7 +8,9 @@
 
 ✅ tabales do 1/1/1970 for appointment dates
 
-    post middlaware to push appointment document to user
+✅ post middlaware to push appointment document to user
+
+❌ when createing appointment register valid user
 
     post request with auth['customer'] to create review to each appointment
 

@@ -62,11 +62,11 @@ export default function PopularServices() {
   };
 
   const getSampleData = () => [
-    { name: "Haircut", percentage: 70, appointments: 150, revenue: 4500 },
-    { name: "Coloring", percentage: 30, appointments: 65, revenue: 3250 },
-    { name: "Styling", percentage: 40, appointments: 85, revenue: 2125 },
-    { name: "Manicure", percentage: 30, appointments: 60, revenue: 1800 },
-    { name: "Pedicure", percentage: 80, appointments: 170, revenue: 5100 },
+    { name: "Haircut", percentage: 0, appointments: 0, revenue: 0 },
+    { name: "Coloring", percentage: 0, appointments: 0, revenue: 0 },
+    { name: "Styling", percentage: 0, appointments: 0, revenue: 0 },
+    { name: "Manicure", percentage: 0, appointments: 0, revenue: 0 },
+    { name: "Pedicure", percentage: 0, appointments: 0, revenue: 0 },
   ];
 
   if (loading) {

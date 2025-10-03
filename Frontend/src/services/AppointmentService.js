@@ -29,8 +29,8 @@ class AppointmentService {
 
   // ✅ used by Appointments.jsx
   // TODO END-POIND
-  static async getAppointmentsByCustomer(customerId) {
-    return api.get(`/appointments/customer/${customerId}`);
+  static async getAppointmentsByCustomer() {
+    return api.get(`/appointments/customer`);
   }
 
   // ✅ used by AppointmentForm.jsx

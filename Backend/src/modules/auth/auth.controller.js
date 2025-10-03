@@ -1,5 +1,6 @@
 import authService from "./auth.service.js";
 
+import jwt from "jsonwebtoken";
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Private (admin/superadmin only)
@@ -55,6 +56,14 @@ export async function registerCustomer(req, res) {
   try {
     const { name, email, password } = req.body;
 
+    // Input validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
     const user = await authService.registerCustomer({
       name,
       email,
@@ -85,16 +94,38 @@ export async function registerCustomer(req, res) {
       },
     });
   } catch (err) {
-    console.error(err);
+    console.error("Registration controller error:", err);
+
     if (err.message === "User already exists") {
       return res.status(400).json({
         success: false,
         message: err.message,
       });
     }
+
+    // More specific error messages
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Validation error: " +
+          Object.values(err.errors)
+            .map((e) => e.message)
+            .join(", "),
+      });
+    }
+
+    if (err.code === 11000) {
+      // MongoDB duplicate key
+      return res.status(400).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: "Server error during customer registration",
+      message: "Server error during customer registration: " + err.message,
     });
   }
 }

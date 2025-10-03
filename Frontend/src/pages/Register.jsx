@@ -19,10 +19,11 @@ export default function Register() {
     try {
       const res = await AuthService.registerCustomer(form);
       if (res.data.success) {
-        // ✅ Call login with email and password, not the response object
+        // ✅ Login with the credentials
         await login(form.email, form.password);
         toast.success("Registration successful!");
-        navigate("/dashboard");
+        // Navigate to barbershops page instead of dashboard
+        navigate("/barbershops"); // or whatever your barbershops page route is
       }
     } catch (err) {
       console.error(err);
