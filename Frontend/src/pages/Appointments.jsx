@@ -29,7 +29,7 @@ export default function Appointments() {
         );
       } else if (user.role === "styler") {
         // Stylers only get their own appointments
-        response = await AppointmentService.getByStyler(user.id);
+        response = await AppointmentService.getAppointmentsByStyler(user.id);
       } else {
         // Customers only get their own appointments
         response = await AppointmentService.getByCustomer(user.id);

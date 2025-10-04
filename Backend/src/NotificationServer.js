@@ -16,7 +16,8 @@ class NotificationServer {
 
   initializeSocketIO() {
     const allowedOrigins = [
-      "http://localhost:5173",
+      "http://localhost:3235",
+      "http://127.0.0.1:3235",
       "https://styler-frontend.onrender.com",
       "https://styler-d41n.onrender.com",
       "https://stylerb.onrender.com",
