@@ -1,29 +1,47 @@
-// Frontend/src/components/CustomerInfoForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CustomerInfoForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
 }) {
+  const auth = useAuth();
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
     customerEmail: "",
     agreeToTerms: false,
   });
+
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (auth?.user) {
+      const updatedFormData = {
+        customerName: auth.user.name || "",
+        customerPhone: auth.user.phone || "", // Prefill phone from user data
+        customerEmail: auth.user.email || "",
+        agreeToTerms: formData.agreeToTerms, // Keep existing terms agreement
+      };
+
+      console.log("Prefilling form with user data:", {
+        name: auth.user.name,
+        phone: auth.user.phone,
+        email: auth.user.email,
+      });
+
+      setFormData(updatedFormData);
+    }
+  }, [auth]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === "checkbox" ? checked : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: newValue,
     }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
   };
 
   const validateForm = () => {
@@ -52,15 +70,17 @@ export default function CustomerInfoForm({
       newErrors.agreeToTerms = "You must accept the terms and conditions";
     }
 
+    console.log("Validation errors:", newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (validateForm()) {
       onSubmit(formData);
+    } else {
+      console.log("Form validation failed");
     }
   };
 

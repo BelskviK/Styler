@@ -36,6 +36,7 @@ export default function App() {
           <Route path="/barbershop/:companyName" element={<CompanyPage />} />
           <Route path="/review/:appointmentId" element={<ReviewPage />} />
           <Route path="/history" element={<CustomerAppointmentsPage />} />
+          <Route path="settings" element={<Settings />} />
 
           {/* All other routes use Layout with Header */}
           {/* Protected routes */}
@@ -52,7 +53,6 @@ export default function App() {
               <Route path="bookings" element={<Bookings />} />
               <Route path="stylists" element={<Stylists />} />
               <Route path="services" element={<Services />} />
-              <Route path="settings" element={<Settings />} />
               <Route path="appointments" element={<Appointments />} />
             </Route>
           </Route>
