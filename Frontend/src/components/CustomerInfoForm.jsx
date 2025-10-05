@@ -25,12 +25,6 @@ export default function CustomerInfoForm({
         agreeToTerms: formData.agreeToTerms, // Keep existing terms agreement
       };
 
-      console.log("Prefilling form with user data:", {
-        name: auth.user.name,
-        phone: auth.user.phone,
-        email: auth.user.email,
-      });
-
       setFormData(updatedFormData);
     }
   }, [auth]);

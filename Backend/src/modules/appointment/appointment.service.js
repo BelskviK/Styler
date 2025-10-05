@@ -193,6 +193,7 @@ class AppointmentService {
       customerEmail,
       customerId,
     } = appointmentData;
+
     if (
       !stylistId ||
       !serviceId ||
@@ -223,20 +224,61 @@ class AppointmentService {
     else if (isAdminCreation && customerId) {
       customerIdToUse = customerId;
       isGuestBooking = false;
-      console.log("👑 Admin creating appointment for customer:", customerId);
+      console.log(
+        "👑 Admin creating appointment for specific customer:",
+        customerId
+      );
     }
-    // STRATEGY 3: Search for existing customer by phone or email (for admins or guest bookings)
+    // STRATEGY 3: Search for existing customer by phone or email
     else {
       let foundCustomer = null;
 
-      // Search by phone number first (most reliable)
+      // Search by phone number with normalization
       if (customerPhone) {
-        foundCustomer = await User.findOne({
-          phone: customerPhone,
-          role: "customer",
-        });
-        if (foundCustomer) {
-          console.log("📱 Found customer by phone:", foundCustomer._id);
+        const normalizedPhone = this.normalizePhoneNumber(customerPhone);
+        console.log(
+          "📱 Searching for customer with normalized phone:",
+          normalizedPhone
+        );
+
+        if (normalizedPhone) {
+          // Find all customers and check for phone matches
+          const allCustomers = await User.find({ role: "customer" });
+
+          for (const customer of allCustomers) {
+            if (customer.phone) {
+              const normalizedCustomerPhone = this.normalizePhoneNumber(
+                customer.phone
+              );
+              if (
+                this.doPhoneNumbersMatch(
+                  normalizedPhone,
+                  normalizedCustomerPhone
+                )
+              ) {
+                foundCustomer = customer;
+                console.log(
+                  "📱 Found customer by normalized phone:",
+                  customer._id
+                );
+                break;
+              }
+            }
+          }
+
+          // If not found with normalization, try direct search as fallback
+          if (!foundCustomer) {
+            foundCustomer = await User.findOne({
+              phone: customerPhone,
+              role: "customer",
+            });
+            if (foundCustomer) {
+              console.log(
+                "📱 Found customer by exact phone:",
+                foundCustomer._id
+              );
+            }
+          }
         }
       }
 
@@ -247,7 +289,7 @@ class AppointmentService {
         customerEmail !== "guest@example.com"
       ) {
         foundCustomer = await User.findOne({
-          email: customerEmail,
+          email: customerEmail.toLowerCase().trim(),
           role: "customer",
         });
         if (foundCustomer) {
@@ -264,13 +306,12 @@ class AppointmentService {
       }
     }
 
-    // Find stylist
+    // Find stylist and service (existing code remains the same)
     const stylist = await User.findById(stylistId);
     if (!stylist || stylist.role !== "styler") {
       throw new Error("Stylist not found");
     }
 
-    // Find service
     const service = await Service.findById(serviceId);
     if (!service) {
       throw new Error("Service not found");
@@ -328,8 +369,12 @@ class AppointmentService {
           "appointment",
           appointment._id
         );
+        console.log("✅ Notification sent to stylist:", stylistId);
       } catch (notificationError) {
-        console.error("❌ Error sending notification:", notificationError);
+        console.error(
+          "❌ Error sending notification to stylist:",
+          notificationError
+        );
       }
     }
 
@@ -345,12 +390,15 @@ class AppointmentService {
           "appointment",
           appointment._id
         );
+        console.log("✅ Notification sent to customer:", customerIdToUse);
       } catch (notificationError) {
         console.error(
           "❌ Error sending customer notification:",
           notificationError
         );
       }
+    } else {
+      console.log("ℹ️ No customer notification sent - no customer ID found");
     }
 
     // Populate and return the appointment
@@ -361,6 +409,23 @@ class AppointmentService {
       .populate("company", "name");
   }
 
+  // Phone number helper functions
+  normalizePhoneNumber(phone) {
+    if (!phone) return null;
+    try {
+      return phone.toString().trim().replace(/\D/g, "");
+    } catch (error) {
+      console.error("❌ Error normalizing phone number:", error);
+      return phone;
+    }
+  }
+
+  doPhoneNumbersMatch(phone1, phone2) {
+    if (!phone1 || !phone2) return false;
+    return (
+      phone1 === phone2 || phone1.includes(phone2) || phone2.includes(phone1)
+    );
+  }
   // Update appointment status
   async updateAppointmentStatus(appointmentId, status, user) {
     const appointment = await Appointment.findById(appointmentId);

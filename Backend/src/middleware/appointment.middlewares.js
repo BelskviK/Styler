@@ -13,47 +13,83 @@ export const updateCustomerAppointments = async function (doc) {
       isAdminCreation: doc.isAdminCreation,
     });
 
-    // Skip if this is an admin creation (let admin handle assignment manually)
-    if (doc.isAdminCreation) {
-      console.log("🛑 Skipping customer assignment - admin creation");
+    // 🚨 CRITICAL FIX: Skip if customer is already assigned (prevents duplicate notifications)
+    if (doc.customer) {
+      console.log(
+        "🛑 Customer already assigned, skipping middleware assignment"
+      );
       return;
     }
 
     let customerIdToUpdate = doc.customer;
 
-    // If no customer ID but this is a guest booking, try to find customer by phone/email
-    if (!customerIdToUpdate && doc.isGuestBooking) {
+    // Search for customer by phone/email only for appointments without customer
+    if (!customerIdToUpdate) {
       let foundCustomer = null;
 
-      // Search by phone number (most reliable)
+      // Search by phone number with normalization
       if (doc.customerPhone) {
-        foundCustomer = await User.findOne({
-          phone: doc.customerPhone,
-          role: "customer",
-        });
-        if (foundCustomer) {
-          console.log(
-            "📱 Middleware found customer by phone:",
-            foundCustomer._id
-          );
+        const normalizedAppointmentPhone = normalizePhoneNumber(
+          doc.customerPhone
+        );
+        console.log(
+          "📱 Normalized appointment phone:",
+          normalizedAppointmentPhone
+        );
+
+        if (normalizedAppointmentPhone) {
+          const allCustomers = await User.find({ role: "customer" });
+
+          for (const customer of allCustomers) {
+            if (customer.phone) {
+              const normalizedCustomerPhone = normalizePhoneNumber(
+                customer.phone
+              );
+              console.log(
+                `🔍 Comparing: ${normalizedAppointmentPhone} with ${normalizedCustomerPhone}`
+              );
+
+              if (
+                doPhoneNumbersMatch(
+                  normalizedAppointmentPhone,
+                  normalizedCustomerPhone
+                )
+              ) {
+                foundCustomer = customer;
+                console.log("✅ Found customer by phone match:", customer._id);
+                break;
+              }
+            }
+          }
+
+          // Fallback to exact match
+          if (!foundCustomer) {
+            foundCustomer = await User.findOne({
+              phone: doc.customerPhone,
+              role: "customer",
+            });
+            if (foundCustomer) {
+              console.log(
+                "📱 Found customer by exact phone:",
+                foundCustomer._id
+              );
+            }
+          }
         }
       }
 
-      // If not found by phone, search by email
+      // Search by email
       if (
         !foundCustomer &&
         doc.customerEmail &&
         doc.customerEmail !== "guest@example.com"
       ) {
         foundCustomer = await User.findOne({
-          email: doc.customerEmail,
+          email: doc.customerEmail.toLowerCase().trim(),
           role: "customer",
         });
         if (foundCustomer) {
-          console.log(
-            "📧 Middleware found customer by email:",
-            foundCustomer._id
-          );
+          console.log("📧 Found customer by email:", foundCustomer._id);
         }
       }
 
@@ -65,7 +101,7 @@ export const updateCustomerAppointments = async function (doc) {
           isGuestBooking: false,
         });
         console.log(
-          "🔗 Middleware linked guest appointment to customer:",
+          "🔗 Middleware linked appointment to customer:",
           customerIdToUpdate
         );
       }
@@ -79,7 +115,7 @@ export const updateCustomerAppointments = async function (doc) {
       if (customer && customer.role === "customer") {
         const updatedUser = await User.findByIdAndUpdate(
           customerIdToUpdate,
-          { $addToSet: { appointments: doc._id } }, // Use $addToSet to avoid duplicates
+          { $addToSet: { appointments: doc._id } },
           { new: true, useFindAndModify: false }
         );
         console.log("✅ Updated customer appointments:", customerIdToUpdate);
@@ -98,23 +134,56 @@ export const updateCustomerAppointments = async function (doc) {
   }
 };
 
+// Phone number normalization function
+function normalizePhoneNumber(phone) {
+  if (!phone) return null;
+  try {
+    let normalized = phone.toString().trim().replace(/\D/g, "");
+    console.log(`📞 Phone normalization: "${phone}" -> "${normalized}"`);
+    return normalized;
+  } catch (error) {
+    console.error("❌ Error normalizing phone number:", error);
+    return phone;
+  }
+}
+
+// Simple phone number matching using contains
+function doPhoneNumbersMatch(phone1, phone2) {
+  if (!phone1 || !phone2) return false;
+
+  // Direct match
+  if (phone1 === phone2) {
+    console.log(`✅ Exact phone match: ${phone1} === ${phone2}`);
+    return true;
+  }
+
+  // Check if one number contains the other
+  if (phone1.includes(phone2)) {
+    console.log(`✅ Phone match: ${phone1} contains ${phone2}`);
+    return true;
+  }
+
+  if (phone2.includes(phone1)) {
+    console.log(`✅ Phone match: ${phone2} contains ${phone1}`);
+    return true;
+  }
+
+  console.log(`❌ No phone match: ${phone1} vs ${phone2}`);
+  return false;
+}
+
+// Other middleware functions remain the same
 export const updateStylistAppointments = async function (doc) {
   try {
     console.log("🔄 Running stylist appointment middleware...");
-
     if (doc.stylist) {
       console.log("💇 Updating stylist appointments for:", doc.stylist);
-
       const updatedStylist = await User.findByIdAndUpdate(
         doc.stylist,
         { $push: { appointments: doc._id } },
         { new: true, useFindAndModify: false }
       );
       console.log("✅ Updated stylist appointments:", doc.stylist);
-      console.log(
-        "📊 Stylist now has appointments:",
-        updatedStylist.appointments
-      );
     }
   } catch (error) {
     console.error("❌ Error updating stylist appointments:", error);
@@ -124,10 +193,8 @@ export const updateStylistAppointments = async function (doc) {
 export const updateCompanyAppointments = async function (doc) {
   try {
     console.log("🔄 Running company appointment middleware...");
-
     if (doc.company) {
       console.log("🏢 Updating company appointments for:", doc.company);
-
       const Company = mongoose.model("Company");
       const updatedCompany = await Company.findByIdAndUpdate(
         doc.company,
@@ -135,10 +202,6 @@ export const updateCompanyAppointments = async function (doc) {
         { new: true, useFindAndModify: false }
       );
       console.log("✅ Updated company appointments:", doc.company);
-      console.log(
-        "📊 Company now has appointments:",
-        updatedCompany.appointments
-      );
     }
   } catch (error) {
     console.error("❌ Error updating company appointments:", error);

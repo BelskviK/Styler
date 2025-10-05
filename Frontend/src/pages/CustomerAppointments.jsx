@@ -50,7 +50,6 @@ const CustomerAppointments = () => {
               appointment.company?.image ||
               getDefaultImage(),
             status: getAppointmentStatus(appointment),
-            action: getActionByStatus(appointment.status),
             rawData: appointment,
           }));
 
@@ -149,87 +148,48 @@ const CustomerAppointments = () => {
     }
   };
 
-  // Helper function to determine action button text
-  const getActionByStatus = (status) => {
+  // Helper function to get status display text and styling
+  const getStatusDisplay = (appointment) => {
+    const status = appointment.rawData.status;
+    const baseClasses = "text-xs font-medium px-2 py-1 rounded capitalize";
+
     switch (status) {
       case "pending":
-        return "Confirm";
+        return {
+          text: "Pending",
+          className: `${baseClasses} bg-yellow-100 text-yellow-800`,
+        };
       case "confirmed":
-        return "Reschedule";
+        return {
+          text: "Confirmed",
+          className: `${baseClasses} bg-green-100 text-green-800`,
+        };
       case "completed":
-        return "View Details";
+        return {
+          text: "Completed",
+          className: `${baseClasses} bg-blue-100 text-blue-800`,
+        };
       case "cancelled":
-        return "Book Again";
+        return {
+          text: "Cancelled",
+          className: `${baseClasses} bg-red-100 text-red-800`,
+        };
       case "no-show":
-        return "Book Again";
+        return {
+          text: "No Show",
+          className: `${baseClasses} bg-gray-100 text-gray-800`,
+        };
       default:
-        return "View Details";
+        return {
+          text: status,
+          className: `${baseClasses} bg-gray-100 text-gray-800`,
+        };
     }
   };
 
   // Default image fallback
   const getDefaultImage = () => {
     return "https://via.placeholder.com/70x70/E7EDF4/49739c?text=Stylist";
-  };
-
-  const handleAction = async (appointmentId, actionType, appointment) => {
-    try {
-      console.log(`🎯 Action: ${actionType} for appointment ${appointmentId}`);
-
-      switch (actionType) {
-        case "Reschedule":
-          alert(`Reschedule appointment ${appointmentId}`);
-          // Implement reschedule logic
-          break;
-        case "Cancel":
-          if (
-            window.confirm("Are you sure you want to cancel this appointment?")
-          ) {
-            await AppointmentService.updateAppointmentStatus(
-              appointmentId,
-              "cancelled"
-            );
-            alert("Appointment cancelled successfully");
-            window.location.reload(); // Refresh to show updated list
-          }
-          break;
-        case "Confirm":
-          await AppointmentService.updateAppointmentStatus(
-            appointmentId,
-            "confirmed"
-          );
-          alert("Appointment confirmed successfully");
-          window.location.reload();
-          break;
-        case "View Details":
-          showAppointmentDetails(appointment);
-          break;
-        case "Leave a Review":
-          alert(`Leave review for appointment ${appointmentId}`);
-          break;
-        case "Book Again":
-          alert(`Book again with ${appointment.rawData.stylist?.name}`);
-          break;
-        default:
-          alert(`${actionType} action for appointment ${appointmentId}`);
-      }
-    } catch (err) {
-      console.error("Error handling appointment action:", err);
-      alert("Failed to perform action. Please try again.");
-    }
-  };
-
-  const showAppointmentDetails = (appointment) => {
-    const details = `
-Service: ${appointment.service}
-Date: ${appointment.date}
-Stylist: ${appointment.specialist}
-Status: ${appointment.rawData.status}
-Company: ${appointment.rawData.company?.name || "N/A"}
-Location: ${appointment.rawData.company?.location || "N/A"}
-Notes: ${appointment.rawData.notes || "None"}
-    `;
-    alert(details);
   };
 
   if (loading) {
@@ -314,57 +274,42 @@ Notes: ${appointment.rawData.notes || "None"}
             </p>
           </div>
         ) : (
-          upcomingAppointments.map((appointment) => (
-            <div
-              key={appointment.id}
-              className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-green-500"
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-[70px]"
-                  style={{ backgroundImage: `url("${appointment.image}")` }}
-                ></div>
-                <div className="flex flex-1 flex-col justify-center">
-                  <p className="text-[#0d141c] text-base font-medium leading-normal">
-                    {appointment.service}
-                  </p>
-                  <p className="text-[#49739c] text-sm font-normal leading-normal">
-                    {appointment.date}
-                  </p>
-                  <p className="text-[#49739c] text-sm font-normal leading-normal">
-                    {appointment.specialist}
-                  </p>
-                  <p className="text-xs text-gray-500 capitalize mt-1">
-                    Status: {appointment.rawData.status}
-                  </p>
+          upcomingAppointments.map((appointment) => {
+            const statusDisplay = getStatusDisplay(appointment);
+            return (
+              <div
+                key={appointment.id}
+                className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-green-500"
+              >
+                <div className="flex items-start gap-4 w-full">
+                  <div
+                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-[70px]"
+                    style={{ backgroundImage: `url("${appointment.image}")` }}
+                  ></div>
+                  <div className="flex flex-1 flex-col justify-between w-full">
+                    <div className="flex flex-row items-start justify-between w-full gap-4">
+                      <p className="text-[#0d141c] text-base font-medium leading-normal flex-1">
+                        {appointment.service}
+                      </p>
+                      <div className="mt-1">
+                        <span className={statusDisplay.className}>
+                          {statusDisplay.text}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-row items-end justify-between w-full gap-4 mt-2">
+                      <p className="text-[#49739c] text-sm font-normal leading-normal flex-1">
+                        {appointment.date}
+                      </p>
+                      <p className="text-[#49739c] text-sm font-normal leading-normal">
+                        {appointment.specialist}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="shrink-0 flex flex-col gap-2">
-                <button
-                  onClick={() =>
-                    handleAction(
-                      appointment.id,
-                      appointment.action,
-                      appointment
-                    )
-                  }
-                  className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-medium leading-normal w-fit hover:bg-[#d0d9e5] transition-colors"
-                >
-                  <span className="truncate">{appointment.action}</span>
-                </button>
-                {appointment.rawData.status === "confirmed" && (
-                  <button
-                    onClick={() =>
-                      handleAction(appointment.id, "Cancel", appointment)
-                    }
-                    className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-red-100 text-red-600 text-sm font-medium leading-normal w-fit hover:bg-red-200 transition-colors"
-                  >
-                    <span className="truncate">Cancel</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Past Appointments Section */}
@@ -377,44 +322,42 @@ Notes: ${appointment.rawData.notes || "None"}
             <p className="text-[#49739c]">No past appointments</p>
           </div>
         ) : (
-          pastAppointments.map((appointment) => (
-            <div
-              key={appointment.id}
-              className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-gray-400"
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-[70px]"
-                  style={{ backgroundImage: `url("${appointment.image}")` }}
-                ></div>
-                <div className="flex flex-1 flex-col justify-center">
-                  <p className="text-[#0d141c] text-base font-medium leading-normal">
-                    {appointment.service}
-                  </p>
-                  <p className="text-[#49739c] text-sm font-normal leading-normal">
-                    {appointment.date}
-                  </p>
-                  <p className="text-[#49739c] text-sm font-normal leading-normal">
-                    {appointment.specialist}
-                  </p>
+          pastAppointments.map((appointment) => {
+            const statusDisplay = getStatusDisplay(appointment);
+            return (
+              <div
+                key={appointment.id}
+                className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-gray-400"
+              >
+                <div className="flex items-start gap-4 w-full">
+                  <div
+                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-[70px]"
+                    style={{ backgroundImage: `url("${appointment.image}")` }}
+                  ></div>
+                  <div className="flex flex-1 flex-col justify-between w-full">
+                    <div className="flex flex-row items-start justify-between w-full gap-4">
+                      <p className="text-[#0d141c] text-base font-medium leading-normal flex-1">
+                        {appointment.service}
+                      </p>
+                      <div className="mt-1">
+                        <span className={statusDisplay.className}>
+                          {statusDisplay.text}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-row items-end justify-between w-full gap-4 mt-2">
+                      <p className="text-[#49739c] text-sm font-normal leading-normal flex-1">
+                        {appointment.date}
+                      </p>
+                      <p className="text-[#49739c] text-sm font-normal leading-normal">
+                        {appointment.specialist}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="shrink-0">
-                <button
-                  onClick={() =>
-                    handleAction(
-                      appointment.id,
-                      appointment.action,
-                      appointment
-                    )
-                  }
-                  className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-medium leading-normal w-fit hover:bg-[#d0d9e5] transition-colors"
-                >
-                  <span className="truncate">{appointment.action}</span>
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Cancelled Appointments Section */}
@@ -423,47 +366,42 @@ Notes: ${appointment.rawData.notes || "None"}
             <h3 className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
               Cancelled Appointments ({cancelledAppointments.length})
             </h3>
-            {cancelledAppointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="flex gap-4 bg-red-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-red-500"
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-[70px] opacity-60"
-                    style={{ backgroundImage: `url("${appointment.image}")` }}
-                  ></div>
-                  <div className="flex flex-1 flex-col justify-center">
-                    <p className="text-[#0d141c] text-base font-medium leading-normal line-through">
-                      {appointment.service}
-                    </p>
-                    <p className="text-[#49739c] text-sm font-normal leading-normal">
-                      {appointment.date}
-                    </p>
-                    <p className="text-[#49739c] text-sm font-normal leading-normal">
-                      {appointment.specialist}
-                    </p>
-                    <p className="text-xs text-red-500 capitalize mt-1">
-                      Status: {appointment.rawData.status}
-                    </p>
+            {cancelledAppointments.map((appointment) => {
+              const statusDisplay = getStatusDisplay(appointment);
+              return (
+                <div
+                  key={appointment.id}
+                  className="flex gap-4 bg-red-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-red-500"
+                >
+                  <div className="flex items-start gap-4 w-full">
+                    <div
+                      className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-[70px] opacity-60"
+                      style={{ backgroundImage: `url("${appointment.image}")` }}
+                    ></div>
+                    <div className="flex flex-1 flex-col justify-between w-full">
+                      <div className="flex flex-row items-start justify-between w-full gap-4">
+                        <p className="text-[#0d141c] text-base font-medium leading-normal line-through flex-1">
+                          {appointment.service}
+                        </p>
+                        <div className="mt-1">
+                          <span className={statusDisplay.className}>
+                            {statusDisplay.text}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-row items-end justify-between w-full gap-4 mt-2">
+                        <p className="text-[#49739c] text-sm font-normal leading-normal flex-1">
+                          {appointment.date}
+                        </p>
+                        <p className="text-[#49739c] text-sm font-normal leading-normal">
+                          {appointment.specialist}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="shrink-0">
-                  <button
-                    onClick={() =>
-                      handleAction(
-                        appointment.id,
-                        appointment.action,
-                        appointment
-                      )
-                    }
-                    className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-medium leading-normal w-fit hover:bg-[#d0d9e5] transition-colors"
-                  >
-                    <span className="truncate">{appointment.action}</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
       </div>
