@@ -178,7 +178,7 @@ class AppointmentService {
       companyName: appt.company?.name || "Unknown Company",
     }));
   }
-
+  // Create appointment
   // Create appointment
   async createAppointment(appointmentData, user = null) {
     const {
@@ -191,9 +191,8 @@ class AppointmentService {
       customerName,
       customerPhone,
       customerEmail,
+      customerId,
     } = appointmentData;
-
-    // Validate required fields
     if (
       !stylistId ||
       !serviceId ||
@@ -206,32 +205,62 @@ class AppointmentService {
       throw new Error("Missing required fields");
     }
 
-    let customerId = null;
+    // Determine if this is an admin/superadmin creation
+    const isAdminCreation =
+      user && (user.role === "admin" || user.role === "superadmin");
+    const isCustomerCreation = user && user.role === "customer";
 
-    // If user is authenticated, use their ID
-    if (user) {
-      customerId = user._id;
-    } else {
-      // For non-authenticated users, create a temporary customer record
-      const tempCustomer = await User.findOne({
-        role: "customer",
-        email: "guest@example.com",
-      });
+    let customerIdToUse = null;
+    let isGuestBooking = true;
 
-      if (tempCustomer) {
-        customerId = tempCustomer._id;
-      } else {
-        // Create a generic guest customer
-        const guestCustomer = new User({
-          name: "Guest Customer",
-          email: "guest@example.com",
-          phone: "000-000-0000",
+    // STRATEGY 1: If customer is creating their own appointment
+    if (isCustomerCreation) {
+      customerIdToUse = user._id;
+      isGuestBooking = false;
+      console.log("✅ Customer creating own appointment:", user._id);
+    }
+    // STRATEGY 2: If admin is creating appointment with specific customer ID
+    else if (isAdminCreation && customerId) {
+      customerIdToUse = customerId;
+      isGuestBooking = false;
+      console.log("👑 Admin creating appointment for customer:", customerId);
+    }
+    // STRATEGY 3: Search for existing customer by phone or email (for admins or guest bookings)
+    else {
+      let foundCustomer = null;
+
+      // Search by phone number first (most reliable)
+      if (customerPhone) {
+        foundCustomer = await User.findOne({
+          phone: customerPhone,
           role: "customer",
-          company: "68a10fb0102bc83919e269ac", // Default company
-          password: Math.random().toString(36).slice(-8),
         });
-        await guestCustomer.save();
-        customerId = guestCustomer._id;
+        if (foundCustomer) {
+          console.log("📱 Found customer by phone:", foundCustomer._id);
+        }
+      }
+
+      // If not found by phone, search by email
+      if (
+        !foundCustomer &&
+        customerEmail &&
+        customerEmail !== "guest@example.com"
+      ) {
+        foundCustomer = await User.findOne({
+          email: customerEmail,
+          role: "customer",
+        });
+        if (foundCustomer) {
+          console.log("📧 Found customer by email:", foundCustomer._id);
+        }
+      }
+
+      if (foundCustomer) {
+        customerIdToUse = foundCustomer._id;
+        isGuestBooking = false;
+        console.log("🔍 Assigning to existing customer:", foundCustomer._id);
+      } else {
+        console.log("👤 Creating as guest booking - no customer found");
       }
     }
 
@@ -268,7 +297,7 @@ class AppointmentService {
 
     // Create appointment
     const appointment = new Appointment({
-      customer: customerId,
+      customer: customerIdToUse,
       customerName,
       customerPhone,
       customerEmail: customerEmail || "",
@@ -280,7 +309,9 @@ class AppointmentService {
       endTime,
       notes: notes || "",
       status: "pending",
-      isGuestBooking: !user,
+      isGuestBooking,
+      createdBy: user ? user._id : null,
+      isAdminCreation: isAdminCreation,
     });
 
     await appointment.save();
@@ -297,27 +328,20 @@ class AppointmentService {
           "appointment",
           appointment._id
         );
-        console.log("✅ Notification sent to stylist:", stylistId);
       } catch (notificationError) {
         console.error("❌ Error sending notification:", notificationError);
-        // Don't fail the appointment creation if notification fails
       }
     }
 
-    // Send notification to customer if they have a real account
-    if (
-      customerId &&
-      customerEmail &&
-      customerEmail !== "guest@example.com" &&
-      this.notificationService
-    ) {
+    // Send notification to customer if assigned
+    if (this.notificationService && customerIdToUse) {
       try {
         await this.notificationService.sendToUser(
-          customerId,
-          "Appointment Confirmed",
-          `Your appointment with ${stylist.name} is confirmed for ${new Date(
+          customerIdToUse,
+          "Appointment Scheduled",
+          `Your appointment with ${stylist.name} is scheduled for ${new Date(
             date
-          ).toLocaleDateString()} at ${startTime}`,
+          ).toLocaleDateString()} at ${startTime} for ${service.name}`,
           "appointment",
           appointment._id
         );

@@ -53,36 +53,36 @@ export async function getStylistServices(req, res) {
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-export async function createPublicAppointment(req, res) {
-  try {
-    const notificationService = req.app.get("notificationService") || null;
+// export async function createPublicAppointment(req, res) {
+//   try {
+//     const notificationService = req.app.get("notificationService") || null;
 
-    const result = await publicService.createPublicAppointment(
-      req.body,
-      notificationService
-    );
+//     const result = await publicService.createPublicAppointment(
+//       req.body,
+//       notificationService
+//     );
 
-    if (!result.success) {
-      if (result.conflictingAppointment) {
-        return res.status(result.status).json({
-          message: result.error,
-          conflictingAppointment: result.conflictingAppointment,
-        });
-      }
-      return res.status(result.status || 500).json({
-        message: result.error,
-      });
-    }
+//     if (!result.success) {
+//       if (result.conflictingAppointment) {
+//         return res.status(result.status).json({
+//           message: result.error,
+//           conflictingAppointment: result.conflictingAppointment,
+//         });
+//       }
+//       return res.status(result.status || 500).json({
+//         message: result.error,
+//       });
+//     }
 
-    res.status(201).json({
-      success: true,
-      appointment: result.data,
-    });
-  } catch (error) {
-    console.error("Controller error - createPublicAppointment:", error);
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
-  }
-}
+//     res.status(201).json({
+//       success: true,
+//       appointment: result.data,
+//     });
+//   } catch (error) {
+//     console.error("Controller error - createPublicAppointment:", error);
+//     res.status(500).json({
+//       message: "Server error",
+//       error: error.message,
+//     });
+//   }
+// }

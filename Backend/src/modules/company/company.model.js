@@ -31,6 +31,16 @@ export const companySchema = new mongoose.Schema({
       default: 0,
     },
   },
+  appointments: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
+    },
+  ],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
   image: {
     type: String,
     default: "",

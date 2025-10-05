@@ -107,16 +107,20 @@ export async function getAppointmentsByCustomer(req, res) {
     });
   }
 }
-
 export async function createAppointment(req, res) {
   try {
     const appointment = await appointmentService.createAppointment(
       req.body,
-      req.user
+      req.user // This now contains user role information
     );
     res.status(201).json({
       success: true,
       appointment,
+      message:
+        req.user &&
+        (req.user.role === "admin" || req.user.role === "superadmin")
+          ? "Appointment created successfully for customer"
+          : "Appointment created successfully",
     });
   } catch (err) {
     console.error("❌ Appointment creation error:", err);

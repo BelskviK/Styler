@@ -5,7 +5,7 @@ const PublicRouter = express.Router();
 import {
   getCompanyStylists,
   getStylistServices,
-  createPublicAppointment,
+  // createPublicAppointment,
 } from "./public.controller.js";
 
 /**
@@ -20,6 +20,6 @@ PublicRouter.get("/company/:companyId/stylists", getCompanyStylists);
 PublicRouter.get("/stylist/:stylistId/services", getStylistServices);
 
 // ✅ Create an appointment (non-authenticated users)
-PublicRouter.post("/appointments", createPublicAppointment);
+// PublicRouter.post("/appointments", createPublicAppointment);
 
 export default PublicRouter;

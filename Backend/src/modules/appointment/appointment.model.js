@@ -7,12 +7,13 @@ import {
   removeCustomerAppointmentRef,
   removeStylistAppointmentRef,
 } from "../../middleware/appointment.middlewares.js";
+
 export const appointmentSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: function () {
-      return !this.isGuestBooking; // Only required for non-guest bookings
+      return !this.isGuestBooking;
     },
   },
   customerName: {
@@ -67,35 +68,28 @@ export const appointmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isAdminCreation: {
+    type: Boolean,
+    default: false,
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-// Post-save middleware to update Company
-appointmentSchema.post("save", { document: true }, updateCompanyAppointments);
-
-// Post-save middleware to update Customer (user with role 'customer')
-appointmentSchema.post("save", { document: true }, updateCustomerAppointments);
-
-// Post-save middleware to update Stylist (user with role 'styler')
-appointmentSchema.post("save", { document: true }, updateStylistAppointments);
+// Post-save middleware
+appointmentSchema.post("save", updateCompanyAppointments);
+appointmentSchema.post("save", updateCustomerAppointments);
+appointmentSchema.post("save", updateStylistAppointments);
 
 // Post-remove middleware
-appointmentSchema.post(
-  "remove",
-  { document: true },
-  removeCompanyAppointmentRef
-);
-appointmentSchema.post(
-  "remove",
-  { document: true },
-  removeCustomerAppointmentRef
-);
-appointmentSchema.post(
-  "remove",
-  { document: true },
-  removeStylistAppointmentRef
-);
+appointmentSchema.post("findOneAndDelete", removeCompanyAppointmentRef);
+appointmentSchema.post("findOneAndDelete", removeCustomerAppointmentRef);
+appointmentSchema.post("findOneAndDelete", removeStylistAppointmentRef);
+
 export default mongoose.model("Appointment", appointmentSchema);

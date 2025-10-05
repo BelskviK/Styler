@@ -1,7 +1,8 @@
-// Backend\models\User.js?
+// Backend\models\User.js
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+
 export const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -58,6 +59,13 @@ export const userSchema = new mongoose.Schema({
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
+    },
+  ],
+  // 🔥 ADD THIS FIELD for storing appointment references
+  appointments: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
     },
   ],
   createdAt: {
