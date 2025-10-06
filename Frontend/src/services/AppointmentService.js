@@ -22,9 +22,8 @@ class AppointmentService {
   }
 
   // ✅ used by Appointments.jsx
-  // TODO END-POIND
-  static async getAppointmentsByStyler(companyId) {
-    return api.get(`/appointments/styler/${companyId}`);
+  static async getAppointmentsByStyler() {
+    return api.get(`/appointments/styler`);
   }
 
   // ✅ used by Appointments.jsx

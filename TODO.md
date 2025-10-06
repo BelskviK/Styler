@@ -12,6 +12,12 @@
 
 ❌ when createing appointment register valid user
 
+❌ page dashbord's and page bookings appointment color dismatch
+
+❌ page dashbord's upcomming Appointments has Todays app...
+
+❌ User STYLER ?has user.name && User ADMIN ?has appointment.customerName
+
     post request with auth['customer'] to create review to each appointment
 
     get request from styler, company
