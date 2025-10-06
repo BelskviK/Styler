@@ -3,7 +3,26 @@ import AppointmentService from "./appointment.service.js";
 
 // Initialize service (will be set with notification service in routes)
 export const appointmentService = new AppointmentService();
-
+// Backend/src/modules/appointment/appointment.controller.js
+// Add this function
+export async function getAppointmentById(req, res) {
+  try {
+    const appointment = await appointmentService.getAppointmentById(
+      req.params.id,
+      req.user
+    );
+    res.status(200).json({
+      success: true,
+      appointment,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
 export async function getAppointmentsByCompany(req, res) {
   try {
     const { companyId } = req.params;
@@ -107,6 +126,7 @@ export async function getAppointmentsByCustomer(req, res) {
     });
   }
 }
+
 export async function createAppointment(req, res) {
   try {
     const appointment = await appointmentService.createAppointment(

@@ -1,4 +1,4 @@
-// src/components/dashboard/ReviewAnalytics.jsx
+// sFrontend\src\components\dashboard\ReviewAnalytics.jsx
 import { useState, useEffect } from "react";
 import {
   Star,

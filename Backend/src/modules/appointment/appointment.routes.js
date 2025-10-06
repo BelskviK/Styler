@@ -12,6 +12,7 @@ import {
   updateAppointmentStatus,
   deleteAppointment,
   appointmentService,
+  getAppointmentById,
 } from "./appointment.controller.js";
 
 const router = express.Router();
@@ -32,6 +33,7 @@ router.get("/upcoming", auth, getUpcomingAppointments); // ✅
 router.get("/availability", auth, checkAppountmantAvailability); // TODO
 router.get("/styler", auth, getAppointmentsByStyler);
 router.get("/customer", auth, getAppointmentsByCustomer); // TODO
+router.get("/:id", auth, getAppointmentById); // Add this line
 
 // ---- CREATE ----
 router.post("/", createAppointment); // ✅ (public for guest bookings)

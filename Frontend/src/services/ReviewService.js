@@ -50,6 +50,17 @@ class ReviewService {
     if (companyId) params.companyId = companyId;
     return api.get("/analytics/reviews/analytics", { params });
   }
+  static async submitReview(reviewData) {
+    return api.post("/reviews", reviewData);
+  }
+
+  static async getReviewByAppointment(appointmentId) {
+    return api.get(`/reviews/appointment/${appointmentId}`);
+  }
+
+  static async canReviewAppointment(appointmentId) {
+    return api.get(`/reviews/can-review/${appointmentId}`);
+  }
 }
 
 export default ReviewService;

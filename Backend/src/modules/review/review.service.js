@@ -1,18 +1,28 @@
+// Backend/src/modules/review/review.service.js
 import mongoose from "mongoose";
-
 import Review from "./review.model.js";
 import Appointment from "../appointment/appointment.model.js";
 import Company from "../company/company.model.js";
 import User from "../user/user.model.js";
-
 class ReviewService {
-  // @desc    Create review with validation
-  // @param   {Object} reviewData - Review data (appointmentId, rating, comment)
+  // @desc    Create review with validation - UPDATED for dual ratings
+  // @param   {Object} reviewData - Review data (appointmentId, overallRating, stylistRating, comment)
   // @param   {string} customerId - ID of the customer creating the review
   // @returns {Object} Result object with created review or error
   async createReview(reviewData, customerId) {
     try {
-      const { appointmentId, rating, comment } = reviewData;
+      const { appointmentId, overallRating, stylistRating, comment } =
+        reviewData;
+
+      // Validate required fields
+      if (!appointmentId || !overallRating || !stylistRating) {
+        return {
+          success: false,
+          status: 400,
+          message:
+            "Missing required fields: appointmentId, overallRating, and stylistRating are required",
+        };
+      }
 
       // Check if appointment exists and is valid for review
       const appointment = await Appointment.findById(appointmentId)
@@ -37,12 +47,12 @@ class ReviewService {
         };
       }
 
-      // Check if appointment is completed
-      if (appointment.status !== "completed") {
+      // CHANGE: Allow both completed AND cancelled appointments
+      if (!["completed", "cancelled"].includes(appointment.status)) {
         return {
           success: false,
           status: 400,
-          message: "Can only review completed appointments",
+          message: "Can only review completed or cancelled appointments",
         };
       }
 
@@ -58,21 +68,22 @@ class ReviewService {
         };
       }
 
-      // Create review
+      // Create review with dual ratings
       const review = await Review.create({
         customer: customerId,
         company: appointment.company._id,
         stylist: appointment.stylist._id,
         appointment: appointmentId,
-        rating,
-        comment,
+        overallRating,
+        stylistRating,
+        comment: comment || "",
       });
 
       // Populate the newly created review
       const populatedReview = await Review.findById(review._id)
         .populate("customer", "name profileImage")
         .populate("stylist", "name profileImage")
-        .populate("company", "name")
+        .populate("company", "name type") // ADDED: Include company type
         .populate({
           path: "appointment",
           select: "date service status",
@@ -92,10 +103,181 @@ class ReviewService {
     }
   }
 
-  // @desc    Get reviews by company with full details
-  // @param   {string} companyId - ID of the company
-  // @param   {Object} queryParams - Query parameters (page, limit, status)
-  // @returns {Object} Result object with reviews and pagination info
+  // @desc    Check if appointment can be reviewed - NEW METHOD
+  // @param   {string} appointmentId - ID of the appointment
+  // @param   {string} customerId - ID of the customer
+  // @returns {Object} Result object with canReview flag and reason
+  async canReviewAppointment(appointmentId, customerId) {
+    try {
+      const appointment = await Appointment.findById(appointmentId);
+
+      if (!appointment) {
+        return {
+          success: false,
+          canReview: false,
+          reason: "Appointment not found",
+        };
+      }
+
+      // Check if user is the customer
+      if (appointment.customer.toString() !== customerId.toString()) {
+        return {
+          success: false,
+          canReview: false,
+          reason: "Not your appointment",
+        };
+      }
+
+      // Check if appointment status allows reviewing
+      if (!["completed", "cancelled"].includes(appointment.status)) {
+        return {
+          success: false,
+          canReview: false,
+          reason: "Can only review completed or cancelled appointments",
+        };
+      }
+
+      // Check if review already exists
+      const existingReview = await Review.findOne({
+        appointment: appointmentId,
+      });
+      if (existingReview) {
+        return {
+          success: false,
+          canReview: false,
+          reason: "Review already submitted",
+        };
+      }
+
+      return {
+        success: true,
+        canReview: true,
+      };
+    } catch (error) {
+      console.error("canReviewAppointment service error:", error);
+      throw error;
+    }
+  }
+
+  // @desc    Get review by appointment ID - NEW METHOD
+  // @param   {string} appointmentId - ID of the appointment
+  // @param   {string} customerId - ID of the customer (for authorization)
+  // @returns {Object} Result object with review or error
+  async getReviewByAppointment(appointmentId, customerId) {
+    try {
+      const review = await Review.findOne({ appointment: appointmentId })
+        .populate("customer", "name profileImage")
+        .populate("stylist", "name profileImage")
+        .populate("company", "name type") // ADDED: Include company type
+        .populate({
+          path: "appointment",
+          select: "date service status",
+          populate: {
+            path: "service",
+            select: "name price",
+          },
+        });
+
+      if (!review) {
+        return {
+          success: false,
+          status: 404,
+          message: "Review not found for this appointment",
+        };
+      }
+
+      // Check authorization
+      if (review.customer._id.toString() !== customerId.toString()) {
+        return {
+          success: false,
+          status: 403,
+          message: "Not authorized to access this review",
+        };
+      }
+
+      return {
+        success: true,
+        review,
+      };
+    } catch (error) {
+      console.error("getReviewByAppointment service error:", error);
+      throw error;
+    }
+  }
+
+  // UPDATE existing methods to handle dual ratings in aggregations:
+
+  // In getReviewsByStylist method, update the aggregation:
+  async getReviewsByStylist(stylistId, queryParams) {
+    try {
+      const { page = 1, limit = 10 } = queryParams;
+
+      // Check if stylist exists
+      const stylist = await User.findById(stylistId);
+      if (!stylist || stylist.role !== "styler") {
+        return {
+          success: false,
+          status: 404,
+          message: "Stylist not found",
+        };
+      }
+
+      const reviews = await Review.find({
+        stylist: stylistId,
+        status: "approved",
+      })
+        .populate("customer", "name profileImage")
+        .populate("company", "name image")
+        .populate({
+          path: "appointment",
+          select: "date service",
+          populate: {
+            path: "service",
+            select: "name",
+          },
+        })
+        .sort({ createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+
+      const total = await Review.countDocuments({
+        stylist: stylistId,
+        status: "approved",
+      });
+
+      // CHANGE: Calculate average rating using stylistRating
+      const averageRating = await Review.aggregate([
+        {
+          $match: {
+            stylist: mongoose.Types.ObjectId(stylistId),
+            status: "approved",
+          },
+        },
+        { $group: { _id: null, avgRating: { $avg: "$stylistRating" } } },
+      ]);
+
+      return {
+        success: true,
+        reviews,
+        stylistStats: {
+          averageRating: averageRating[0]?.avgRating || 0,
+          totalReviews: total,
+        },
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalReviews: total,
+        },
+      };
+    } catch (error) {
+      console.error("getReviewsByStylist service error:", error);
+      throw error;
+    }
+  }
+
+  // Keep all other existing methods as they are...
+
+  // Add all the other methods that are missing but referenced in your controller
   async getReviewsByCompany(companyId, queryParams) {
     try {
       const { page = 1, limit = 10, status = "approved" } = queryParams;
@@ -151,10 +333,6 @@ class ReviewService {
     }
   }
 
-  // @desc    Get reviews by customer
-  // @param   {string} customerId - ID of the customer
-  // @param   {Object} queryParams - Query parameters (page, limit)
-  // @returns {Object} Result object with reviews and pagination info
   async getReviewsByCustomer(customerId, queryParams) {
     try {
       const { page = 1, limit = 10 } = queryParams;
@@ -191,80 +369,6 @@ class ReviewService {
     }
   }
 
-  // @desc    Get reviews by stylist
-  // @param   {string} stylistId - ID of the stylist
-  // @param   {Object} queryParams - Query parameters (page, limit)
-  // @returns {Object} Result object with reviews, stats, and pagination info
-  async getReviewsByStylist(stylistId, queryParams) {
-    try {
-      const { page = 1, limit = 10 } = queryParams;
-
-      // Check if stylist exists
-      const stylist = await User.findById(stylistId);
-      if (!stylist || stylist.role !== "styler") {
-        return {
-          success: false,
-          status: 404,
-          message: "Stylist not found",
-        };
-      }
-
-      const reviews = await Review.find({
-        stylist: stylistId,
-        status: "approved",
-      })
-        .populate("customer", "name profileImage")
-        .populate("company", "name image")
-        .populate({
-          path: "appointment",
-          select: "date service",
-          populate: {
-            path: "service",
-            select: "name",
-          },
-        })
-        .sort({ createdAt: -1 })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
-
-      const total = await Review.countDocuments({
-        stylist: stylistId,
-        status: "approved",
-      });
-
-      // Calculate average rating for stylist
-      const averageRating = await Review.aggregate([
-        {
-          $match: {
-            stylist: mongoose.Types.ObjectId(stylistId),
-            status: "approved",
-          },
-        },
-        { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-      ]);
-
-      return {
-        success: true,
-        reviews,
-        stylistStats: {
-          averageRating: averageRating[0]?.avgRating || 0,
-          totalReviews: total,
-        },
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
-          totalReviews: total,
-        },
-      };
-    } catch (error) {
-      console.error("getReviewsByStylist service error:", error);
-      throw error;
-    }
-  }
-
-  // @desc    Get single review by ID
-  // @param   {string} reviewId - ID of the review
-  // @returns {Object} Result object with review details or error
   async getReviewById(reviewId) {
     try {
       const review = await Review.findById(reviewId)
@@ -298,9 +402,6 @@ class ReviewService {
     }
   }
 
-  // @desc    Get reviews for a specific appointment
-  // @param   {string} appointmentId - ID of the appointment
-  // @returns {Object} Result object with reviews and appointment details
   async getReviewsByAppointment(appointmentId) {
     try {
       // Check if appointment exists
@@ -334,9 +435,6 @@ class ReviewService {
     }
   }
 
-  // @desc    Get recent reviews with all details
-  // @param   {Object} queryParams - Query parameters (limit)
-  // @returns {Object} Result object with recent reviews
   async getRecentReviews(queryParams) {
     try {
       const { limit = 5 } = queryParams;
@@ -367,4 +465,5 @@ class ReviewService {
   }
 }
 
-export default new ReviewService();
+const reviewService = new ReviewService();
+export default reviewService;

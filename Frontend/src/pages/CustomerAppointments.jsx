@@ -1,10 +1,13 @@
+// Frontend\src\pages\CustomerAppointments.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AppointmentService from "../services/AppointmentService";
 
 const CustomerAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch appointments from API
   useEffect(() => {
@@ -251,7 +254,15 @@ const CustomerAppointments = () => {
   const cancelledAppointments = appointments.filter(
     (app) => app.status === "cancelled"
   );
+  const shouldShowReviewButton = (appointment) => {
+    const status = appointment.rawData.status;
+    return status === "completed" || status === "cancelled";
+  };
 
+  // Add this function to handle review button click
+  const handleReviewClick = (appointmentId) => {
+    navigate(`/review/${appointmentId}`);
+  };
   return (
     <div className="px-4 md:px-40 flex flex-1 justify-center py-5">
       <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
@@ -266,20 +277,19 @@ const CustomerAppointments = () => {
           Upcoming Appointments ({upcomingAppointments.length})
         </h3>
 
-        {upcomingAppointments.length === 0 ? (
+        {pastAppointments.length === 0 ? (
           <div className="bg-slate-50 px-4 py-8 rounded-lg text-center">
-            <p className="text-[#49739c] text-lg">No upcoming appointments</p>
-            <p className="text-[#49739c] text-sm mt-2">
-              Book your next appointment to see it here
-            </p>
+            <p className="text-[#49739c]">No past appointments</p>
           </div>
         ) : (
-          upcomingAppointments.map((appointment) => {
+          pastAppointments.map((appointment) => {
             const statusDisplay = getStatusDisplay(appointment);
+            const showReviewButton = shouldShowReviewButton(appointment);
+
             return (
               <div
                 key={appointment.id}
-                className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-green-500"
+                className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-gray-400"
               >
                 <div className="flex items-start gap-4 w-full">
                   <div
@@ -305,6 +315,17 @@ const CustomerAppointments = () => {
                         {appointment.specialist}
                       </p>
                     </div>
+                    {/* Add Review Button */}
+                    {showReviewButton && (
+                      <div className="flex justify-end mt-3">
+                        <button
+                          onClick={() => handleReviewClick(appointment.id)}
+                          className="flex items-center justify-center px-4 py-2 bg-[#0d80f2] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors opacity-100"
+                        >
+                          Add Review
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -368,6 +389,8 @@ const CustomerAppointments = () => {
             </h3>
             {cancelledAppointments.map((appointment) => {
               const statusDisplay = getStatusDisplay(appointment);
+              const showReviewButton = shouldShowReviewButton(appointment);
+
               return (
                 <div
                   key={appointment.id}
@@ -397,6 +420,17 @@ const CustomerAppointments = () => {
                           {appointment.specialist}
                         </p>
                       </div>
+                      {/* Add Review Button */}
+                      {showReviewButton && (
+                        <div className="flex justify-end mt-3">
+                          <button
+                            onClick={() => handleReviewClick(appointment.id)}
+                            className="flex items-center justify-center px-4 py-2 bg-[#0d80f2] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors opacity-100"
+                          >
+                            Add Review
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

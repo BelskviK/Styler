@@ -9,8 +9,9 @@ import {
   getReviewsByCustomer,
   getReviewsByStylist,
   getReview,
-  getReviewsByAppointment,
+  getReviewByAppointment, // CHANGED: from getReviewsByAppointment
   getRecentReviews,
+  canReviewAppointment, // NEW
 } from "./review.controller.js";
 
 /**
@@ -25,9 +26,6 @@ ReviewRouter.get("/company/:companyId", getReviewsByCompany);
 // ✅ Get all reviews for a stylist
 ReviewRouter.get("/stylist/:stylistId", getReviewsByStylist);
 
-// ✅ Get review by appointment
-ReviewRouter.get("/appointment/:appointmentId", getReviewsByAppointment);
-
 // ✅ Get most recent reviews
 ReviewRouter.get("/recent", getRecentReviews);
 
@@ -41,5 +39,11 @@ ReviewRouter.post("/", auth, createReview);
 
 // ✅ Get my reviews (authenticated customer only)
 ReviewRouter.get("/customer/my-reviews", auth, getReviewsByCustomer);
+
+// ✅ Get review by appointment ID (authenticated customer only) - CHANGED
+ReviewRouter.get("/appointment/:appointmentId", auth, getReviewByAppointment);
+
+// ✅ Check if appointment can be reviewed (authenticated customer only) - NEW
+ReviewRouter.get("/can-review/:appointmentId", auth, canReviewAppointment);
 
 export default ReviewRouter;

@@ -10,7 +10,9 @@ class AppointmentService {
   static async getTodayAppointments(userId, role) {
     return api.get(`/appointments/today?userId=${userId}&role=${role}`);
   }
-
+  static async getAppointmentById(appointmentId) {
+    return api.get(`/appointments/${appointmentId}`);
+  }
   // ✅ used by UpcomingAppointments.jsx
   static async getUpcomingAppointments(userId, role) {
     return api.get(`/appointments/upcoming?userId=${userId}&role=${role}`);

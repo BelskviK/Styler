@@ -425,6 +425,42 @@ class AppointmentService {
     return (
       phone1 === phone2 || phone1.includes(phone2) || phone2.includes(phone1)
     );
+  } // Backend/src/modules/appointment/appointment.service.js
+  // Add this method to the AppointmentService class
+  async getAppointmentById(appointmentId, user) {
+    const appointment = await Appointment.findById(appointmentId)
+      .populate("customer", "name email phone")
+      .populate("stylist", "name email profileImage expertise rating")
+      .populate("service", "name price duration description")
+      .populate("company", "name type location image");
+
+    if (!appointment) {
+      throw new Error("Appointment not found");
+    }
+
+    // Check authorization
+    if (
+      user.role === "customer" &&
+      appointment.customer._id.toString() !== user._id.toString()
+    ) {
+      throw new Error("Not authorized to access this appointment");
+    }
+
+    if (
+      user.role === "styler" &&
+      appointment.stylist._id.toString() !== user._id.toString()
+    ) {
+      throw new Error("Not authorized to access this appointment");
+    }
+
+    if (
+      user.role === "admin" &&
+      appointment.company._id.toString() !== user.company.toString()
+    ) {
+      throw new Error("Not authorized to access this appointment");
+    }
+
+    return appointment;
   }
   // Update appointment status
   async updateAppointmentStatus(appointmentId, status, user) {

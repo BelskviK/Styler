@@ -1,6 +1,6 @@
-import * as reviewService from "./review.service.js";
+import reviewService from "./review.service.js";
 
-// @desc    Create review with validation
+// @desc    Create review with validation - UPDATED
 // @route   POST /api/reviews
 // @access  Private (customer)
 export async function createReview(req, res) {
@@ -23,6 +23,53 @@ export async function createReview(req, res) {
   }
 }
 
+// @desc    Check if appointment can be reviewed - NEW
+// @route   GET /api/reviews/can-review/:appointmentId
+// @access  Private (customer)
+export async function canReviewAppointment(req, res) {
+  try {
+    const result = await reviewService.canReviewAppointment(
+      req.params.appointmentId,
+      req.user._id
+    );
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// @desc    Get review by appointment ID - UPDATED
+// @route   GET /api/reviews/appointment/:appointmentId
+// @access  Private (customer)
+export async function getReviewByAppointment(req, res) {
+  try {
+    const result = await reviewService.getReviewByAppointment(
+      req.params.appointmentId,
+      req.user._id
+    );
+
+    if (!result.success) {
+      return res.status(result.status).json({ message: result.message });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result.review,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
 // @desc    Get reviews by company with full details
 // @route   GET /api/reviews/company/:companyId
 // @access  Public

@@ -6,16 +6,14 @@ class CompanyService {
   static async getCompanies() {
     return api.get("/companies");
   }
+  static async getCompanyById(companyId) {
+    return api.get(`/companies/${companyId}`);
+  }
   //BarberShopSelector.jsx
   //CompanyPage.jsx
   static async getPublicBarbershops() {
     return api.get("/companies/public/barbershops");
   }
-  // TODO NOT IN USE IN FRONTEND
-  static async getById(id) {
-    return api.get(`/companies/${id}`);
-  }
-
   static async getMyCompany() {
     return api.get("/companies/me");
   }
