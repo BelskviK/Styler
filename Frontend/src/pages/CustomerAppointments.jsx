@@ -132,7 +132,7 @@ const CustomerAppointments = () => {
       // First check backend status
       if (
         appointment.status === "cancelled" ||
-        appointment.status === "no-show"
+        appointment.status === "noShow"
       ) {
         return "cancelled";
       } else if (appointment.status === "completed") {
@@ -165,19 +165,19 @@ const CustomerAppointments = () => {
       case "confirmed":
         return {
           text: "Confirmed",
-          className: `${baseClasses} bg-green-100 text-green-800`,
+          className: `${baseClasses} bg-blue-100 text-blue-800`,
         };
       case "completed":
         return {
           text: "Completed",
-          className: `${baseClasses} bg-blue-100 text-blue-800`,
+          className: `${baseClasses} bg-green-100 text-green-800`,
         };
       case "cancelled":
         return {
           text: "Cancelled",
           className: `${baseClasses} bg-red-100 text-red-800`,
         };
-      case "no-show":
+      case "noShow":
         return {
           text: "No Show",
           className: `${baseClasses} bg-gray-100 text-gray-800`,
@@ -298,8 +298,8 @@ const CustomerAppointments = () => {
     (app) => app.status === "upcoming"
   );
   const pastAppointments = appointments.filter((app) => app.status === "past");
-  const cancelledAppointments = appointments.filter(
-    (app) => app.status === "cancelled"
+  const cancelledAppointments = appointments.filter((app) =>
+    ["cancelled", "noShow"].includes(app.status)
   );
 
   return (

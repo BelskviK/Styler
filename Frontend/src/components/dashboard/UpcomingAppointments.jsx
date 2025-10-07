@@ -320,7 +320,7 @@ export default function UpcomingAppointments() {
                               ? "bg-green-100 text-green-800"
                               : appointment.status === "cancelled"
                               ? "bg-red-100 text-red-800"
-                              : appointment.status === "no-show"
+                              : appointment.status === "noShow"
                               ? "bg-gray-100 text-gray-800"
                               : "bg-yellow-100 text-yellow-800"
                           }`}

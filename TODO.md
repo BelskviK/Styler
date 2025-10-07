@@ -8,8 +8,6 @@ FIX: PAGE dashbord : ensure rating is properly count for COMPANY, STYLER, ADMIN
 
 FIX: PAGE Barbershops : ensure barbershop cards counts correct rating for Company
 
-FIX: page dashbord's and page bookings appointment color dismatch
-
 FIX: page dashbord's upcomming Appointments has Todays app...
 
 FIX: when createing appointment register valid user TODAY AND UPCOMMING APPOINTMENT TABLE SEPARATE ROW AS USER/CLIENT
@@ -37,6 +35,8 @@ FEAT: Page Appointment History Ensure service Image is properly syncd to appoint
     FEAT: subscription plan content
 
     FEAT: subscription plan APi
+
+❌ FIX: page dashbord's and page bookings appointment color dismatch
 
 ✅ ajust layout indexes of notification
 

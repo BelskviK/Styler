@@ -117,11 +117,13 @@ const AppointmentRow = memo(function AppointmentRow({
   };
 
   const getStatusColor = (status) => {
+    //  enum: ["pending", "confirmed", "completed", "cancelled", "noShow"],
     const colors = {
       pending: "bg-yellow-100 text-yellow-800",
       confirmed: "bg-blue-100 text-blue-800",
       completed: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
+      noShow: "bg-gray-100 text-gray-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
@@ -212,6 +214,7 @@ const AppointmentRow = memo(function AppointmentRow({
               <option value="confirmed">Confirmed</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
+              <option value="noShow">No Show</option>
             </select>
           )}
           {(userRole === "admin" || userRole === "superadmin") && (

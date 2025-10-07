@@ -226,7 +226,7 @@ export default function TodaySchedule() {
                         <option value="confirmed">Confirmed</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
-                        <option value="no-show">No Show</option>
+                        <option value="noShow">No Show</option>
                       </select>
                     </td>
                   </tr>
