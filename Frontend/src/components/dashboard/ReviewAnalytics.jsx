@@ -1,5 +1,5 @@
 // src/components/dashboard/ReviewAnalytics.jsx - FIXED with proper combined distribution
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Star,
   Users,
@@ -28,8 +28,7 @@ const ReviewAnalytics = ({ companyId = null }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const fetchReviewStats = async () => {
+  const fetchReviewStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -57,12 +56,11 @@ const ReviewAnalytics = ({ companyId = null }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
   useEffect(() => {
     fetchReviewStats();
-  }, [companyId]);
-
+  }, [fetchReviewStats]);
   // Calculate overall average from all three rating types
   const getOverallAverageRating = () => {
     const serviceRating = getServiceRating();
