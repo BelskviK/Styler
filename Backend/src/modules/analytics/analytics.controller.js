@@ -557,14 +557,10 @@ export async function getEmployeePerformance(req, res) {
 // Backend/controllers/analytics.controller.js
 export async function getPopularServices(req, res) {
   try {
-    console.log("getPopularServices called by user:", req.user._id);
-    console.log("User company:", req.user.company);
-
     const { timeframe = "monthly", limit = 5, startDate, endDate } = req.query;
     const userCompany = req.user.company;
 
     if (!userCompany) {
-      console.log("No company found for user");
       return res.status(403).json({
         success: false,
         message: "Company access not authorized",
@@ -576,23 +572,18 @@ export async function getPopularServices(req, res) {
       status: "completed",
     };
 
-    console.log("Base query:", query);
-
     // Date range filtering - simplify for debugging
     if (startDate && endDate) {
       query.date = {
         $gte: new Date(startDate).toISOString().split("T")[0],
         $lte: new Date(endDate).toISOString().split("T")[0],
       };
-      console.log("With date range:", query.date);
     } else {
       // Remove date filtering temporarily for debugging
-      console.log("No date range provided, skipping date filter");
     }
 
     // Debug: Check if there are any appointments at all
     const totalAppointments = await Appointment.countDocuments(query);
-    console.log("Total appointments matching query:", totalAppointments);
 
     const popularServicesPipeline = [
       { $match: query },
@@ -758,15 +749,10 @@ export async function getServicePerformance(req, res) {
 // Backend/controllers/analytics.controller.js - FIXED getReviewStatistics
 export async function getReviewStatistics(req, res) {
   try {
-    console.log("🔍 [DEBUG] getReviewStatistics called");
     const userCompany = req.user.company;
     const effectiveCompanyId = userCompany ? userCompany.toString() : null;
 
-    console.log("🔍 [DEBUG] User company:", userCompany);
-    console.log("🔍 [DEBUG] Effective company ID:", effectiveCompanyId);
-
     if (!effectiveCompanyId) {
-      console.log("❌ [DEBUG] No company ID found");
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -774,19 +760,12 @@ export async function getReviewStatistics(req, res) {
     }
 
     // First, let's see what reviews we have - REMOVE STATUS FILTER
-    console.log(
-      "🔍 [DEBUG] Fetching ALL reviews for company:",
-      effectiveCompanyId
-    );
     const reviews = await Review.find({
       company: effectiveCompanyId,
       // REMOVED: status: "approved" - count all reviews regardless of status
     }).select("serviceRating companyRating stylistRating status createdAt");
 
-    console.log("🔍 [DEBUG] Found ALL reviews count:", reviews.length);
-
     if (reviews.length === 0) {
-      console.log("⚠️ [DEBUG] No reviews found for this company");
       return res.status(200).json({
         success: true,
         data: {
@@ -801,20 +780,6 @@ export async function getReviewStatistics(req, res) {
       });
     }
 
-    console.log("📊 [DEBUG] All review ratings with status:");
-    reviews.forEach((review, index) => {
-      console.log(`   Review ${index + 1}:`, {
-        service: review.serviceRating,
-        company: review.companyRating,
-        stylist: review.stylistRating,
-        status: review.status,
-        date: review.createdAt,
-      });
-    });
-
-    console.log(
-      "🔍 [DEBUG] Running aggregation pipeline WITHOUT status filter..."
-    );
     const stats = await Review.aggregate([
       {
         $match: {
@@ -839,11 +804,6 @@ export async function getReviewStatistics(req, res) {
       },
     ]);
 
-    console.log(
-      "🔍 [DEBUG] Aggregation result:",
-      JSON.stringify(stats, null, 2)
-    );
-
     const result = stats[0] || {
       totalReviews: 0,
       averageServiceRating: 0,
@@ -853,30 +813,16 @@ export async function getReviewStatistics(req, res) {
       serviceRatings: [],
     };
 
-    console.log("📊 [DEBUG] Processed result:", {
-      totalReviews: result.totalReviews,
-      averageServiceRating: result.averageServiceRating,
-      averageCompanyRating: result.averageCompanyRating,
-      averageStylistRating: result.averageStylistRating,
-      averageOverallRating: result.averageOverallRating,
-    });
-
     // Calculate distribution from service ratings
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     const serviceRatings = result.serviceRatings || [];
-
-    console.log("📊 [DEBUG] Service ratings for distribution:", serviceRatings);
 
     serviceRatings.forEach((rating) => {
       // Use exact rating values (they should be integers 1-5)
       if (distribution.hasOwnProperty(rating)) {
         distribution[rating]++;
-      } else {
-        console.log(`⚠️ [DEBUG] Unexpected rating value: ${rating}`);
       }
     });
-
-    console.log("📊 [DEBUG] Calculated distribution:", distribution);
 
     const totalReviews = result.totalReviews || 0;
     const percentageDistribution = {
@@ -906,10 +852,6 @@ export async function getReviewStatistics(req, res) {
       },
     };
 
-    console.log(
-      "✅ [DEBUG] Final response:",
-      JSON.stringify(response, null, 2)
-    );
     res.status(200).json(response);
   } catch (error) {
     console.error("❌ [DEBUG] Error in getReviewStatistics:", error);

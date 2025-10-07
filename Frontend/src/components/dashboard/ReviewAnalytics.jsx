@@ -18,55 +18,16 @@ const ReviewAnalytics = ({ companyId = null }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
 
   const fetchReviewStats = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log(
-        "🔍 [FRONTEND] Fetching review stats for company:",
-        companyId
-      );
-
       const response = await AnalyticsService.getReviewStatistics(companyId);
 
-      console.log("🔍 [FRONTEND] Raw API response:", response);
-
       if (response.data.success) {
-        console.log(
-          "✅ [FRONTEND] API success, data received:",
-          response.data.data
-        );
         setStats(response.data.data);
-
-        // Store debug info if available
-        if (response.data.data.debug) {
-          setDebugInfo(response.data.data.debug);
-        }
-
-        // Debug the distribution data
-        console.log(
-          "📊 [FRONTEND] Rating distribution:",
-          response.data.data.ratingDistribution
-        );
-        console.log(
-          "📊 [FRONTEND] Percentage distribution:",
-          response.data.data.percentageDistribution
-        );
-
-        // Verify the data makes sense
-        const totalFromDistribution = Object.values(
-          response.data.data.ratingDistribution
-        ).reduce((sum, count) => sum + count, 0);
-        console.log("🔢 [FRONTEND] Data verification:", {
-          totalReviews: response.data.data.totalReviews,
-          totalFromDistribution: totalFromDistribution,
-          match: response.data.data.totalReviews === totalFromDistribution,
-        });
-      } else {
-        console.log("❌ [FRONTEND] API returned success: false", response.data);
       }
     } catch (err) {
       console.error("❌ [FRONTEND] Error fetching review analytics:", err);
@@ -80,7 +41,6 @@ const ReviewAnalytics = ({ companyId = null }) => {
   };
 
   useEffect(() => {
-    console.log("🔍 [FRONTEND] ReviewAnalytics mounted, companyId:", companyId);
     fetchReviewStats();
   }, [companyId]);
   const RatingBar = ({ stars, count, percentage }) => (
