@@ -9,7 +9,7 @@ import {
   linkReviewToAppointmentAfterSave,
   recalculateRatingsAfterUpdate,
   recalculateRatingsAfterDelete,
-} from "../../middleware/review.middlewares.js";
+} from "./review.middlewares.js";
 
 export const reviewSchema = new mongoose.Schema({
   customer: {
@@ -58,7 +58,7 @@ export const reviewSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
-    default: "pending",
+    default: "approved",
   },
   createdAt: {
     type: Date,

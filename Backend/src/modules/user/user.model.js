@@ -47,6 +47,15 @@ export const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  reviewCount: {
+    type: Number,
+    default: 0,
+  },
+  ratings: {
+    serviceRating: { type: Number, default: 0 },
+    stylistRating: { type: Number, default: 0 }, // This is the main one we're using
+    count: { type: Number, default: 0 },
+  },
   description: {
     type: String,
     default: "Professional stylist",

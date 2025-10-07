@@ -753,91 +753,173 @@ export async function getServicePerformance(req, res) {
     console.error("Error fetching service performance:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
-} // Get review statistics for dashboard
-// Backend/controllers/analytics.controller.jsc
+}
+
+// Backend/controllers/analytics.controller.js - FIXED getReviewStatistics
 export async function getReviewStatistics(req, res) {
   try {
-    const { companyId } = req.user.company;
+    console.log("🔍 [DEBUG] getReviewStatistics called");
+    const userCompany = req.user.company;
+    const effectiveCompanyId = userCompany ? userCompany.toString() : null;
 
-    // If companyId is not provided and user is company-specific, use user's company
-    const effectiveCompanyId =
-      companyId || (req.user.company ? req.user.company.toString() : null);
+    console.log("🔍 [DEBUG] User company:", userCompany);
+    console.log("🔍 [DEBUG] Effective company ID:", effectiveCompanyId);
 
     if (!effectiveCompanyId) {
+      console.log("❌ [DEBUG] No company ID found");
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
+    // First, let's see what reviews we have - REMOVE STATUS FILTER
+    console.log(
+      "🔍 [DEBUG] Fetching ALL reviews for company:",
+      effectiveCompanyId
+    );
+    const reviews = await Review.find({
+      company: effectiveCompanyId,
+      // REMOVED: status: "approved" - count all reviews regardless of status
+    }).select("serviceRating companyRating stylistRating status createdAt");
+
+    console.log("🔍 [DEBUG] Found ALL reviews count:", reviews.length);
+
+    if (reviews.length === 0) {
+      console.log("⚠️ [DEBUG] No reviews found for this company");
+      return res.status(200).json({
+        success: true,
+        data: {
+          totalReviews: 0,
+          averageRating: 0,
+          averageServiceRating: 0,
+          averageCompanyRating: 0,
+          averageStylistRating: 0,
+          ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          percentageDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        },
+      });
+    }
+
+    console.log("📊 [DEBUG] All review ratings with status:");
+    reviews.forEach((review, index) => {
+      console.log(`   Review ${index + 1}:`, {
+        service: review.serviceRating,
+        company: review.companyRating,
+        stylist: review.stylistRating,
+        status: review.status,
+        date: review.createdAt,
+      });
+    });
+
+    console.log(
+      "🔍 [DEBUG] Running aggregation pipeline WITHOUT status filter..."
+    );
     const stats = await Review.aggregate([
       {
         $match: {
-          company: new mongoose.Types.ObjectId(effectiveCompanyId), // ← FIXED: added 'new'
+          company: new mongoose.Types.ObjectId(effectiveCompanyId),
+          // REMOVED: status: "approved" - include all reviews
         },
       },
       {
         $group: {
           _id: null,
           totalReviews: { $sum: 1 },
-          averageRating: { $avg: "$rating" },
-          ratingDistribution: {
-            $push: "$rating",
+          averageServiceRating: { $avg: "$serviceRating" },
+          averageCompanyRating: { $avg: "$companyRating" },
+          averageStylistRating: { $avg: "$stylistRating" },
+          averageOverallRating: {
+            $avg: {
+              $avg: ["$serviceRating", "$companyRating", "$stylistRating"],
+            },
           },
+          serviceRatings: { $push: "$serviceRating" },
         },
       },
     ]);
 
-    // Calculate rating distribution
-    const distribution = {
-      5: 0,
-      4: 0,
-      3: 0,
-      2: 0,
-      1: 0,
+    console.log(
+      "🔍 [DEBUG] Aggregation result:",
+      JSON.stringify(stats, null, 2)
+    );
+
+    const result = stats[0] || {
+      totalReviews: 0,
+      averageServiceRating: 0,
+      averageCompanyRating: 0,
+      averageStylistRating: 0,
+      averageOverallRating: 0,
+      serviceRatings: [],
     };
 
-    if (stats[0]?.ratingDistribution) {
-      stats[0].ratingDistribution.forEach((rating) => {
-        distribution[rating] = (distribution[rating] || 0) + 1;
-      });
-    }
+    console.log("📊 [DEBUG] Processed result:", {
+      totalReviews: result.totalReviews,
+      averageServiceRating: result.averageServiceRating,
+      averageCompanyRating: result.averageCompanyRating,
+      averageStylistRating: result.averageStylistRating,
+      averageOverallRating: result.averageOverallRating,
+    });
 
-    res.status(200).json({
+    // Calculate distribution from service ratings
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    const serviceRatings = result.serviceRatings || [];
+
+    console.log("📊 [DEBUG] Service ratings for distribution:", serviceRatings);
+
+    serviceRatings.forEach((rating) => {
+      // Use exact rating values (they should be integers 1-5)
+      if (distribution.hasOwnProperty(rating)) {
+        distribution[rating]++;
+      } else {
+        console.log(`⚠️ [DEBUG] Unexpected rating value: ${rating}`);
+      }
+    });
+
+    console.log("📊 [DEBUG] Calculated distribution:", distribution);
+
+    const totalReviews = result.totalReviews || 0;
+    const percentageDistribution = {
+      5: totalReviews ? Math.round((distribution[5] / totalReviews) * 100) : 0,
+      4: totalReviews ? Math.round((distribution[4] / totalReviews) * 100) : 0,
+      3: totalReviews ? Math.round((distribution[3] / totalReviews) * 100) : 0,
+      2: totalReviews ? Math.round((distribution[2] / totalReviews) * 100) : 0,
+      1: totalReviews ? Math.round((distribution[1] / totalReviews) * 100) : 0,
+    };
+
+    const response = {
       success: true,
       data: {
-        totalReviews: stats[0]?.totalReviews || 0,
-        averageRating: stats[0]?.averageRating
-          ? parseFloat(stats[0].averageRating.toFixed(1))
-          : 0,
+        totalReviews: totalReviews,
+        averageRating: parseFloat(result.averageOverallRating.toFixed(1)),
+        averageServiceRating: parseFloat(
+          result.averageServiceRating.toFixed(1)
+        ),
+        averageCompanyRating: parseFloat(
+          result.averageCompanyRating.toFixed(1)
+        ),
+        averageStylistRating: parseFloat(
+          result.averageStylistRating.toFixed(1)
+        ),
         ratingDistribution: distribution,
-        percentageDistribution: {
-          5: stats[0]?.totalReviews
-            ? Math.round((distribution[5] / stats[0].totalReviews) * 100)
-            : 0,
-          4: stats[0]?.totalReviews
-            ? Math.round((distribution[4] / stats[0].totalReviews) * 100)
-            : 0,
-          3: stats[0]?.totalReviews
-            ? Math.round((distribution[3] / stats[0].totalReviews) * 100)
-            : 0,
-          2: stats[0]?.totalReviews
-            ? Math.round((distribution[2] / stats[0].totalReviews) * 100)
-            : 0,
-          1: stats[0]?.totalReviews
-            ? Math.round((distribution[1] / stats[0].totalReviews) * 100)
-            : 0,
-        },
+        percentageDistribution: percentageDistribution,
       },
-    });
+    };
+
+    console.log(
+      "✅ [DEBUG] Final response:",
+      JSON.stringify(response, null, 2)
+    );
+    res.status(200).json(response);
   } catch (error) {
-    console.error("Error in getReviewStatistics:", error);
+    console.error("❌ [DEBUG] Error in getReviewStatistics:", error);
     res.status(400).json({
       success: false,
       message: error.message,
     });
   }
 }
+
 // Optional: Add comprehensive review analytics with time series
 export async function getReviewAnalytics(req, res) {
   try {

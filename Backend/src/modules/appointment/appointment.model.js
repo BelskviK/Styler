@@ -6,7 +6,7 @@ import {
   removeCompanyAppointmentRef,
   removeCustomerAppointmentRef,
   removeStylistAppointmentRef,
-} from "../../middleware/appointment.middlewares.js";
+} from "./appointment.middlewares.js";
 
 export const appointmentSchema = new mongoose.Schema({
   customer: {

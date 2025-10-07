@@ -1,59 +1,67 @@
 // Backend/models/Company.js
 import mongoose from "mongoose";
 
-export const companySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  description: String,
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  type: {
-    type: String,
-    enum: ["barbershop", "market"],
-    default: "barbershop",
-  },
-  reviews: {
-    rating: {
-      type: Number,
-      default: 0,
+// Backend/models/Company.js - UPDATED schema
+export const companySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    count: {
-      type: Number,
-      default: 0,
-    },
-  },
-  appointments: [
-    {
+    description: String,
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Appointment",
+      ref: "User",
     },
-  ],
-  createdAt: {
-    type: Date,
-    default: Date.now,
+    type: {
+      type: String,
+      enum: ["barbershop", "market"],
+      default: "barbershop",
+    },
+    reviews: {
+      rating: {
+        type: Number,
+        default: 0,
+      },
+      companyRating: {
+        // ADD THIS: Specific company experience rating
+        type: Number,
+        default: 0,
+      },
+      serviceRating: {
+        // ADD THIS: Specific service rating
+        type: Number,
+        default: 0,
+      },
+      count: {
+        type: Number,
+        default: 0,
+      },
+    },
+    appointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Appointment",
+      },
+    ],
+    image: {
+      type: String,
+      default: "",
+    },
+    banner: {
+      type: String,
+      default: "",
+    },
+    location: String,
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  image: {
-    type: String,
-    default: "",
-  },
-  banner: {
-    type: String,
-    default: "",
-  },
-  location: String,
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-});
+  {
+    timestamps: true, // Use built-in timestamps instead of manual createdAt
+  }
+);
 
 export default mongoose.model("Company", companySchema);

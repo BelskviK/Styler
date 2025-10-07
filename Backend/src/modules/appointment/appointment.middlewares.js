@@ -1,4 +1,4 @@
-import User from "../modules/user/user.model.js";
+import User from "../user/user.model.js";
 import mongoose from "mongoose";
 
 export const updateCustomerAppointments = async function (doc) {
