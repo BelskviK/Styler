@@ -28,6 +28,8 @@ FEAT: PAGE Appointments: Appointment ADD Call Button
 
     FEAT: subscription plan APi
 
+✅ FIX: Datepicker registeres -1 day (choshen 15 aug db saves 14 aug)
+
 ✅ FEAT: Page Appointment History Ensure service Image is properly syncd to appointment card
 
 ✅ FIX: PAGE Barbershops : ensure barbershop cards counts correct rating for Company

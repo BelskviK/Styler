@@ -21,7 +21,27 @@ export default function DateTimePicker({
     slotDuration: 30, // 30 minutes per slot
   };
 
-  // ✅ FIXED: Better fetchBusySlots with error handling
+  // ✅ FIXED: Date handling to avoid timezone issues
+  const formatDateForAPI = (date) => {
+    // Use local date components to avoid timezone shifts
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // ✅ FIXED: Create date object without timezone issues
+  const createLocalDate = (year, month, day, timeString = null) => {
+    if (timeString) {
+      const [hours, minutes] = timeString.split(":").map(Number);
+      // Create date in local timezone
+      return new Date(year, month, day, hours, minutes);
+    }
+    // Create date at noon to avoid timezone issues around midnight
+    return new Date(year, month, day, 12, 0, 0);
+  };
+
+  // ✅ FIXED: Better fetchBusySlots with proper date handling
   const fetchBusySlots = useCallback(async () => {
     if (!selectedStylist || !company || !selectedDate) {
       setBusySlots([]);
@@ -32,7 +52,7 @@ export default function DateTimePicker({
       setLoadingBusySlots(true);
       setError(null);
 
-      const dateString = selectedDate.toISOString().split("T")[0]; // YYYY-MM-DD
+      const dateString = formatDateForAPI(selectedDate);
 
       console.log("📅 Fetching busy slots for:", {
         companyId: company.id || company._id,
@@ -62,10 +82,49 @@ export default function DateTimePicker({
     }
   }, [selectedStylist, company, selectedDate]);
 
-  // Fetch busy slots when date or stylist changes
-  useEffect(() => {
-    fetchBusySlots();
-  }, [fetchBusySlots]);
+  // ✅ FIXED: Handle date selection with proper timezone handling
+  const handleDateSelect = (day) => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    // Create date at noon to avoid timezone issues
+    const newDate = createLocalDate(year, month, day);
+
+    setSelectedDate(newDate);
+    setSelectedTime(null);
+
+    if (onDateTimeSelect) {
+      // Send the properly formatted date to parent
+      onDateTimeSelect({
+        date: newDate,
+        time: null,
+        dateString: formatDateForAPI(newDate),
+      });
+    }
+  };
+
+  // ✅ FIXED: Handle time selection with proper datetime construction
+  const handleTimeSelect = (time) => {
+    if (time.isBusy) return;
+
+    setSelectedTime(time.time);
+
+    if (onDateTimeSelect && selectedDate) {
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+      const day = selectedDate.getDate();
+
+      // Create full datetime in local timezone
+      const dateTime = createLocalDate(year, month, day, time.time);
+
+      onDateTimeSelect({
+        date: selectedDate,
+        time: time.time,
+        dateTime: dateTime,
+        dateString: formatDateForAPI(selectedDate),
+      });
+    }
+  };
 
   // Check if two time ranges overlap
   const isTimeOverlap = (start1, end1, start2, end2) => {
@@ -115,7 +174,7 @@ export default function DateTimePicker({
 
   const timeSlots = generateTimeSlots();
 
-  // Rest of your existing functions remain the same...
+  // Rest of your calendar functions remain the same...
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -140,30 +199,6 @@ export default function DateTimePicker({
     );
   };
 
-  const handleDateSelect = (day) => {
-    const newDate = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      day
-    );
-    setSelectedDate(newDate);
-    setSelectedTime(null);
-
-    if (onDateTimeSelect) {
-      onDateTimeSelect({ date: newDate, time: null });
-    }
-  };
-
-  const handleTimeSelect = (time) => {
-    if (time.isBusy) return;
-
-    setSelectedTime(time.time);
-
-    if (onDateTimeSelect) {
-      onDateTimeSelect({ date: selectedDate, time: time.time });
-    }
-  };
-
   const isToday = (day) => {
     const today = new Date();
     return (
@@ -182,7 +217,7 @@ export default function DateTimePicker({
   };
 
   const isPastDate = (day) => {
-    const date = new Date(
+    const date = createLocalDate(
       currentDate.getFullYear(),
       currentDate.getMonth(),
       day
@@ -214,11 +249,23 @@ export default function DateTimePicker({
 
   const calendarDays = generateCalendarDays();
 
+  // ✅ FIXED: Initialize with proper date handling
   useEffect(() => {
     const today = new Date();
-    setSelectedDate(today);
+    // Set to noon to avoid timezone issues
+    const todayNoon = createLocalDate(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    setSelectedDate(todayNoon);
     setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
   }, []);
+
+  // Fetch busy slots when date or stylist changes
+  useEffect(() => {
+    fetchBusySlots();
+  }, [fetchBusySlots]);
 
   return (
     <section className="mt-6">
@@ -375,6 +422,9 @@ export default function DateTimePicker({
           <p className="text-sm text-blue-800">
             Selected: {selectedDate.toLocaleDateString()}
             {selectedTime && ` at ${selectedTime}`}
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Will be saved as: {formatDateForAPI(selectedDate)}
           </p>
         </div>
       )}
