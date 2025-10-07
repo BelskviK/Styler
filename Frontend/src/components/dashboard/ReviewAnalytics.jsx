@@ -32,13 +32,9 @@ const ReviewAnalytics = ({ companyId = null }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("🔄 Fetching review statistics...");
-
       const response = await AnalyticsService.getReviewStatistics(companyId);
-      console.log("📊 Review stats response:", response);
 
       if (response.data.success) {
-        console.log("✅ Review stats data:", response.data.data);
         setStats(response.data.data);
       } else {
         throw new Error(
