@@ -22,8 +22,8 @@ export default function DashboardStyler() {
       <TodaySchedule />
       <UpcomingAppointments />
       <PerformanceSummary />
-      <ClientFeedback />
-      <QuickNotes />
+      {/* <ClientFeedback /> */}
+      {/* <QuickNotes /> */}
     </div>
   );
 }
