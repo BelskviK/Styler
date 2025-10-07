@@ -65,25 +65,25 @@ class AppointmentService {
       .sort({ date: -1, startTime: -1 });
   }
 
-  // get appointments by customer
+  // Get appointments by customer
   async getAppointmentsByCustomer(user) {
     if (user.role !== "customer") {
       throw new Error(
-        "Access denied. Only customer can view their appointments"
+        "Access denied. Only customers can view their appointments"
       );
     }
 
-    const appointments = await Appointment.find({
-      customer: user._id,
-    })
+    const appointments = await Appointment.find({ customer: user._id })
       .populate("stylist", "name email phone profileImage expertise rating")
       .populate("service", "name price duration description")
       .populate("company", "name location image")
-      .sort({ date: 1, startTime: 1 }) // Sort by upcoming first
+      .populate("review")
+      .sort({ date: 1, startTime: 1 })
       .lean();
 
     return appointments;
   }
+
   // Get today's appointments
   async getTodayAppointments(userId, role) {
     const today = new Date();

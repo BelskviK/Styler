@@ -24,19 +24,17 @@ const queryClient = new QueryClient({
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        {" "}
-        {/* Wrap with i18n provider */}
-        <AuthProvider>
-          <BrowserRouter>
-            <NotificationProvider>
-              <App />
-            </NotificationProvider>
-          </BrowserRouter>
-        </AuthProvider>
-      </I18nProvider>
-    </QueryClientProvider>
-  </React.StrictMode>
+  // <React.StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <I18nProvider>
+      {" "}
+      {/* Wrap with i18n provider */}
+      <AuthProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AuthProvider>
+    </I18nProvider>
+  </QueryClientProvider>
+  // </React.StrictMode>
 );

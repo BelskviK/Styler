@@ -5,22 +5,32 @@ import Appointment from "../appointment/appointment.model.js";
 import Company from "../company/company.model.js";
 import User from "../user/user.model.js";
 class ReviewService {
-  // @desc    Create review with validation - UPDATED for dual ratings
-  // @param   {Object} reviewData - Review data (appointmentId, overallRating, stylistRating, comment)
+  // @desc    Create review with validation - UPDATED for triple ratings
+  // @param   {Object} reviewData - Review data (appointmentId, serviceRating, companyRating, stylistRating, comment)
   // @param   {string} customerId - ID of the customer creating the review
   // @returns {Object} Result object with created review or error
   async createReview(reviewData, customerId) {
     try {
-      const { appointmentId, overallRating, stylistRating, comment } =
-        reviewData;
+      const {
+        appointmentId,
+        serviceRating,
+        companyRating,
+        stylistRating,
+        comment,
+      } = reviewData;
 
-      // Validate required fields
-      if (!appointmentId || !overallRating || !stylistRating) {
+      // Validate required fields - UPDATED for companyRating
+      if (
+        !appointmentId ||
+        !serviceRating ||
+        !companyRating ||
+        !stylistRating
+      ) {
         return {
           success: false,
           status: 400,
           message:
-            "Missing required fields: appointmentId, overallRating, and stylistRating are required",
+            "Missing required fields: appointmentId, serviceRating, companyRating, and stylistRating are required",
         };
       }
 
@@ -68,13 +78,14 @@ class ReviewService {
         };
       }
 
-      // Create review with dual ratings
+      // Create review with triple ratings - UPDATED
       const review = await Review.create({
         customer: customerId,
         company: appointment.company._id,
         stylist: appointment.stylist._id,
         appointment: appointmentId,
-        overallRating,
+        serviceRating,
+        companyRating, // ADDED: Include companyRating
         stylistRating,
         comment: comment || "",
       });
@@ -83,7 +94,7 @@ class ReviewService {
       const populatedReview = await Review.findById(review._id)
         .populate("customer", "name profileImage")
         .populate("stylist", "name profileImage")
-        .populate("company", "name type") // ADDED: Include company type
+        .populate("company", "name type")
         .populate({
           path: "appointment",
           select: "date service status",
@@ -245,23 +256,37 @@ class ReviewService {
         status: "approved",
       });
 
-      // CHANGE: Calculate average rating using stylistRating
-      const averageRating = await Review.aggregate([
+      // UPDATE: Calculate multiple average ratings
+      const averageRatings = await Review.aggregate([
         {
           $match: {
             stylist: mongoose.Types.ObjectId(stylistId),
             status: "approved",
           },
         },
-        { $group: { _id: null, avgRating: { $avg: "$stylistRating" } } },
+        {
+          $group: {
+            _id: null,
+            avgStylistRating: { $avg: "$stylistRating" },
+            avgServiceRating: { $avg: "$serviceRating" }, // ADDED: Service rating average
+            totalReviews: { $sum: 1 },
+          },
+        },
       ]);
+
+      const ratings = averageRatings[0] || {
+        avgStylistRating: 0,
+        avgServiceRating: 0,
+        totalReviews: 0,
+      };
 
       return {
         success: true,
         reviews,
         stylistStats: {
-          averageRating: averageRating[0]?.avgRating || 0,
-          totalReviews: total,
+          averageStylistRating: ratings.avgStylistRating || 0,
+          averageServiceRating: ratings.avgServiceRating || 0, // ADDED
+          totalReviews: ratings.totalReviews,
         },
         pagination: {
           currentPage: parseInt(page),
@@ -275,9 +300,6 @@ class ReviewService {
     }
   }
 
-  // Keep all other existing methods as they are...
-
-  // Add all the other methods that are missing but referenced in your controller
   async getReviewsByCompany(companyId, queryParams) {
     try {
       const { page = 1, limit = 10, status = "approved" } = queryParams;
@@ -316,9 +338,39 @@ class ReviewService {
         status: status,
       });
 
+      // ADDED: Calculate company rating statistics
+      const companyRatingStats = await Review.aggregate([
+        {
+          $match: {
+            company: mongoose.Types.ObjectId(companyId),
+            status: "approved",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            avgCompanyRating: { $avg: "$companyRating" },
+            avgServiceRating: { $avg: "$serviceRating" },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const stats = companyRatingStats[0] || {
+        avgCompanyRating: 0,
+        avgServiceRating: 0,
+        totalReviews: 0,
+      };
+
       return {
         success: true,
         reviews,
+        companyStats: {
+          // ADDED: Include company rating stats
+          averageCompanyRating: stats.avgCompanyRating || 0,
+          averageServiceRating: stats.avgServiceRating || 0,
+          totalReviews: stats.totalReviews,
+        },
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(total / limit),
@@ -463,7 +515,87 @@ class ReviewService {
       throw error;
     }
   }
-}
+  // @desc    Get comprehensive rating statistics for a company
+  // @param   {string} companyId - ID of the company
+  // @returns {Object} Comprehensive rating statistics
+  async getCompanyRatingStats(companyId) {
+    try {
+      const ratingStats = await Review.aggregate([
+        {
+          $match: {
+            company: mongoose.Types.ObjectId(companyId),
+            status: "approved",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            avgCompanyRating: { $avg: "$companyRating" },
+            avgServiceRating: { $avg: "$serviceRating" },
+            avgStylistRating: { $avg: "$stylistRating" },
+            totalReviews: { $sum: 1 },
+            companyRatingBreakdown: {
+              $push: "$companyRating",
+            },
+            serviceRatingBreakdown: {
+              $push: "$serviceRating",
+            },
+          },
+        },
+      ]);
 
+      if (ratingStats.length === 0) {
+        return {
+          success: true,
+          stats: {
+            avgCompanyRating: 0,
+            avgServiceRating: 0,
+            avgStylistRating: 0,
+            totalReviews: 0,
+            ratingDistribution: {
+              company: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+              service: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            },
+          },
+        };
+      }
+
+      const stats = ratingStats[0];
+
+      // Calculate rating distribution (optional - if needed)
+      const companyDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const serviceDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      if (stats.companyRatingBreakdown) {
+        stats.companyRatingBreakdown.forEach((rating) => {
+          companyDistribution[rating]++;
+        });
+      }
+
+      if (stats.serviceRatingBreakdown) {
+        stats.serviceRatingBreakdown.forEach((rating) => {
+          serviceDistribution[rating]++;
+        });
+      }
+
+      return {
+        success: true,
+        stats: {
+          avgCompanyRating: stats.avgCompanyRating || 0,
+          avgServiceRating: stats.avgServiceRating || 0,
+          avgStylistRating: stats.avgStylistRating || 0,
+          totalReviews: stats.totalReviews,
+          ratingDistribution: {
+            company: companyDistribution,
+            service: serviceDistribution,
+          },
+        },
+      };
+    } catch (error) {
+      console.error("getCompanyRatingStats service error:", error);
+      throw error;
+    }
+  }
+}
 const reviewService = new ReviewService();
 export default reviewService;

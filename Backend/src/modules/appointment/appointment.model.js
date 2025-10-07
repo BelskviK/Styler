@@ -80,6 +80,11 @@ export const appointmentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  review: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Review",
+    default: null,
+  },
 });
 
 // Post-save middleware

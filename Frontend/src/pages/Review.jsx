@@ -3,19 +3,19 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppointmentService from "@/services/AppointmentService";
 import ReviewService from "@/services/ReviewService";
-import CompanyService from "@/services/CompanyService"; // Add this import
+import CompanyService from "@/services/CompanyService";
 
 export default function ReviewPage() {
   const { appointmentId } = useParams();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
-  const [company, setCompany] = useState(null); // NEW: Separate company state
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [serviceRating, setServiceRating] = useState(0);
   const [stylistRating, setStylistRating] = useState(0);
-  const [companyRating, setCompanyRating] = useState(0);
+  const [companyRating, setCompanyRating] = useState(0); // NEW: Company rating state
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -68,16 +68,18 @@ export default function ReviewPage() {
     try {
       console.log("Submitting review with data:", {
         appointmentId,
-        overallRating: serviceRating,
+        serviceRating,
         stylistRating,
+        companyRating, // ADDED: Include companyRating
         comment: reviewText,
       });
 
-      // Submit review to backend
+      // UPDATED: Submit review with all three ratings
       const response = await ReviewService.submitReview({
         appointmentId,
-        overallRating: serviceRating,
+        serviceRating,
         stylistRating,
+        companyRating, // ADDED
         comment: reviewText,
       });
 
@@ -166,7 +168,7 @@ export default function ReviewPage() {
     return "the company";
   };
 
-  // Check if all required ratings are selected
+  // UPDATED: Check if all required ratings are selected (now including companyRating)
   const isFormValid =
     serviceRating > 0 && stylistRating > 0 && companyRating > 0;
 
@@ -273,7 +275,8 @@ export default function ReviewPage() {
             {/* Optional: Show basic info without the box */}
             <p className="text-[#49739c] text-sm">
               Reviewing your experience with{" "}
-              {appointment?.stylist?.name || "your stylist"}
+              {appointment?.stylist?.name || "your stylist"} at{" "}
+              {getCompanyName()}
             </p>
           </div>
         </div>
@@ -301,8 +304,7 @@ export default function ReviewPage() {
             title="Stylist Rating"
           />
 
-          {/* 3. Company Type Experience - Dynamic */}
-          {/* FIXED: Always show company rating section with fallback */}
+          {/* 3. Company Rating - Dynamic */}
           <StarRating
             rating={companyRating}
             setRating={setCompanyRating}
@@ -365,6 +367,15 @@ export default function ReviewPage() {
               )}
             </button>
           </div>
+
+          {/* UPDATED: Form validation hint */}
+          {!isFormValid && (
+            <div className="px-4 pb-4">
+              <p className="text-sm text-amber-600 text-center">
+                Please rate all three categories to submit your review
+              </p>
+            </div>
+          )}
         </form>
       </div>
     </div>

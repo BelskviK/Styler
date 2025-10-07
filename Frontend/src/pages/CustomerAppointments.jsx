@@ -195,6 +195,53 @@ const CustomerAppointments = () => {
     return "https://via.placeholder.com/70x70/E7EDF4/49739c?text=Stylist";
   };
 
+  // Update this function to check for existing review
+  const shouldShowReviewButton = (appointment) => {
+    const status = appointment.rawData.status;
+    const hasReview = appointment.rawData.review; // Check if review field exists and has value
+
+    // Only show button for completed appointments that don't have reviews
+    return (status === "completed" || status === "cancelled") && !hasReview;
+  };
+
+  // Add this function to handle review button click
+  const handleReviewClick = (appointmentId) => {
+    navigate(`/review/${appointmentId}`);
+  };
+
+  // NEW: Star Rating Component
+  const StarRating = ({ rating }) => {
+    return (
+      <div className="flex items-center gap-1 ml-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <svg
+            key={star}
+            className={`w-4 h-4 ${
+              rating >= star ? "text-amber-500" : "text-gray-300"
+            }`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        ))}
+        <span className="text-xs text-gray-500 ml-1">{rating.toFixed(1)}</span>
+      </div>
+    );
+  };
+
+  // NEW: Get service rating from review data
+  const getServiceRating = (appointment) => {
+    // Check if review exists and has serviceRating
+    if (
+      appointment.rawData.review &&
+      appointment.rawData.review.serviceRating
+    ) {
+      return appointment.rawData.review.serviceRating;
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="px-4 md:px-40 flex flex-1 justify-center py-5">
@@ -254,15 +301,7 @@ const CustomerAppointments = () => {
   const cancelledAppointments = appointments.filter(
     (app) => app.status === "cancelled"
   );
-  const shouldShowReviewButton = (appointment) => {
-    const status = appointment.rawData.status;
-    return status === "completed" || status === "cancelled";
-  };
 
-  // Add this function to handle review button click
-  const handleReviewClick = (appointmentId) => {
-    navigate(`/review/${appointmentId}`);
-  };
   return (
     <div className="px-4 md:px-40 flex flex-1 justify-center py-5">
       <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
@@ -277,19 +316,17 @@ const CustomerAppointments = () => {
           Upcoming Appointments ({upcomingAppointments.length})
         </h3>
 
-        {pastAppointments.length === 0 ? (
+        {upcomingAppointments.length === 0 ? (
           <div className="bg-slate-50 px-4 py-8 rounded-lg text-center">
-            <p className="text-[#49739c]">No past appointments</p>
+            <p className="text-[#49739c]">No upcoming appointments</p>
           </div>
         ) : (
-          pastAppointments.map((appointment) => {
+          upcomingAppointments.map((appointment) => {
             const statusDisplay = getStatusDisplay(appointment);
-            const showReviewButton = shouldShowReviewButton(appointment);
-
             return (
               <div
                 key={appointment.id}
-                className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-gray-400"
+                className="flex gap-4 bg-slate-50 px-4 py-3 justify-between mb-3 rounded-lg border-l-4 border-blue-400"
               >
                 <div className="flex items-start gap-4 w-full">
                   <div
@@ -315,17 +352,6 @@ const CustomerAppointments = () => {
                         {appointment.specialist}
                       </p>
                     </div>
-                    {/* Add Review Button */}
-                    {showReviewButton && (
-                      <div className="flex justify-end mt-3">
-                        <button
-                          onClick={() => handleReviewClick(appointment.id)}
-                          className="flex items-center justify-center px-4 py-2 bg-[#0d80f2] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors opacity-100"
-                        >
-                          Add Review
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -345,6 +371,9 @@ const CustomerAppointments = () => {
         ) : (
           pastAppointments.map((appointment) => {
             const statusDisplay = getStatusDisplay(appointment);
+            const showReviewButton = shouldShowReviewButton(appointment);
+            const serviceRating = getServiceRating(appointment);
+
             return (
               <div
                 key={appointment.id}
@@ -357,9 +386,23 @@ const CustomerAppointments = () => {
                   ></div>
                   <div className="flex flex-1 flex-col justify-between w-full">
                     <div className="flex flex-row items-start justify-between w-full gap-4">
-                      <p className="text-[#0d141c] text-base font-medium leading-normal flex-1">
-                        {appointment.service}
-                      </p>
+                      <div className="flex items-center gap-2 flex-1">
+                        <p className="text-[#0d141c] text-base font-medium leading-normal">
+                          {appointment.service}
+                        </p>
+                        {/* Show review button OR star rating */}
+                        {showReviewButton ? (
+                          <button
+                            onClick={() => handleReviewClick(appointment.id)}
+                            className="text-amber-500 hover:text-amber-600 text-sm font-medium transition-colors ml-2"
+                            title="Add review for this appointment"
+                          >
+                            Add Review
+                          </button>
+                        ) : serviceRating ? (
+                          <StarRating rating={serviceRating} />
+                        ) : null}
+                      </div>
                       <div className="mt-1">
                         <span className={statusDisplay.className}>
                           {statusDisplay.text}
@@ -390,6 +433,7 @@ const CustomerAppointments = () => {
             {cancelledAppointments.map((appointment) => {
               const statusDisplay = getStatusDisplay(appointment);
               const showReviewButton = shouldShowReviewButton(appointment);
+              const serviceRating = getServiceRating(appointment);
 
               return (
                 <div
@@ -403,9 +447,23 @@ const CustomerAppointments = () => {
                     ></div>
                     <div className="flex flex-1 flex-col justify-between w-full">
                       <div className="flex flex-row items-start justify-between w-full gap-4">
-                        <p className="text-[#0d141c] text-base font-medium leading-normal line-through flex-1">
-                          {appointment.service}
-                        </p>
+                        <div className="flex items-center gap-2 flex-1">
+                          <p className="text-[#0d141c] text-base font-medium leading-normal line-through">
+                            {appointment.service}
+                          </p>
+                          {/* Show review button OR star rating for cancelled appointments too */}
+                          {showReviewButton ? (
+                            <button
+                              onClick={() => handleReviewClick(appointment.id)}
+                              className="text-amber-500 hover:text-amber-600 text-sm font-medium transition-colors ml-2"
+                              title="Add review for this appointment"
+                            >
+                              Add Review
+                            </button>
+                          ) : serviceRating ? (
+                            <StarRating rating={serviceRating} />
+                          ) : null}
+                        </div>
                         <div className="mt-1">
                           <span className={statusDisplay.className}>
                             {statusDisplay.text}
@@ -420,17 +478,6 @@ const CustomerAppointments = () => {
                           {appointment.specialist}
                         </p>
                       </div>
-                      {/* Add Review Button */}
-                      {showReviewButton && (
-                        <div className="flex justify-end mt-3">
-                          <button
-                            onClick={() => handleReviewClick(appointment.id)}
-                            className="flex items-center justify-center px-4 py-2 bg-[#0d80f2] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors opacity-100"
-                          >
-                            Add Review
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
