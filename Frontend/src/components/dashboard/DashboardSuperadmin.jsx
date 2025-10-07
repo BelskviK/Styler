@@ -1,4 +1,4 @@
-// src/components/dashboard/SuperadminDashboard.jsx
+// src/components/dashboard/SuperadminDashboard.jsx - Updated
 import React from "react";
 import SuperadminMetrics from "@/components/dashboard/SuperadminMetrics";
 import PopularServices from "@/components/dashboard/PopularServices";
@@ -18,7 +18,7 @@ export default function SuperadminDashboard() {
             Dashboard
           </p>
           <p className="text-[#60758a] text-sm font-normal leading-normal">
-            Overview of your business performance
+            Overview of your business performance with detailed rating analytics
           </p>
         </div>
       </div>
@@ -26,7 +26,7 @@ export default function SuperadminDashboard() {
       <SuperadminMetrics />
       <ReviewAnalytics />
       <PopularServices />
-      {/* <StylistPerformance /> */}
+      <StylistPerformance />
       <TodaySchedule />
       <UpcomingAppointments />
       {/* <RecentActivity /> */}

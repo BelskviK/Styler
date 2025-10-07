@@ -36,7 +36,7 @@ FEAT: Page Appointment History Ensure service Image is properly syncd to appoint
 
     FEAT: subscription plan APi
 
-❌ FIX: page dashbord's and page bookings appointment color dismatch
+✅ FIX: page dashbord's and page bookings appointment color dismatch
 
 ✅ ajust layout indexes of notification
 

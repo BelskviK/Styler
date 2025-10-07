@@ -4,11 +4,9 @@ import {
   validateAppointmentBeforeSave,
   updateTimestampsBeforeUpdate,
   removeReviewReferenceBeforeDelete,
-  updateCompanyAfterSave,
-  updateStylistAfterSave,
-  linkReviewToAppointmentAfterSave,
-  recalculateRatingsAfterUpdate,
-  recalculateRatingsAfterDelete,
+  syncAllRatingsAfterSave,
+  syncAllRatingsAfterUpdate,
+  syncAllRatingsAfterDelete,
 } from "./review.middlewares.js";
 
 export const reviewSchema = new mongoose.Schema({
@@ -33,23 +31,36 @@ export const reviewSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  serviceRating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5,
-  },
-  companyRating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5,
-  },
-  stylistRating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5,
+  // Rating components - clear naming
+  ratings: {
+    service: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+    company: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+    stylist: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+    overall: {
+      type: Number,
+      default: function () {
+        // Auto-calculate overall as average of three components
+        return (
+          (this.ratings.service + this.ratings.company + this.ratings.stylist) /
+          3
+        );
+      },
+    },
   },
   comment: {
     type: String,
@@ -70,14 +81,39 @@ export const reviewSchema = new mongoose.Schema({
   },
 });
 
+// Pre-save middleware to calculate overall rating
+reviewSchema.pre("save", function (next) {
+  // Check if any ratings are being modified and are valid numbers
+  if (
+    (this.isModified("ratings.service") && this.ratings.service) ||
+    (this.isModified("ratings.company") && this.ratings.company) ||
+    (this.isModified("ratings.stylist") && this.ratings.stylist)
+  ) {
+    const { service, company, stylist } = this.ratings;
+
+    // Only calculate if all ratings are valid numbers
+    if (
+      typeof service === "number" &&
+      typeof company === "number" &&
+      typeof stylist === "number" &&
+      !isNaN(service) &&
+      !isNaN(company) &&
+      !isNaN(stylist)
+    ) {
+      this.ratings.overall = (service + company + stylist) / 3;
+    }
+  }
+  next();
+});
+
+// Simplified middleware registration
 reviewSchema.pre("save", validateAppointmentBeforeSave);
 reviewSchema.pre("findOneAndUpdate", updateTimestampsBeforeUpdate);
 reviewSchema.pre("findOneAndDelete", removeReviewReferenceBeforeDelete);
 
-reviewSchema.post("save", updateCompanyAfterSave);
-reviewSchema.post("save", updateStylistAfterSave);
-reviewSchema.post("save", linkReviewToAppointmentAfterSave);
-reviewSchema.post("findOneAndUpdate", recalculateRatingsAfterUpdate);
-reviewSchema.post("findOneAndDelete", recalculateRatingsAfterDelete);
+// Single post-save middleware for all rating sync
+reviewSchema.post("save", syncAllRatingsAfterSave);
+reviewSchema.post("findOneAndUpdate", syncAllRatingsAfterUpdate);
+reviewSchema.post("findOneAndDelete", syncAllRatingsAfterDelete);
 
 export default mongoose.model("Review", reviewSchema);

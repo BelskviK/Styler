@@ -1,7 +1,6 @@
 // Backend/models/Company.js
 import mongoose from "mongoose";
 
-// Backend/models/Company.js - UPDATED schema
 export const companySchema = new mongoose.Schema(
   {
     name: {
@@ -25,12 +24,10 @@ export const companySchema = new mongoose.Schema(
         default: 0,
       },
       companyRating: {
-        // ADD THIS: Specific company experience rating
         type: Number,
         default: 0,
       },
       serviceRating: {
-        // ADD THIS: Specific service rating
         type: Number,
         default: 0,
       },
@@ -60,7 +57,7 @@ export const companySchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Use built-in timestamps instead of manual createdAt
+    timestamps: true,
   }
 );
 

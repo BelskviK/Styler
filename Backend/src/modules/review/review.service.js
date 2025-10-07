@@ -5,119 +5,6 @@ import Appointment from "../appointment/appointment.model.js";
 import Company from "../company/company.model.js";
 import User from "../user/user.model.js";
 class ReviewService {
-  // @desc    Create review with validation - UPDATED for triple ratings
-  // @param   {Object} reviewData - Review data (appointmentId, serviceRating, companyRating, stylistRating, comment)
-  // @param   {string} customerId - ID of the customer creating the review
-  // @returns {Object} Result object with created review or error
-  async createReview(reviewData, customerId) {
-    try {
-      const {
-        appointmentId,
-        serviceRating,
-        companyRating,
-        stylistRating,
-        comment,
-      } = reviewData;
-
-      // Validate required fields - UPDATED for companyRating
-      if (
-        !appointmentId ||
-        !serviceRating ||
-        !companyRating ||
-        !stylistRating
-      ) {
-        return {
-          success: false,
-          status: 400,
-          message:
-            "Missing required fields: appointmentId, serviceRating, companyRating, and stylistRating are required",
-        };
-      }
-
-      // Check if appointment exists and is valid for review
-      const appointment = await Appointment.findById(appointmentId)
-        .populate("customer")
-        .populate("company")
-        .populate("stylist");
-
-      if (!appointment) {
-        return {
-          success: false,
-          status: 404,
-          message: "Appointment not found",
-        };
-      }
-
-      // Check if user is the customer who made the appointment
-      if (appointment.customer._id.toString() !== customerId.toString()) {
-        return {
-          success: false,
-          status: 403,
-          message: "Not authorized to review this appointment",
-        };
-      }
-
-      // CHANGE: Allow both completed AND cancelled appointments
-      if (!["completed", "cancelled"].includes(appointment.status)) {
-        return {
-          success: false,
-          status: 400,
-          message: "Can only review completed or cancelled appointments",
-        };
-      }
-
-      // Check if review already exists
-      const existingReview = await Review.findOne({
-        appointment: appointmentId,
-      });
-      if (existingReview) {
-        return {
-          success: false,
-          status: 400,
-          message: "Review already exists for this appointment",
-        };
-      }
-
-      // Create review with triple ratings - UPDATED
-      const review = await Review.create({
-        customer: customerId,
-        company: appointment.company._id,
-        stylist: appointment.stylist._id,
-        appointment: appointmentId,
-        serviceRating,
-        companyRating, // ADDED: Include companyRating
-        stylistRating,
-        comment: comment || "",
-      });
-
-      // Populate the newly created review
-      const populatedReview = await Review.findById(review._id)
-        .populate("customer", "name profileImage")
-        .populate("stylist", "name profileImage")
-        .populate("company", "name type")
-        .populate({
-          path: "appointment",
-          select: "date service status",
-          populate: {
-            path: "service",
-            select: "name price",
-          },
-        });
-
-      return {
-        success: true,
-        review: populatedReview,
-      };
-    } catch (error) {
-      console.error("createReview service error:", error);
-      throw error;
-    }
-  }
-
-  // @desc    Check if appointment can be reviewed - NEW METHOD
-  // @param   {string} appointmentId - ID of the appointment
-  // @param   {string} customerId - ID of the customer
-  // @returns {Object} Result object with canReview flag and reason
   async canReviewAppointment(appointmentId, customerId) {
     try {
       const appointment = await Appointment.findById(appointmentId);
@@ -170,10 +57,6 @@ class ReviewService {
     }
   }
 
-  // @desc    Get review by appointment ID - NEW METHOD
-  // @param   {string} appointmentId - ID of the appointment
-  // @param   {string} customerId - ID of the customer (for authorization)
-  // @returns {Object} Result object with review or error
   async getReviewByAppointment(appointmentId, customerId) {
     try {
       const review = await Review.findOne({ appointment: appointmentId })
@@ -216,9 +99,134 @@ class ReviewService {
     }
   }
 
-  // UPDATE existing methods to handle dual ratings in aggregations:
+  async createReview(reviewData, customerId) {
+    try {
+      const {
+        appointmentId,
+        serviceRating,
+        companyRating,
+        stylistRating,
+        comment,
+      } = reviewData;
 
-  // In getReviewsByStylist method, update the aggregation:
+      console.log("📝 Creating review with data:", reviewData);
+
+      // Validate required fields
+      if (
+        !appointmentId ||
+        serviceRating === undefined ||
+        companyRating === undefined ||
+        stylistRating === undefined
+      ) {
+        return {
+          success: false,
+          status: 400,
+          message:
+            "Missing required fields: appointmentId, serviceRating, companyRating, and stylistRating are required",
+        };
+      }
+
+      // Validate rating values
+      if (
+        serviceRating < 1 ||
+        serviceRating > 5 ||
+        companyRating < 1 ||
+        companyRating > 5 ||
+        stylistRating < 1 ||
+        stylistRating > 5
+      ) {
+        return {
+          success: false,
+          status: 400,
+          message: "All ratings must be between 1 and 5",
+        };
+      }
+
+      // Check if appointment exists and is valid for review
+      const appointment = await Appointment.findById(appointmentId)
+        .populate("customer")
+        .populate("company")
+        .populate("stylist");
+
+      if (!appointment) {
+        return {
+          success: false,
+          status: 404,
+          message: "Appointment not found",
+        };
+      }
+
+      // Check if user is the customer who made the appointment
+      if (appointment.customer._id.toString() !== customerId.toString()) {
+        return {
+          success: false,
+          status: 403,
+          message: "Not authorized to review this appointment",
+        };
+      }
+
+      // Allow both completed AND cancelled appointments
+      if (!["completed", "cancelled"].includes(appointment.status)) {
+        return {
+          success: false,
+          status: 400,
+          message: "Can only review completed or cancelled appointments",
+        };
+      }
+
+      // Check if review already exists
+      const existingReview = await Review.findOne({
+        appointment: appointmentId,
+      });
+      if (existingReview) {
+        return {
+          success: false,
+          status: 400,
+          message: "Review already exists for this appointment",
+        };
+      }
+
+      // FIXED: Create review with NESTED ratings structure
+      const review = await Review.create({
+        customer: customerId,
+        company: appointment.company._id,
+        stylist: appointment.stylist._id,
+        appointment: appointmentId,
+        ratings: {
+          service: serviceRating,
+          company: companyRating,
+          stylist: stylistRating,
+          // overall will be auto-calculated in pre-save middleware
+        },
+        comment: comment || "",
+      });
+
+      console.log("✅ Review created successfully:", review._id);
+
+      // Populate the newly created review
+      const populatedReview = await Review.findById(review._id)
+        .populate("customer", "name profileImage")
+        .populate("stylist", "name profileImage")
+        .populate("company", "name type")
+        .populate({
+          path: "appointment",
+          select: "date service status",
+          populate: {
+            path: "service",
+            select: "name price",
+          },
+        });
+
+      return {
+        success: true,
+        review: populatedReview,
+      };
+    } catch (error) {
+      console.error("createReview service error:", error);
+      throw error;
+    }
+  }
+
   async getReviewsByStylist(stylistId, queryParams) {
     try {
       const { page = 1, limit = 10 } = queryParams;
@@ -256,7 +264,7 @@ class ReviewService {
         status: "approved",
       });
 
-      // UPDATE: Calculate multiple average ratings
+      // FIXED: Use nested ratings structure in aggregation
       const averageRatings = await Review.aggregate([
         {
           $match: {
@@ -267,8 +275,8 @@ class ReviewService {
         {
           $group: {
             _id: null,
-            avgStylistRating: { $avg: "$stylistRating" },
-            avgServiceRating: { $avg: "$serviceRating" }, // ADDED: Service rating average
+            avgStylistRating: { $avg: "$ratings.stylist" },
+            avgServiceRating: { $avg: "$ratings.service" },
             totalReviews: { $sum: 1 },
           },
         },
@@ -285,7 +293,7 @@ class ReviewService {
         reviews,
         stylistStats: {
           averageStylistRating: ratings.avgStylistRating || 0,
-          averageServiceRating: ratings.avgServiceRating || 0, // ADDED
+          averageServiceRating: ratings.avgServiceRating || 0,
           totalReviews: ratings.totalReviews,
         },
         pagination: {
@@ -338,7 +346,7 @@ class ReviewService {
         status: status,
       });
 
-      // ADDED: Calculate company rating statistics
+      // FIXED: Use nested ratings structure in aggregation
       const companyRatingStats = await Review.aggregate([
         {
           $match: {
@@ -349,8 +357,8 @@ class ReviewService {
         {
           $group: {
             _id: null,
-            avgCompanyRating: { $avg: "$companyRating" },
-            avgServiceRating: { $avg: "$serviceRating" },
+            avgCompanyRating: { $avg: "$ratings.company" },
+            avgServiceRating: { $avg: "$ratings.service" },
             totalReviews: { $sum: 1 },
           },
         },
@@ -366,7 +374,6 @@ class ReviewService {
         success: true,
         reviews,
         companyStats: {
-          // ADDED: Include company rating stats
           averageCompanyRating: stats.avgCompanyRating || 0,
           averageServiceRating: stats.avgServiceRating || 0,
           totalReviews: stats.totalReviews,
@@ -381,6 +388,85 @@ class ReviewService {
       };
     } catch (error) {
       console.error("getReviewsByCompany service error:", error);
+      throw error;
+    }
+  }
+
+  async getCompanyRatingStats(companyId) {
+    try {
+      const ratingStats = await Review.aggregate([
+        {
+          $match: {
+            company: mongoose.Types.ObjectId(companyId),
+            status: "approved",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            avgCompanyRating: { $avg: "$ratings.company" },
+            avgServiceRating: { $avg: "$ratings.service" },
+            avgStylistRating: { $avg: "$ratings.stylist" },
+            totalReviews: { $sum: 1 },
+            companyRatingBreakdown: {
+              $push: "$ratings.company",
+            },
+            serviceRatingBreakdown: {
+              $push: "$ratings.service",
+            },
+          },
+        },
+      ]);
+
+      if (ratingStats.length === 0) {
+        return {
+          success: true,
+          stats: {
+            avgCompanyRating: 0,
+            avgServiceRating: 0,
+            avgStylistRating: 0,
+            totalReviews: 0,
+            ratingDistribution: {
+              company: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+              service: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            },
+          },
+        };
+      }
+
+      const stats = ratingStats[0];
+
+      // Calculate rating distribution
+      const companyDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const serviceDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      if (stats.companyRatingBreakdown) {
+        stats.companyRatingBreakdown.forEach((rating) => {
+          companyDistribution[rating]++;
+        });
+      }
+
+      if (stats.serviceRatingBreakdown) {
+        stats.serviceRatingBreakdown.forEach((rating) => {
+          serviceDistribution[rating]++;
+        });
+      }
+
+      return {
+        success: true,
+        stats: {
+          avgCompanyRating: stats.avgCompanyRating || 0,
+          avgServiceRating: stats.avgServiceRating || 0,
+          avgStylistRating: stats.avgStylistRating || 0,
+          totalReviews: stats.totalReviews,
+          ratingDistribution: {
+            company: companyDistribution,
+            service: serviceDistribution,
+          },
+        },
+      };
+    } catch (error) {
+      console.error("getCompanyRatingStats service error:", error);
       throw error;
     }
   }
@@ -512,87 +598,6 @@ class ReviewService {
       };
     } catch (error) {
       console.error("getRecentReviews service error:", error);
-      throw error;
-    }
-  }
-  // @desc    Get comprehensive rating statistics for a company
-  // @param   {string} companyId - ID of the company
-  // @returns {Object} Comprehensive rating statistics
-  async getCompanyRatingStats(companyId) {
-    try {
-      const ratingStats = await Review.aggregate([
-        {
-          $match: {
-            company: mongoose.Types.ObjectId(companyId),
-            status: "approved",
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            avgCompanyRating: { $avg: "$companyRating" },
-            avgServiceRating: { $avg: "$serviceRating" },
-            avgStylistRating: { $avg: "$stylistRating" },
-            totalReviews: { $sum: 1 },
-            companyRatingBreakdown: {
-              $push: "$companyRating",
-            },
-            serviceRatingBreakdown: {
-              $push: "$serviceRating",
-            },
-          },
-        },
-      ]);
-
-      if (ratingStats.length === 0) {
-        return {
-          success: true,
-          stats: {
-            avgCompanyRating: 0,
-            avgServiceRating: 0,
-            avgStylistRating: 0,
-            totalReviews: 0,
-            ratingDistribution: {
-              company: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-              service: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-            },
-          },
-        };
-      }
-
-      const stats = ratingStats[0];
-
-      // Calculate rating distribution (optional - if needed)
-      const companyDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      const serviceDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-
-      if (stats.companyRatingBreakdown) {
-        stats.companyRatingBreakdown.forEach((rating) => {
-          companyDistribution[rating]++;
-        });
-      }
-
-      if (stats.serviceRatingBreakdown) {
-        stats.serviceRatingBreakdown.forEach((rating) => {
-          serviceDistribution[rating]++;
-        });
-      }
-
-      return {
-        success: true,
-        stats: {
-          avgCompanyRating: stats.avgCompanyRating || 0,
-          avgServiceRating: stats.avgServiceRating || 0,
-          avgStylistRating: stats.avgStylistRating || 0,
-          totalReviews: stats.totalReviews,
-          ratingDistribution: {
-            company: companyDistribution,
-            service: serviceDistribution,
-          },
-        },
-      };
-    } catch (error) {
-      console.error("getCompanyRatingStats service error:", error);
       throw error;
     }
   }

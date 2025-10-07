@@ -6,145 +6,6 @@ import User from "../user/user.model.js";
 import Service from "../service/service.model.js";
 import Review from "../review/review.model.js";
 
-// @desc    Get dashboard statistics
-// @route   GET /api/analytics/dashboard
-// @access  Private
-export async function getDashboardStats(req, res) {
-  try {
-    const { startDate, endDate } = req.query;
-    const userRole = req.user.role;
-    const userCompany = req.user.company;
-
-    // EVERY user (including superadmins) can only see their own company's data
-    if (!userCompany) {
-      return res.status(403).json({ message: "Company access not authorized" });
-    }
-
-    let query = { company: new mongoose.Types.ObjectId(userCompany) };
-
-    // Date range filtering
-    if (startDate && endDate) {
-      query.date = {
-        $gte: new Date(startDate).toISOString().split("T")[0],
-        $lte: new Date(endDate).toISOString().split("T")[0],
-      };
-    }
-
-    // Get current date for today's appointments
-    const today = new Date();
-    const todayFormatted = today.toISOString().split("T")[0];
-
-    // Appointment counts
-    const totalAppointments = await Appointment.countDocuments(query);
-
-    const todayAppointments = await Appointment.countDocuments({
-      ...query,
-      date: todayFormatted,
-    });
-
-    const completedAppointments = await Appointment.countDocuments({
-      ...query,
-      status: "completed",
-    });
-
-    // Revenue calculations
-    const revenuePipeline = [
-      {
-        $match: {
-          ...query,
-          status: "completed",
-        },
-      },
-      {
-        $lookup: {
-          from: "services",
-          localField: "service",
-          foreignField: "_id",
-          as: "serviceData",
-        },
-      },
-      { $unwind: "$serviceData" },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$serviceData.price" },
-          avgRevenuePerAppointment: { $avg: "$serviceData.price" },
-        },
-      },
-    ];
-
-    const revenueStats = await Appointment.aggregate(revenuePipeline);
-    const totalRevenue = revenueStats[0]?.totalRevenue || 0;
-    const avgRevenue = revenueStats[0]?.avgRevenuePerAppointment || 0;
-
-    // Customer counts - only for this company
-    const totalCustomers = await User.countDocuments({
-      role: "customer",
-      company: userCompany,
-    });
-
-    // Employee counts (stylists) - only for this company
-    const totalStylists = await User.countDocuments({
-      role: "styler",
-      company: userCompany,
-    });
-
-    // Rating calculations
-    const ratingStats = await Appointment.aggregate([
-      {
-        $match: {
-          ...query,
-          rating: { $exists: true, $ne: null },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          avgRating: { $avg: "$rating" },
-          totalRatings: { $sum: 1 },
-        },
-      },
-    ]);
-
-    const avgRating = ratingStats[0]?.avgRating || 0;
-    const totalRatings = ratingStats[0]?.totalRatings || 0;
-
-    // Recent appointments
-    const recentAppointments = await Appointment.find(query)
-      .sort({ date: -1, startTime: -1 })
-      .limit(5)
-      .populate("customer", "name")
-      .populate("service", "name price")
-      .populate("stylist", "name");
-
-    res.json({
-      overview: {
-        totalAppointments,
-        todayAppointments,
-        completedAppointments,
-        totalRevenue,
-        avgRevenuePerAppointment: avgRevenue,
-        totalCustomers,
-        totalStylists,
-        avgRating: Math.round(avgRating * 10) / 10,
-        totalRatings,
-        dateRange: {
-          startDate: startDate || null,
-          endDate: endDate || null,
-        },
-        company: userCompany,
-      },
-      recentAppointments,
-    });
-  } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-}
-
-// @desc    Get revenue analytics
-// @route   GET /api/analytics/revenue
-// @access  Private
 export async function getRevenueAnalytics(req, res) {
   try {
     const { timeframe = "monthly", startDate, endDate } = req.query;
@@ -238,9 +99,6 @@ export async function getRevenueAnalytics(req, res) {
   }
 }
 
-// @desc    Get appointment analytics
-// @route   GET /api/analytics/appointments
-// @access  Private
 export async function getAppointmentAnalytics(req, res) {
   try {
     const { timeframe = "monthly", startDate, endDate } = req.query;
@@ -325,9 +183,6 @@ export async function getAppointmentAnalytics(req, res) {
   }
 }
 
-// @desc    Get customer analytics
-// @route   GET /api/analytics/customers
-// @access  Private
 export async function getCustomerAnalytics(req, res) {
   try {
     const { startDate, endDate } = req.query;
@@ -430,131 +285,6 @@ export async function getCustomerAnalytics(req, res) {
   }
 }
 
-// @desc    Get employee performance analytics
-// @route   GET /api/analytics/employees
-// @access  Private
-export async function getEmployeePerformance(req, res) {
-  try {
-    const { startDate, endDate } = req.query;
-    const userCompany = req.user.company;
-
-    // Only allow access to user's own company data
-    if (!userCompany) {
-      return res.status(403).json({ message: "Company access not authorized" });
-    }
-
-    let employeeQuery = {
-      role: "styler",
-      company: new mongoose.Types.ObjectId(userCompany),
-    };
-
-    let appointmentMatch = {
-      company: new mongoose.Types.ObjectId(userCompany),
-    };
-
-    // Date range filtering for appointments
-    if (startDate && endDate) {
-      appointmentMatch.date = {
-        $gte: new Date(startDate).toISOString().split("T")[0],
-        $lte: new Date(endDate).toISOString().split("T")[0],
-      };
-    }
-
-    const employeeStats = await User.aggregate([
-      { $match: employeeQuery },
-      {
-        $lookup: {
-          from: "appointments",
-          let: { employeeId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ["$stylist", "$$employeeId"] },
-                ...appointmentMatch,
-              },
-            },
-            {
-              $lookup: {
-                from: "services",
-                localField: "service",
-                foreignField: "_id",
-                as: "serviceData",
-              },
-            },
-            { $unwind: "$serviceData" },
-          ],
-          as: "appointments",
-        },
-      },
-      {
-        $project: {
-          name: 1,
-          email: 1,
-          totalAppointments: { $size: "$appointments" },
-          completedAppointments: {
-            $size: {
-              $filter: {
-                input: "$appointments",
-                as: "appt",
-                cond: { $eq: ["$$appt.status", "completed"] },
-              },
-            },
-          },
-          totalRevenue: {
-            $sum: {
-              $map: {
-                input: {
-                  $filter: {
-                    input: "$appointments",
-                    as: "appt",
-                    cond: { $eq: ["$$appt.status", "completed"] },
-                  },
-                },
-                as: "appt",
-                in: "$$appt.serviceData.price",
-              },
-            },
-          },
-          avgRating: {
-            $avg: {
-              $filter: {
-                input: "$appointments.rating",
-                as: "rating",
-                cond: { $ne: ["$$rating", null] },
-              },
-            },
-          },
-          utilizationRate: {
-            $cond: {
-              if: { $gt: ["$totalAppointments", 0] },
-              then: {
-                $multiply: [
-                  {
-                    $divide: ["$completedAppointments", "$totalAppointments"],
-                  },
-                  100,
-                ],
-              },
-              else: 0,
-            },
-          },
-        },
-      },
-      { $sort: { totalRevenue: -1 } },
-    ]);
-
-    res.json({
-      totalEmployees: employeeStats.length,
-      employees: employeeStats,
-      filters: { startDate, endDate },
-      company: userCompany,
-    });
-  } catch (error) {
-    console.error("Error fetching employee analytics:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-}
-// Backend/controllers/analytics.controller.js
 export async function getPopularServices(req, res) {
   try {
     const { timeframe = "monthly", limit = 5, startDate, endDate } = req.query;
@@ -638,9 +368,7 @@ export async function getPopularServices(req, res) {
     });
   }
 }
-// @desc    Get service performance analytics
-// @route   GET /api/analytics/services/:serviceId
-// @access  Private (Admin/SuperAdmin only)
+
 export async function getServicePerformance(req, res) {
   try {
     const { serviceId } = req.params;
@@ -746,7 +474,6 @@ export async function getServicePerformance(req, res) {
   }
 }
 
-// Backend/controllers/analytics.controller.js - FIXED getReviewStatistics
 export async function getReviewStatistics(req, res) {
   try {
     const userCompany = req.user.company;
@@ -759,11 +486,11 @@ export async function getReviewStatistics(req, res) {
       });
     }
 
-    // First, let's see what reviews we have - REMOVE STATUS FILTER
+    // Get all reviews for this company
     const reviews = await Review.find({
       company: effectiveCompanyId,
-      // REMOVED: status: "approved" - count all reviews regardless of status
-    }).select("serviceRating companyRating stylistRating status createdAt");
+      // Include all reviews regardless of status
+    }).select("ratings status createdAt");
 
     if (reviews.length === 0) {
       return res.status(200).json({
@@ -780,26 +507,33 @@ export async function getReviewStatistics(req, res) {
       });
     }
 
+    // UPDATED: Use nested ratings structure in aggregation
     const stats = await Review.aggregate([
       {
         $match: {
           company: new mongoose.Types.ObjectId(effectiveCompanyId),
-          // REMOVED: status: "approved" - include all reviews
+          // Include all reviews
         },
       },
       {
         $group: {
           _id: null,
           totalReviews: { $sum: 1 },
-          averageServiceRating: { $avg: "$serviceRating" },
-          averageCompanyRating: { $avg: "$companyRating" },
-          averageStylistRating: { $avg: "$stylistRating" },
+          averageServiceRating: { $avg: "$ratings.service" },
+          averageCompanyRating: { $avg: "$ratings.company" },
+          averageStylistRating: { $avg: "$ratings.stylist" },
           averageOverallRating: {
             $avg: {
-              $avg: ["$serviceRating", "$companyRating", "$stylistRating"],
+              $avg: [
+                "$ratings.service",
+                "$ratings.company",
+                "$ratings.stylist",
+              ],
             },
           },
-          serviceRatings: { $push: "$serviceRating" },
+          serviceRatings: { $push: "$ratings.service" },
+          companyRatings: { $push: "$ratings.company" },
+          stylistRatings: { $push: "$ratings.stylist" },
         },
       },
     ]);
@@ -811,14 +545,15 @@ export async function getReviewStatistics(req, res) {
       averageStylistRating: 0,
       averageOverallRating: 0,
       serviceRatings: [],
+      companyRatings: [],
+      stylistRatings: [],
     };
 
-    // Calculate distribution from service ratings
+    // Calculate distribution from service ratings (or any rating type)
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     const serviceRatings = result.serviceRatings || [];
 
     serviceRatings.forEach((rating) => {
-      // Use exact rating values (they should be integers 1-5)
       if (distribution.hasOwnProperty(rating)) {
         distribution[rating]++;
       }
@@ -849,12 +584,27 @@ export async function getReviewStatistics(req, res) {
         ),
         ratingDistribution: distribution,
         percentageDistribution: percentageDistribution,
+        // Add breakdown by rating type
+        ratingBreakdown: {
+          service: {
+            average: parseFloat(result.averageServiceRating.toFixed(1)),
+            distribution: calculateRatingDistribution(result.serviceRatings),
+          },
+          company: {
+            average: parseFloat(result.averageCompanyRating.toFixed(1)),
+            distribution: calculateRatingDistribution(result.companyRatings),
+          },
+          stylist: {
+            average: parseFloat(result.averageStylistRating.toFixed(1)),
+            distribution: calculateRatingDistribution(result.stylistRatings),
+          },
+        },
       },
     };
 
     res.status(200).json(response);
   } catch (error) {
-    console.error("❌ [DEBUG] Error in getReviewStatistics:", error);
+    console.error("❌ Error in getReviewStatistics:", error);
     res.status(400).json({
       success: false,
       message: error.message,
@@ -862,7 +612,16 @@ export async function getReviewStatistics(req, res) {
   }
 }
 
-// Optional: Add comprehensive review analytics with time series
+function calculateRatingDistribution(ratings = []) {
+  const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  ratings.forEach((rating) => {
+    if (distribution.hasOwnProperty(rating)) {
+      distribution[rating]++;
+    }
+  });
+  return distribution;
+}
+
 export async function getReviewAnalytics(req, res) {
   try {
     const { companyId, startDate, endDate } = req.query;
@@ -888,18 +647,32 @@ export async function getReviewAnalytics(req, res) {
       if (endDate) matchStage.createdAt.$lte = new Date(endDate);
     }
 
+    // UPDATED: Use nested ratings structure
     const analytics = await Review.aggregate([
       { $match: matchStage },
       {
         $group: {
           _id: null,
           totalReviews: { $sum: 1 },
-          averageRating: { $avg: "$rating" },
+          averageServiceRating: { $avg: "$ratings.service" },
+          averageCompanyRating: { $avg: "$ratings.company" },
+          averageStylistRating: { $avg: "$ratings.stylist" },
+          averageOverallRating: {
+            $avg: {
+              $avg: [
+                "$ratings.service",
+                "$ratings.company",
+                "$ratings.stylist",
+              ],
+            },
+          },
           monthlyData: {
             $push: {
               month: { $month: "$createdAt" },
               year: { $year: "$createdAt" },
-              rating: "$rating",
+              serviceRating: "$ratings.service",
+              companyRating: "$ratings.company",
+              stylistRating: "$ratings.stylist",
             },
           },
         },
@@ -907,7 +680,10 @@ export async function getReviewAnalytics(req, res) {
       {
         $project: {
           totalReviews: 1,
-          averageRating: { $round: ["$averageRating", 1] },
+          averageServiceRating: { $round: ["$averageServiceRating", 1] },
+          averageCompanyRating: { $round: ["$averageCompanyRating", 1] },
+          averageStylistRating: { $round: ["$averageStylistRating", 1] },
+          averageOverallRating: { $round: ["$averageOverallRating", 1] },
           monthlyBreakdown: {
             $map: {
               input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -923,12 +699,48 @@ export async function getReviewAnalytics(req, res) {
                     },
                   },
                 },
-                averageRating: {
+                averageServiceRating: {
                   $avg: {
-                    $filter: {
-                      input: "$monthlyData",
+                    $map: {
+                      input: {
+                        $filter: {
+                          input: "$monthlyData",
+                          as: "data",
+                          cond: { $eq: ["$$data.month", "$$month"] },
+                        },
+                      },
                       as: "data",
-                      cond: { $eq: ["$$data.month", "$$month"] },
+                      in: "$$data.serviceRating",
+                    },
+                  },
+                },
+                averageCompanyRating: {
+                  $avg: {
+                    $map: {
+                      input: {
+                        $filter: {
+                          input: "$monthlyData",
+                          as: "data",
+                          cond: { $eq: ["$$data.month", "$$month"] },
+                        },
+                      },
+                      as: "data",
+                      in: "$$data.companyRating",
+                    },
+                  },
+                },
+                averageStylistRating: {
+                  $avg: {
+                    $map: {
+                      input: {
+                        $filter: {
+                          input: "$monthlyData",
+                          as: "data",
+                          cond: { $eq: ["$$data.month", "$$month"] },
+                        },
+                      },
+                      as: "data",
+                      in: "$$data.stylistRating",
                     },
                   },
                 },
@@ -943,18 +755,315 @@ export async function getReviewAnalytics(req, res) {
       success: true,
       data: analytics[0] || {
         totalReviews: 0,
-        averageRating: 0,
+        averageServiceRating: 0,
+        averageCompanyRating: 0,
+        averageStylistRating: 0,
+        averageOverallRating: 0,
         monthlyBreakdown: Array.from({ length: 12 }, (_, i) => ({
           month: i + 1,
           reviews: 0,
-          averageRating: 0,
+          averageServiceRating: 0,
+          averageCompanyRating: 0,
+          averageStylistRating: 0,
         })),
       },
     });
   } catch (error) {
+    console.error("Error in getReviewAnalytics:", error);
     res.status(400).json({
       success: false,
       message: error.message,
     });
+  }
+}
+
+export async function getDashboardStats(req, res) {
+  try {
+    const { startDate, endDate } = req.query;
+    const userRole = req.user.role;
+    const userCompany = req.user.company;
+
+    if (!userCompany) {
+      return res.status(403).json({ message: "Company access not authorized" });
+    }
+
+    let query = { company: new mongoose.Types.ObjectId(userCompany) };
+
+    // Date range filtering
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate).toISOString().split("T")[0],
+        $lte: new Date(endDate).toISOString().split("T")[0],
+      };
+    }
+
+    const today = new Date();
+    const todayFormatted = today.toISOString().split("T")[0];
+
+    // Appointment counts
+    const totalAppointments = await Appointment.countDocuments(query);
+    const todayAppointments = await Appointment.countDocuments({
+      ...query,
+      date: todayFormatted,
+    });
+    const completedAppointments = await Appointment.countDocuments({
+      ...query,
+      status: "completed",
+    });
+
+    // UPDATED: Review statistics using nested ratings
+    const reviewStats = await Review.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(userCompany),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalReviews: { $sum: 1 },
+          averageServiceRating: { $avg: "$ratings.service" },
+          averageCompanyRating: { $avg: "$ratings.company" },
+          averageStylistRating: { $avg: "$ratings.stylist" },
+          averageOverallRating: {
+            $avg: {
+              $avg: [
+                "$ratings.service",
+                "$ratings.company",
+                "$ratings.stylist",
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    const reviewData = reviewStats[0] || {
+      totalReviews: 0,
+      averageServiceRating: 0,
+      averageCompanyRating: 0,
+      averageStylistRating: 0,
+      averageOverallRating: 0,
+    };
+
+    // Revenue calculations
+    const revenuePipeline = [
+      {
+        $match: {
+          ...query,
+          status: "completed",
+        },
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "service",
+          foreignField: "_id",
+          as: "serviceData",
+        },
+      },
+      { $unwind: "$serviceData" },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$serviceData.price" },
+          avgRevenuePerAppointment: { $avg: "$serviceData.price" },
+        },
+      },
+    ];
+
+    const revenueStats = await Appointment.aggregate(revenuePipeline);
+    const totalRevenue = revenueStats[0]?.totalRevenue || 0;
+    const avgRevenue = revenueStats[0]?.avgRevenuePerAppointment || 0;
+
+    // Customer counts
+    const totalCustomers = await User.countDocuments({
+      role: "customer",
+      company: userCompany,
+    });
+
+    // Employee counts
+    const totalStylists = await User.countDocuments({
+      role: "styler",
+      company: userCompany,
+    });
+
+    // Recent appointments
+    const recentAppointments = await Appointment.find(query)
+      .sort({ date: -1, startTime: -1 })
+      .limit(5)
+      .populate("customer", "name")
+      .populate("service", "name price")
+      .populate("stylist", "name");
+
+    res.json({
+      overview: {
+        totalAppointments,
+        todayAppointments,
+        completedAppointments,
+        totalRevenue,
+        avgRevenuePerAppointment: avgRevenue,
+        totalCustomers,
+        totalStylists,
+        // UPDATED: Use nested ratings data
+        totalReviews: reviewData.totalReviews,
+        averageRating: parseFloat(reviewData.averageOverallRating.toFixed(1)),
+        averageServiceRating: parseFloat(
+          reviewData.averageServiceRating.toFixed(1)
+        ),
+        averageCompanyRating: parseFloat(
+          reviewData.averageCompanyRating.toFixed(1)
+        ),
+        averageStylistRating: parseFloat(
+          reviewData.averageStylistRating.toFixed(1)
+        ),
+        dateRange: {
+          startDate: startDate || null,
+          endDate: endDate || null,
+        },
+        company: userCompany,
+      },
+      recentAppointments,
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+}
+
+export async function getEmployeePerformance(req, res) {
+  try {
+    const { startDate, endDate } = req.query;
+    const userCompany = req.user.company;
+
+    if (!userCompany) {
+      return res.status(403).json({ message: "Company access not authorized" });
+    }
+
+    let employeeQuery = {
+      role: "styler",
+      company: new mongoose.Types.ObjectId(userCompany),
+    };
+
+    let appointmentMatch = {
+      company: new mongoose.Types.ObjectId(userCompany),
+    };
+
+    // Date range filtering for appointments
+    if (startDate && endDate) {
+      appointmentMatch.date = {
+        $gte: new Date(startDate).toISOString().split("T")[0],
+        $lte: new Date(endDate).toISOString().split("T")[0],
+      };
+    }
+
+    const employeeStats = await User.aggregate([
+      { $match: employeeQuery },
+      {
+        $lookup: {
+          from: "appointments",
+          let: { employeeId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$stylist", "$$employeeId"] },
+                ...appointmentMatch,
+              },
+            },
+            {
+              $lookup: {
+                from: "services",
+                localField: "service",
+                foreignField: "_id",
+                as: "serviceData",
+              },
+            },
+            { $unwind: "$serviceData" },
+          ],
+          as: "appointments",
+        },
+      },
+      {
+        $lookup: {
+          from: "reviews",
+          let: { employeeId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$stylist", "$$employeeId"] },
+              },
+            },
+          ],
+          as: "reviews",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          totalAppointments: { $size: "$appointments" },
+          completedAppointments: {
+            $size: {
+              $filter: {
+                input: "$appointments",
+                as: "appt",
+                cond: { $eq: ["$$appt.status", "completed"] },
+              },
+            },
+          },
+          totalRevenue: {
+            $sum: {
+              $map: {
+                input: {
+                  $filter: {
+                    input: "$appointments",
+                    as: "appt",
+                    cond: { $eq: ["$$appt.status", "completed"] },
+                  },
+                },
+                as: "appt",
+                in: "$$appt.serviceData.price",
+              },
+            },
+          },
+          // UPDATED: Use nested ratings from reviews
+          avgStylistRating: {
+            $avg: {
+              $map: {
+                input: "$reviews",
+                as: "review",
+                in: "$$review.ratings.stylist",
+              },
+            },
+          },
+          totalReviews: { $size: "$reviews" },
+          utilizationRate: {
+            $cond: {
+              if: { $gt: ["$totalAppointments", 0] },
+              then: {
+                $multiply: [
+                  {
+                    $divide: ["$completedAppointments", "$totalAppointments"],
+                  },
+                  100,
+                ],
+              },
+              else: 0,
+            },
+          },
+        },
+      },
+      { $sort: { totalRevenue: -1 } },
+    ]);
+
+    res.json({
+      totalEmployees: employeeStats.length,
+      employees: employeeStats,
+      filters: { startDate, endDate },
+      company: userCompany,
+    });
+  } catch (error) {
+    console.error("Error fetching employee analytics:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 }
