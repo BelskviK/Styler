@@ -37,6 +37,8 @@ class NotificationService {
   }
 
   // Send notification to specific user
+  // In your notification service, check the sendToUser method:
+
   async sendToUser(
     userId,
     title,
@@ -60,11 +62,10 @@ class NotificationService {
       // Check if user is connected and send real-time notification
       const userSocketId = this.getUserSocketId(userId);
       if (userSocketId) {
-        // Send to specific socket AND to the user's room for redundancy
-        this.io.to(userSocketId).emit("newNotification", notification);
+        // ✅ FIX: Only send to room, not both socket AND room
         this.io.to(userId.toString()).emit("newNotification", notification);
         console.log(
-          `✅ Real-time notification sent to user ${userId} via socket ${userSocketId} and room ${userId}`
+          `✅ Real-time notification sent to user ${userId} via room ${userId}`
         );
       } else {
         console.log(

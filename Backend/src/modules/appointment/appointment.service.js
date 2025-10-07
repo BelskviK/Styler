@@ -2,7 +2,7 @@
 import Appointment from "./appointment.model.js";
 import User from "../user/user.model.js";
 import Service from "../service/service.model.js";
-
+import mongoose from "mongoose";
 class AppointmentService {
   constructor(notificationService = null) {
     this.notificationService = notificationService;
@@ -178,8 +178,8 @@ class AppointmentService {
       companyName: appt.company?.name || "Unknown Company",
     }));
   }
-  // Create appointment
-  // Create appointment
+  // Backend/src/modules/appointment/appointment.service.js
+
   async createAppointment(appointmentData, user = null) {
     const {
       stylistId,
@@ -306,7 +306,7 @@ class AppointmentService {
       }
     }
 
-    // Find stylist and service (existing code remains the same)
+    // Find stylist and service
     const stylist = await User.findById(stylistId);
     if (!stylist || stylist.role !== "styler") {
       throw new Error("Stylist not found");
@@ -336,7 +336,7 @@ class AppointmentService {
       throw new Error("Time slot already booked");
     }
 
-    // Create appointment
+    // ✅ Create appointment with flags to prevent middleware duplication
     const appointment = new Appointment({
       customer: customerIdToUse,
       customerName,
@@ -353,13 +353,49 @@ class AppointmentService {
       isGuestBooking,
       createdBy: user ? user._id : null,
       isAdminCreation: isAdminCreation,
+      customerAssignedByService: !!customerIdToUse, // ✅ Set flag
+      // ✅ Add flag for stylist to prevent middleware duplication
+      relationshipsHandledByService: true, // ✅ NEW FLAG
     });
 
     await appointment.save();
 
-    // Send notification to stylist
+    // ✅ MANUALLY update relationships to prevent middleware duplication
+    try {
+      // Update stylist's appointments array
+      await User.findByIdAndUpdate(
+        stylistId,
+        { $addToSet: { appointments: appointment._id } },
+        { new: true }
+      );
+      console.log("✅ Stylist appointments updated manually");
+
+      // Update company's appointments array
+      const Company = mongoose.model("Company");
+      await Company.findByIdAndUpdate(
+        stylist.company,
+        { $addToSet: { appointments: appointment._id } },
+        { new: true }
+      );
+      console.log("✅ Company appointments updated manually");
+
+      // Update customer's appointments array if customer exists
+      if (customerIdToUse) {
+        await User.findByIdAndUpdate(
+          customerIdToUse,
+          { $addToSet: { appointments: appointment._id } },
+          { new: true }
+        );
+        console.log("✅ Customer appointments updated manually");
+      }
+    } catch (updateError) {
+      console.error("❌ Error updating relationships manually:", updateError);
+    }
+
+    // ✅ Send notifications (only once)
     if (this.notificationService) {
       try {
+        // Send notification to stylist
         await this.notificationService.sendToUser(
           stylistId,
           "New Appointment Booking",
@@ -370,35 +406,27 @@ class AppointmentService {
           appointment._id
         );
         console.log("✅ Notification sent to stylist:", stylistId);
-      } catch (notificationError) {
-        console.error(
-          "❌ Error sending notification to stylist:",
-          notificationError
-        );
-      }
-    }
 
-    // Send notification to customer if assigned
-    if (this.notificationService && customerIdToUse) {
-      try {
-        await this.notificationService.sendToUser(
-          customerIdToUse,
-          "Appointment Scheduled",
-          `Your appointment with ${stylist.name} is scheduled for ${new Date(
-            date
-          ).toLocaleDateString()} at ${startTime} for ${service.name}`,
-          "appointment",
-          appointment._id
-        );
-        console.log("✅ Notification sent to customer:", customerIdToUse);
+        // Send notification to customer if assigned
+        if (customerIdToUse) {
+          await this.notificationService.sendToUser(
+            customerIdToUse,
+            "Appointment Scheduled",
+            `Your appointment with ${stylist.name} is scheduled for ${new Date(
+              date
+            ).toLocaleDateString()} at ${startTime} for ${service.name}`,
+            "appointment",
+            appointment._id
+          );
+          console.log("✅ Notification sent to customer:", customerIdToUse);
+        } else {
+          console.log(
+            "ℹ️ No customer notification sent - no customer ID found"
+          );
+        }
       } catch (notificationError) {
-        console.error(
-          "❌ Error sending customer notification:",
-          notificationError
-        );
+        console.error("❌ Error sending notifications:", notificationError);
       }
-    } else {
-      console.log("ℹ️ No customer notification sent - no customer ID found");
     }
 
     // Populate and return the appointment

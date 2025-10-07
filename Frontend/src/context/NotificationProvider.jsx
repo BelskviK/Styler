@@ -38,7 +38,6 @@ export const NotificationProvider = ({ children }) => {
       });
 
       newSocket.on("newNotification", (notification) => {
-        console.log("📩 New notification received:", notification);
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
       });

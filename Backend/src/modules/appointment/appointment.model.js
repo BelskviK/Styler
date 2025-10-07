@@ -72,6 +72,14 @@ export const appointmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  customerAssignedByService: {
+    type: Boolean,
+    default: false,
+  },
+  relationshipsHandledByService: {
+    type: Boolean,
+    default: false,
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

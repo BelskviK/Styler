@@ -3,38 +3,38 @@ import mongoose from "mongoose";
 
 export const updateCustomerAppointments = async function (doc) {
   try {
-    console.log("🔄 Running customer appointment middleware...");
-    console.log("📋 Appointment details:", {
-      appointmentId: doc._id,
-      customerId: doc.customer,
-      customerPhone: doc.customerPhone,
-      customerEmail: doc.customerEmail,
-      isGuestBooking: doc.isGuestBooking,
-      isAdminCreation: doc.isAdminCreation,
-    });
+    // ✅ FIRST: Check if relationships were handled by service
+    if (doc.relationshipsHandledByService) {
+      // Still update the appointments array if customer exists
+      if (doc.customer) {
+        await updateCustomerAppointmentsArray(doc.customer, doc._id);
+      }
+      return;
+    }
 
-    // 🚨 CRITICAL FIX: Skip if customer is already assigned (prevents duplicate notifications)
-    if (doc.customer) {
-      console.log(
-        "🛑 Customer already assigned, skipping middleware assignment"
-      );
+    // ✅ SECOND: Check if customer assignment was handled by service
+    if (
+      doc.customerAssignedByService ||
+      (doc.customer && !doc.isGuestBooking)
+    ) {
+      // Still update the appointments array
+      if (doc.customer) {
+        await updateCustomerAppointmentsArray(doc.customer, doc._id);
+      }
       return;
     }
 
     let customerIdToUpdate = doc.customer;
+    let shouldUpdateAppointment = false;
 
-    // Search for customer by phone/email only for appointments without customer
-    if (!customerIdToUpdate) {
+    // Search for customer by phone/email only for guest bookings or appointments without customer
+    if (!customerIdToUpdate || doc.isGuestBooking) {
       let foundCustomer = null;
 
       // Search by phone number with normalization
       if (doc.customerPhone) {
         const normalizedAppointmentPhone = normalizePhoneNumber(
           doc.customerPhone
-        );
-        console.log(
-          "📱 Normalized appointment phone:",
-          normalizedAppointmentPhone
         );
 
         if (normalizedAppointmentPhone) {
@@ -44,9 +44,6 @@ export const updateCustomerAppointments = async function (doc) {
             if (customer.phone) {
               const normalizedCustomerPhone = normalizePhoneNumber(
                 customer.phone
-              );
-              console.log(
-                `🔍 Comparing: ${normalizedAppointmentPhone} with ${normalizedCustomerPhone}`
               );
 
               if (
@@ -95,37 +92,34 @@ export const updateCustomerAppointments = async function (doc) {
 
       if (foundCustomer) {
         customerIdToUpdate = foundCustomer._id;
-        // Update the appointment to link it to the customer
-        await mongoose.model("Appointment").findByIdAndUpdate(doc._id, {
-          customer: customerIdToUpdate,
-          isGuestBooking: false,
-        });
+        shouldUpdateAppointment = true;
         console.log(
-          "🔗 Middleware linked appointment to customer:",
+          "🔗 Middleware will link appointment to customer:",
           customerIdToUpdate
         );
       }
     }
 
+    // Update the appointment document if we found a customer
+    if (shouldUpdateAppointment && customerIdToUpdate) {
+      console.log(
+        "📝 Updating appointment with customer ID:",
+        customerIdToUpdate
+      );
+      await mongoose.model("Appointment").findByIdAndUpdate(
+        doc._id,
+        {
+          customer: customerIdToUpdate,
+          isGuestBooking: false,
+        },
+        { new: true }
+      );
+      console.log("✅ Appointment updated with customer link");
+    }
+
     // Update customer's appointments array if we have a customer ID
     if (customerIdToUpdate) {
-      console.log("👤 Updating customer appointments for:", customerIdToUpdate);
-
-      const customer = await User.findById(customerIdToUpdate);
-      if (customer && customer.role === "customer") {
-        const updatedUser = await User.findByIdAndUpdate(
-          customerIdToUpdate,
-          { $addToSet: { appointments: doc._id } },
-          { new: true, useFindAndModify: false }
-        );
-        console.log("✅ Updated customer appointments:", customerIdToUpdate);
-        console.log(
-          "📊 Customer now has appointments:",
-          updatedUser.appointments.length
-        );
-      } else {
-        console.log("❌ Customer not found or not a customer role");
-      }
+      await updateCustomerAppointmentsArray(customerIdToUpdate, doc._id);
     } else {
       console.log("ℹ️ No customer to update - remains as guest booking");
     }
@@ -134,6 +128,30 @@ export const updateCustomerAppointments = async function (doc) {
   }
 };
 
+async function updateCustomerAppointmentsArray(customerId, appointmentId) {
+  try {
+    console.log("👤 Updating customer appointments array for:", customerId);
+
+    const customer = await User.findById(customerId);
+    if (customer && customer.role === "customer") {
+      // Use $addToSet to prevent duplicates
+      const updatedUser = await User.findByIdAndUpdate(
+        customerId,
+        { $addToSet: { appointments: appointmentId } },
+        { new: true, useFindAndModify: false }
+      );
+      console.log("✅ Updated customer appointments array:", customerId);
+      console.log(
+        "📊 Customer now has appointments:",
+        updatedUser.appointments.length
+      );
+    } else {
+      console.log("❌ Customer not found or not a customer role");
+    }
+  } catch (error) {
+    console.error("❌ Error updating customer appointments array:", error);
+  }
+}
 // Phone number normalization function
 function normalizePhoneNumber(phone) {
   if (!phone) return null;
@@ -176,11 +194,20 @@ function doPhoneNumbersMatch(phone1, phone2) {
 export const updateStylistAppointments = async function (doc) {
   try {
     console.log("🔄 Running stylist appointment middleware...");
+
+    // ✅ Skip if relationships were handled by service
+    if (doc.relationshipsHandledByService) {
+      console.log(
+        "🛑 Stylist relationships handled by service, skipping middleware"
+      );
+      return;
+    }
+
     if (doc.stylist) {
       console.log("💇 Updating stylist appointments for:", doc.stylist);
       const updatedStylist = await User.findByIdAndUpdate(
         doc.stylist,
-        { $push: { appointments: doc._id } },
+        { $addToSet: { appointments: doc._id } }, // ✅ Use $addToSet to prevent duplicates
         { new: true, useFindAndModify: false }
       );
       console.log("✅ Updated stylist appointments:", doc.stylist);
@@ -193,12 +220,21 @@ export const updateStylistAppointments = async function (doc) {
 export const updateCompanyAppointments = async function (doc) {
   try {
     console.log("🔄 Running company appointment middleware...");
+
+    // ✅ Skip if relationships were handled by service
+    if (doc.relationshipsHandledByService) {
+      console.log(
+        "🛑 Company relationships handled by service, skipping middleware"
+      );
+      return;
+    }
+
     if (doc.company) {
       console.log("🏢 Updating company appointments for:", doc.company);
       const Company = mongoose.model("Company");
       const updatedCompany = await Company.findByIdAndUpdate(
         doc.company,
-        { $push: { appointments: doc._id } },
+        { $addToSet: { appointments: doc._id } }, // ✅ Use $addToSet to prevent duplicates
         { new: true, useFindAndModify: false }
       );
       console.log("✅ Updated company appointments:", doc.company);
