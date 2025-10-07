@@ -31,9 +31,9 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register/customer" element={<Register />} />
           <Route path="/barbershops" element={<Barbershops />} />
+          <Route path="/barbershop/:companyName" element={<CompanyPage />} />
           <Route path="/forbusiness" element={<ForBusiness />} />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/barbershop/:companyName" element={<CompanyPage />} />
           <Route path="/review/:appointmentId" element={<ReviewPage />} />
           <Route path="/history" element={<CustomerAppointmentsPage />} />
           <Route path="settings" element={<Settings />} />

@@ -18,9 +18,11 @@ class AppointmentService {
     return api.get(`/appointments/upcoming?userId=${userId}&role=${role}`);
   }
 
-  // TODO END-POIND
-  static async checkAppountmantAvailability(companyId) {
-    return api.get(`/appointments/styler/${companyId}`);
+  // TODO END-POIND.................. done?
+  static async CheckBusySlots(companyId, stylistId, date) {
+    return api.get(`/appointments/availability`, {
+      params: { companyId, stylistId, date },
+    });
   }
 
   // ✅ used by Appointments.jsx

@@ -377,8 +377,11 @@ export default function CompanyPage() {
               selectedService={selectedService}
             />
 
-            <DateTimePicker onDateTimeSelect={handleDateTimeSelect} />
-
+            <DateTimePicker
+              onDateTimeSelect={handleDateTimeSelect}
+              selectedStylist={selectedStylist}
+              company={company} // ✅ Make sure this is passed
+            />
             {/* Customer Info Form */}
             {showCustomerForm && (
               <CustomerInfoForm

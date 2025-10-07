@@ -539,17 +539,44 @@ class AppointmentService {
   }
 
   // Check availability
-  async checkAvailability(stylistId, date, startTime, endTime) {
-    const conflictingAppointment = await Appointment.findOne({
-      stylist: stylistId,
-      date,
-      $or: [{ startTime: { $lt: endTime }, endTime: { $gt: startTime } }],
-    });
+  // Backend/src/modules/appointment/appointment.service.js
 
-    return {
-      available: !conflictingAppointment,
-      conflictingAppointment,
-    };
+  // Check availability - returns all busy time slots
+  async checkAvailability(companyId, stylistId, date) {
+    try {
+      // Validate inputs
+      if (!companyId || !stylistId || !date) {
+        throw new Error("companyId, stylistId, and date are required");
+      }
+
+      // Find all appointments for the specific company, stylist, and date
+      const appointments = await Appointment.find({
+        company: companyId,
+        stylist: stylistId,
+        date: new Date(date),
+        status: { $in: ["pending", "confirmed"] }, // Only active appointments
+      })
+        .select("startTime endTime status customerName service notes")
+        .populate("service", "name duration")
+        .populate("customer", "name phone")
+        .sort({ startTime: 1 }); // Sort by start time
+
+      // Format the response to show busy slots
+      const busySlots = appointments.map((appointment) => ({
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        status: appointment.status,
+        customerName: appointment.customerName,
+        service: appointment.service?.name || "Unknown Service",
+        duration: appointment.service?.duration || 30,
+        notes: appointment.notes || "",
+      }));
+
+      return busySlots;
+    } catch (error) {
+      console.error("❌ Error in checkAvailability:", error);
+      throw new Error(`Failed to check availability: ${error.message}`);
+    }
   }
 }
 

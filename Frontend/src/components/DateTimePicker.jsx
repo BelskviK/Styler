@@ -1,17 +1,76 @@
 // Frontend/src/components/DateTimePicker.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import AppointmentService from "@/services/AppointmentService";
 
-export default function DateTimePicker({ onDateTimeSelect }) {
+export default function DateTimePicker({
+  onDateTimeSelect,
+  selectedStylist,
+  company,
+}) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(null);
+  const [busySlots, setBusySlots] = useState([]);
+  const [loadingBusySlots, setLoadingBusySlots] = useState(false);
+  const [error, setError] = useState(null);
 
   // Static working hours (10:00 to 18:00)
-  const [workingHours] = useState({
+  const workingHours = {
     start: 10, // 10:00 AM
     end: 18, // 6:00 PM
     slotDuration: 30, // 30 minutes per slot
-  });
+  };
+
+  // ✅ FIXED: Better fetchBusySlots with error handling
+  const fetchBusySlots = useCallback(async () => {
+    if (!selectedStylist || !company || !selectedDate) {
+      setBusySlots([]);
+      return;
+    }
+
+    try {
+      setLoadingBusySlots(true);
+      setError(null);
+
+      const dateString = selectedDate.toISOString().split("T")[0]; // YYYY-MM-DD
+
+      console.log("📅 Fetching busy slots for:", {
+        companyId: company.id || company._id,
+        stylistId: selectedStylist.id || selectedStylist._id,
+        date: dateString,
+      });
+
+      const response = await AppointmentService.CheckBusySlots(
+        company.id || company._id,
+        selectedStylist.id || selectedStylist._id,
+        dateString
+      );
+
+      console.log("✅ Busy slots response:", response.data);
+
+      if (response.data.success) {
+        setBusySlots(response.data.busySlots || []);
+      } else {
+        setBusySlots([]);
+      }
+    } catch (error) {
+      console.error("❌ Failed to fetch busy slots:", error);
+      setError("Failed to load available times");
+      setBusySlots([]);
+    } finally {
+      setLoadingBusySlots(false);
+    }
+  }, [selectedStylist, company, selectedDate]);
+
+  // Fetch busy slots when date or stylist changes
+  useEffect(() => {
+    fetchBusySlots();
+  }, [fetchBusySlots]);
+
+  // Check if two time ranges overlap
+  const isTimeOverlap = (start1, end1, start2, end2) => {
+    return start1 < end2 && end1 > start2;
+  };
 
   // Generate time slots based on working hours
   const generateTimeSlots = () => {
@@ -23,7 +82,31 @@ export default function DateTimePicker({ onDateTimeSelect }) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute
           .toString()
           .padStart(2, "0")}`;
-        slots.push(timeString);
+
+        // Calculate end time for this slot
+        const endMinute = minute + slotDuration;
+        const endHour = hour + Math.floor(endMinute / 60);
+        const endTimeString = `${endHour.toString().padStart(2, "0")}:${(
+          endMinute % 60
+        )
+          .toString()
+          .padStart(2, "0")}`;
+
+        // Check if this slot overlaps with any busy slot
+        const isBusy = busySlots.some((busySlot) =>
+          isTimeOverlap(
+            timeString,
+            endTimeString,
+            busySlot.startTime,
+            busySlot.endTime
+          )
+        );
+
+        slots.push({
+          time: timeString,
+          endTime: endTimeString,
+          isBusy,
+        });
       }
     }
 
@@ -32,35 +115,31 @@ export default function DateTimePicker({ onDateTimeSelect }) {
 
   const timeSlots = generateTimeSlots();
 
-  // Get days in month
+  // Rest of your existing functions remain the same...
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     return new Date(year, month + 1, 0).getDate();
   };
 
-  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
   const getFirstDayOfMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     return new Date(year, month, 1).getDay();
   };
 
-  // Navigate to previous month
   const prevMonth = () => {
     setCurrentDate(
       new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
     );
   };
 
-  // Navigate to next month
   const nextMonth = () => {
     setCurrentDate(
       new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
     );
   };
 
-  // Handle date selection
   const handleDateSelect = (day) => {
     const newDate = new Date(
       currentDate.getFullYear(),
@@ -75,16 +154,16 @@ export default function DateTimePicker({ onDateTimeSelect }) {
     }
   };
 
-  // Handle time selection
   const handleTimeSelect = (time) => {
-    setSelectedTime(time);
+    if (time.isBusy) return;
+
+    setSelectedTime(time.time);
 
     if (onDateTimeSelect) {
-      onDateTimeSelect({ date: selectedDate, time });
+      onDateTimeSelect({ date: selectedDate, time: time.time });
     }
   };
 
-  // Check if a date is today
   const isToday = (day) => {
     const today = new Date();
     return (
@@ -94,7 +173,6 @@ export default function DateTimePicker({ onDateTimeSelect }) {
     );
   };
 
-  // Check if a date is selected
   const isSelected = (day) => {
     return (
       day === selectedDate.getDate() &&
@@ -103,7 +181,6 @@ export default function DateTimePicker({ onDateTimeSelect }) {
     );
   };
 
-  // Check if a date is in the past
   const isPastDate = (day) => {
     const date = new Date(
       currentDate.getFullYear(),
@@ -111,27 +188,23 @@ export default function DateTimePicker({ onDateTimeSelect }) {
       day
     );
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time part for comparison
+    today.setHours(0, 0, 0, 0);
     return date < today;
   };
 
-  // Format month and year for display
   const formatMonthYear = (date) => {
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
-  // Generate calendar days
   const generateCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
 
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
 
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
@@ -141,7 +214,6 @@ export default function DateTimePicker({ onDateTimeSelect }) {
 
   const calendarDays = generateCalendarDays();
 
-  // Auto-select current date on component mount
   useEffect(() => {
     const today = new Date();
     setSelectedDate(today);
@@ -251,28 +323,48 @@ export default function DateTimePicker({ onDateTimeSelect }) {
         {/* Time Slots Section */}
         <div className="flex-1">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h4 className="text-[#0d141c] text-base font-bold mb-4">
-              Available Times for {selectedDate.toLocaleDateString()}
-            </h4>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {timeSlots.map((time, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleTimeSelect(time)}
-                  className={`
-                    py-2 px-3 rounded-lg text-sm font-medium transition-all
-                    ${
-                      selectedTime === time
-                        ? "bg-[#0d80f2] text-white"
-                        : "bg-[#e7edf4] text-[#0d141c] hover:bg-[#d0d9e8]"
-                    }
-                  `}
-                >
-                  {time}
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-[#0d141c] text-base font-bold">
+                Available Times for {selectedDate.toLocaleDateString()}
+              </h4>
+              {loadingBusySlots && (
+                <div className="text-sm text-gray-500">Loading...</div>
+              )}
             </div>
+
+            {error && (
+              <div className="text-center py-4 text-red-500 text-sm">
+                {error}
+              </div>
+            )}
+
+            {!selectedStylist ? (
+              <div className="text-center py-8 text-gray-500">
+                Please select a stylist first
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {timeSlots.map((slot, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleTimeSelect(slot)}
+                    disabled={slot.isBusy}
+                    className={`
+                      py-2 px-3 rounded-lg text-sm font-medium transition-all
+                      ${
+                        selectedTime === slot.time
+                          ? "bg-[#0d80f2] text-white"
+                          : slot.isBusy
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed line-through"
+                          : "bg-[#e7edf4] text-[#0d141c] hover:bg-[#d0d9e8]"
+                      }
+                    `}
+                  >
+                    {slot.time}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

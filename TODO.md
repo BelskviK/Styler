@@ -10,6 +10,8 @@
 
 ✅ post middlaware to push appointment document to user
 
+✅dublicated for customer appointment notification
+
 ❌ when createing appointment register valid user
 
 ❌ page dashbord's and page bookings appointment color dismatch

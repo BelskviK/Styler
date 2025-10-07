@@ -3,8 +3,73 @@ import AppointmentService from "./appointment.service.js";
 
 // Initialize service (will be set with notification service in routes)
 export const appointmentService = new AppointmentService();
-// Backend/src/modules/appointment/appointment.controller.js
-// Add this function
+
+// Helper function to validate date format
+function isValidDate(dateString) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateString.match(regex)) return false;
+
+  const date = new Date(dateString);
+  const timestamp = date.getTime();
+
+  return typeof timestamp === "number" && !isNaN(timestamp);
+}
+// @desc    Get busy appointments for company stylist on specific date
+// @route   GET /api/appointments/availability
+// @access  Public/Private (based on your needs)
+
+export async function CheckBusySlots(req, res) {
+  try {
+    const { companyId, stylistId, date } = req.query;
+
+    // Input validation
+    if (!companyId || !stylistId || !date) {
+      return res.status(400).json({
+        success: false,
+        message: "companyId, stylistId, and date are required in request body",
+      });
+    }
+
+    // Validate date format
+    if (!isValidDate(date)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Use YYYY-MM-DD",
+      });
+    }
+
+    const busySlots = await appointmentService.checkAvailability(
+      companyId,
+      stylistId,
+      date
+    );
+
+    // ✅ Simplified response - only return time ranges
+    const simplifiedBusySlots = busySlots.map((slot) => ({
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    }));
+
+    res.status(200).json({
+      success: true,
+      companyId,
+      stylistId,
+      date,
+      busySlots: simplifiedBusySlots, // ✅ Only startTime and endTime
+      message:
+        busySlots.length > 0
+          ? "Busy appointments retrieved successfully"
+          : "No appointments found for this date",
+    });
+  } catch (err) {
+    console.error("❌ CheckBusyAppointments error:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
 export async function getAppointmentById(req, res) {
   try {
     const appointment = await appointmentService.getAppointmentById(
@@ -69,26 +134,7 @@ export async function getUpcomingAppointments(req, res) {
       .status(error.message.includes("Not authorized") ? 403 : 500)
       .json({ message: error.message });
   }
-}
-// TODO
-// @desc    Get availability
-// @route   GET /api/appointments/availability
-// @access  Private
-export async function checkAppountmantAvailability(req, res) {
-  try {
-    const { stylistId, date, startTime, endTime } = req.query;
-    const availability = await appointmentService.checkAvailability(
-      stylistId,
-      date,
-      startTime,
-      endTime
-    );
-    res.status(200).json(availability);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
-  }
-}
+} // Helper function to validate date format
 
 // @desc    Get appointments by styler within a company
 // @route   GET /api/appointments/company/:companyId/styler/:stylerId
