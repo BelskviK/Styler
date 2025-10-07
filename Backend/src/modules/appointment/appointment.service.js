@@ -75,7 +75,7 @@ class AppointmentService {
 
     const appointments = await Appointment.find({ customer: user._id })
       .populate("stylist", "name email phone profileImage expertise rating")
-      .populate("service", "name price duration description")
+      .populate("service", "name price duration description imageUrl")
       .populate("company", "name location image")
       .populate("review")
       .sort({ date: 1, startTime: 1 })

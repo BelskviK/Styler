@@ -2,23 +2,15 @@
 
 FIX: Ensure Table displays correct formated date
 
-FIX: Ensure Datepicker displays correct formated date
-
-FIX: PAGE dashbord : ensure rating is properly count for COMPANY, STYLER, ADMIN
-
-FIX: PAGE Barbershops : ensure barbershop cards counts correct rating for Company
-
-FIX: page dashbord's upcomming Appointments has Todays app...
-
 FIX: when createing appointment register valid user TODAY AND UPCOMMING APPOINTMENT TABLE SEPARATE ROW AS USER/CLIENT
 
 FEAT: User STYLER ?has user.name && User ADMIN ?has appointment.customerName
 
 FEAT: PAGE Appointments: Appointment ADD Table Types (today and upcoming)
 
-FEAT: PAGE Appointments: Appointment ADD Call Button
+FIX: page dashbord's upcomming Appointments has Todays app...
 
-FEAT: Page Appointment History Ensure service Image is properly syncd to appointment card
+FEAT: PAGE Appointments: Appointment ADD Call Button
 
     FIX: model pre post save
 
@@ -35,6 +27,14 @@ FEAT: Page Appointment History Ensure service Image is properly syncd to appoint
     FEAT: subscription plan content
 
     FEAT: subscription plan APi
+
+✅ FEAT: Page Appointment History Ensure service Image is properly syncd to appointment card
+
+✅ FIX: PAGE Barbershops : ensure barbershop cards counts correct rating for Company
+
+✅ FIX: Ensure Datepicker displays correct formated date
+
+✅ FIX: PAGE dashbord : ensure rating is properly count for COMPANY, STYLER, ADMIN
 
 ✅ FIX: page dashbord's and page bookings appointment color dismatch
 

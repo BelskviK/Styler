@@ -16,10 +16,7 @@ const CustomerAppointments = () => {
         setLoading(true);
         setError(null);
 
-        console.log("🔍 Fetching customer appointments...");
-
         const response = await AppointmentService.getAppointmentsByCustomer();
-        console.log("📦 API Response:", response);
 
         // Handle different response structures
         let appointmentsData;
@@ -37,8 +34,6 @@ const CustomerAppointments = () => {
           appointmentsData = response;
         }
 
-        console.log("📋 Appointments data:", appointmentsData);
-
         if (Array.isArray(appointmentsData)) {
           const formattedAppointments = appointmentsData.map((appointment) => ({
             id: appointment._id || appointment.id,
@@ -48,20 +43,12 @@ const CustomerAppointments = () => {
               appointment.startTime
             ),
             specialist: appointment.stylist?.name || "Our Stylist",
-            image:
-              appointment.stylist?.profileImage ||
-              appointment.company?.image ||
-              getDefaultImage(),
+            image: appointment.service?.imageUrl || getDefaultImage(),
             status: getAppointmentStatus(appointment),
             rawData: appointment,
           }));
 
           setAppointments(formattedAppointments);
-          console.log(
-            "✅ Successfully loaded",
-            formattedAppointments.length,
-            "appointments"
-          );
         } else {
           console.error("❌ Invalid data format:", appointmentsData);
           throw new Error("Invalid data format received from server");
@@ -192,7 +179,7 @@ const CustomerAppointments = () => {
 
   // Default image fallback
   const getDefaultImage = () => {
-    return "https://via.placeholder.com/70x70/E7EDF4/49739c?text=Stylist";
+    return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw4EfRsy_s4tkIqY3lnj0diB1dECW1ByiiFA&s";
   };
 
   // Update this function to check for existing review
