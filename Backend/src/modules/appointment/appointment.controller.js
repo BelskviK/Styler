@@ -18,7 +18,7 @@ function isValidDate(dateString) {
 // @route   GET /api/appointments/availability
 // @access  Public/Private (based on your needs)
 
-export async function CheckBusySlots(req, res) {
+export async function getBusyTimeSlots(req, res) {
   try {
     const { companyId, stylistId, date } = req.query;
 

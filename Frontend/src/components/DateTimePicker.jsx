@@ -40,7 +40,7 @@ export default function DateTimePicker({
         date: dateString,
       });
 
-      const response = await AppointmentService.CheckBusySlots(
+      const response = await AppointmentService.getBusyTimeSlots(
         company.id || company._id,
         selectedStylist.id || selectedStylist._id,
         dateString

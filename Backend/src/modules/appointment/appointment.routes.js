@@ -5,7 +5,7 @@ import {
   getAppointmentsByCompany,
   getTodayAppointments,
   getUpcomingAppointments,
-  CheckBusySlots,
+  getBusyTimeSlots,
   getAppointmentsByStyler,
   getAppointmentsByCustomer,
   createAppointment,
@@ -30,7 +30,7 @@ export function setAppointmentNotificationService(notificationService) {
 router.get("/company/:companyId", auth, getAppointmentsByCompany); // ✅
 router.get("/today", auth, getTodayAppointments); // ✅
 router.get("/upcoming", auth, getUpcomingAppointments); // ✅
-router.get("/availability", CheckBusySlots);
+router.get("/availability", getBusyTimeSlots);
 router.get("/styler", auth, getAppointmentsByStyler);
 router.get("/customer", auth, getAppointmentsByCustomer); // TODO
 router.get("/:id", auth, getAppointmentById); // Add this line

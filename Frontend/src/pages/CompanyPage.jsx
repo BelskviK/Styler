@@ -88,7 +88,6 @@ export default function CompanyPage() {
       try {
         setStylistsLoading(true);
         const response = await PublicService.getCompanyStylists(companyId);
-        console.log("Stylists response:", response.data);
         const stylistsWithServices = response.data || [];
         setStylists(stylistsWithServices);
       } catch (err) {
@@ -195,8 +194,6 @@ export default function CompanyPage() {
         customerEmail: customerData.customerEmail || "",
         notes: "",
       };
-
-      console.log("Booking appointment:", appointmentData);
 
       let response;
       if (isAuthenticated) {

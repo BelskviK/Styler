@@ -19,7 +19,7 @@ class AppointmentService {
   }
 
   // TODO END-POIND.................. done?
-  static async CheckBusySlots(companyId, stylistId, date) {
+  static async getBusyTimeSlots(companyId, stylistId, date) {
     return api.get(`/appointments/availability`, {
       params: { companyId, stylistId, date },
     });
