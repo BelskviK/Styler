@@ -10,10 +10,9 @@ import Review from "./review.model.js";
  */
 export const validateAppointmentBeforeSave = async function (next) {
   try {
-    const appointment = await mongoose
-      .model("Appointment")
-      .findById(this.appointment)
-      .populate("company");
+    const appointment = await Appointment.findById(this.appointment).populate(
+      "company"
+    );
 
     if (!appointment) {
       throw new Error("Appointment not found");
@@ -24,7 +23,7 @@ export const validateAppointmentBeforeSave = async function (next) {
       throw new Error("Can only review completed or cancelled appointments");
     }
 
-    // Check if customer matches appointment customer
+    // Check if the customer matches the appointment customer
     if (this.customer.toString() !== appointment.customer.toString()) {
       throw new Error("Only the appointment customer can leave a review");
     }
@@ -32,8 +31,8 @@ export const validateAppointmentBeforeSave = async function (next) {
     // Set company and stylist from appointment
     this.company = appointment.company._id;
     this.stylist = appointment.stylist;
-
     this.updatedAt = Date.now();
+
     next();
   } catch (error) {
     next(error);
@@ -55,9 +54,9 @@ export const removeReviewReferenceBeforeDelete = async function (next) {
   try {
     const review = await this.model.findOne(this.getFilter());
     if (review) {
-      await mongoose
-        .model("Appointment")
-        .findByIdAndUpdate(review.appointment, { $unset: { review: "" } });
+      await Appointment.findByIdAndUpdate(review.appointment, {
+        $unset: { review: "" },
+      });
       console.log("✅ Review reference removed from appointment");
     }
     next();
@@ -380,21 +379,16 @@ export const linkReviewToAppointmentAfterSave = async function (doc) {
   try {
     console.log("🔄 Linking review to appointment:", doc._id);
 
-    // Use $addToSet to prevent duplicates instead of direct assignment
-    await mongoose.model("Appointment").findByIdAndUpdate(doc.appointment, {
+    // Link review to the appointment
+    await Appointment.findByIdAndUpdate(doc.appointment, {
       review: doc._id,
-      // Also update company and user appointments without duplicates
-      $addToSet: {
-        // This ensures the appointment is only added once to each array
-      },
     });
 
-    // Update company appointments without duplicates
+    // Update company and stylist to include this appointment (no duplicates)
     await Company.findByIdAndUpdate(doc.company, {
       $addToSet: { appointments: doc.appointment },
     });
 
-    // Update stylist appointments without duplicates
     await User.findByIdAndUpdate(doc.stylist, {
       $addToSet: { appointments: doc.appointment },
     });

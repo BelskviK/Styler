@@ -1,4 +1,6 @@
 import User from "../user/user.model.js";
+import Appointment from "./appointment.model.js";
+import Company from "../company/company.model.js";
 import mongoose from "mongoose";
 
 export const updateCustomerAppointments = async function (doc) {
@@ -106,7 +108,7 @@ export const updateCustomerAppointments = async function (doc) {
         "📝 Updating appointment with customer ID:",
         customerIdToUpdate
       );
-      await mongoose.model("Appointment").findByIdAndUpdate(
+      await Appointment.findByIdAndUpdate(
         doc._id,
         {
           customer: customerIdToUpdate,
@@ -231,7 +233,6 @@ export const updateCompanyAppointments = async function (doc) {
 
     if (doc.company) {
       console.log("🏢 Updating company appointments for:", doc.company);
-      const Company = mongoose.model("Company");
       const updatedCompany = await Company.findByIdAndUpdate(
         doc.company,
         { $addToSet: { appointments: doc._id } }, // ✅ Use $addToSet to prevent duplicates
@@ -277,7 +278,6 @@ export const removeStylistAppointmentRef = async function (doc) {
 export const removeCompanyAppointmentRef = async function (doc) {
   try {
     if (doc.company) {
-      const Company = mongoose.model("Company");
       await Company.findByIdAndUpdate(
         doc.company,
         { $pull: { appointments: doc._id } },

@@ -2,7 +2,7 @@
 import Appointment from "./appointment.model.js";
 import User from "../user/user.model.js";
 import Service from "../service/service.model.js";
-import mongoose from "mongoose";
+import Company from "../company/company.model.js";
 class AppointmentService {
   constructor(notificationService = null) {
     this.notificationService = notificationService;
@@ -371,7 +371,6 @@ class AppointmentService {
       console.log("✅ Stylist appointments updated manually");
 
       // Update company's appointments array
-      const Company = mongoose.model("Company");
       await Company.findByIdAndUpdate(
         stylist.company,
         { $addToSet: { appointments: appointment._id } },
