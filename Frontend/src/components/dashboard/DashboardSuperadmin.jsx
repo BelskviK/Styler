@@ -3,11 +3,11 @@ import React from "react";
 import SuperadminMetrics from "@/components/dashboard/SuperadminMetrics";
 import PopularServices from "@/components/dashboard/PopularServices";
 import StylistPerformance from "@/components/dashboard/StylistPerformance";
-import RecentActivity from "@/components/dashboard/RecentActivity";
-import CustomerFeedbackSummary from "@/components/dashboard/CustomerFeedbackSummary";
 import TodaySchedule from "@/components/dashboard/TodaySchedule";
 import UpcomingAppointments from "@/components/dashboard/UpcomingAppointments";
 import ReviewAnalytics from "@/components/dashboard/ReviewAnalytics";
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import CustomerFeedbackSummary from "@/components/dashboard/CustomerFeedbackSummary";
 
 export default function SuperadminDashboard() {
   return (

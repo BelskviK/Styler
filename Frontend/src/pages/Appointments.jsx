@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Modal from "@/components/common/Modal";
 import AppointmentForm from "@/components/Appointments/AppointmentForm";
-import AppointmentTable from "@/components/Appointments/AppointmentTable";
+import Table from "@/components/common/Table";
 import AppointmentService from "@/services/AppointmentService";
 import toast from "react-hot-toast";
 
@@ -46,25 +46,6 @@ export default function Appointments() {
   useEffect(() => {
     loadAppointments();
   }, [loadAppointments]);
-
-  // Memoized sort handler
-  const handleSort = useCallback((key, direction) => {
-    setAppointments((prev) => {
-      const sorted = [...prev].sort((a, b) => {
-        const aValue = getNestedValue(a, key);
-        const bValue = getNestedValue(b, key);
-
-        if (aValue < bValue) return direction === "asc" ? -1 : 1;
-        if (aValue > bValue) return direction === "asc" ? 1 : -1;
-        return 0;
-      });
-      return sorted;
-    });
-  }, []);
-
-  const getNestedValue = (obj, path) => {
-    return path.split(".").reduce((acc, part) => acc && acc[part], obj);
-  };
 
   // Memoized status update - only update the specific appointment
   const handleStatusUpdate = useCallback(
@@ -149,13 +130,15 @@ export default function Appointments() {
 
       {/* Table */}
       <div className="px-4 py-3">
-        <AppointmentTable
-          appointments={appointments} // Pass the main appointments array
+        <Table
+          appointments={appointments}
           search={search}
-          onSort={handleSort}
           onStatusUpdate={handleStatusUpdate}
           onDelete={handleDelete}
-          userRole={user?.role}
+          viewType="all"
+          loading={loading}
+          emptyMessage="No appointments found"
+          maxHeight="max-h-[600px]"
         />
       </div>
 
