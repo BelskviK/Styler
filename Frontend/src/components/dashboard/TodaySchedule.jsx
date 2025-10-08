@@ -45,7 +45,7 @@ export default function TodaySchedule() {
       <h2 className="text-[#111418] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
         Today's Schedule
       </h2>
-      <div className="px-4 py-3">
+      <div className=" py-4">
         <Table
           appointments={appointments}
           onStatusUpdate={handleStatusUpdate}
