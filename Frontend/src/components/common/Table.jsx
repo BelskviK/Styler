@@ -263,14 +263,14 @@ function Table({
             <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <div className="flex px-3 py-2">
                 {/* Date - Moved to first column */}
-                <div className="flex-[180px] min-w-0">
+                <div className="flex-1 min-w-0">
                   <SortableHeader sortKey="date">
                     {viewType === "today" ? "Time" : "Date"}
                   </SortableHeader>
                 </div>
 
                 {/* Customer */}
-                <div className="flex-[200px] min-w-0">
+                <div className="flex-1 min-w-0">
                   <SortableHeader sortKey="customerName">
                     Customer
                   </SortableHeader>
@@ -425,10 +425,10 @@ const AppointmentRow = memo(function AppointmentRow({
   return (
     <div className="flex items-center px-3 py-2 hover:bg-gray-50 transition-colors duration-150 min-h-[48px]">
       {/* Date/Time - Moved to first column */}
-      <div className="flex-[180px] min-w-0 pr-3">{renderDateTime()}</div>
+      <div className="flex-1 min-w-0 pr-3">{renderDateTime()}</div>
 
       {/* Customer */}
-      <div className="flex-[200px] min-w-0 pr-0">
+      <div className="flex-1 min-w-0 pr-3">
         <div className="text-xs text-gray-900">
           <button
             onClick={() => onCustomerNameClick(appointment)}
@@ -464,6 +464,11 @@ const AppointmentRow = memo(function AppointmentRow({
           <div className="font-medium truncate text-xs">
             {appointment.serviceName}
           </div>
+          {appointment.servicePrice && (
+            <div className="text-xs text-gray-500">
+              ${appointment.servicePrice}
+            </div>
+          )}
         </div>
       </div>
 
