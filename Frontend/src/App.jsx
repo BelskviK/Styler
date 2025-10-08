@@ -1,9 +1,12 @@
 // Frontend/src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import ProtectedRoute from "@/components/common/ProtectedRoute";
+import AuthenticatedLayout from "@/components/common/AuthenticatedLayout";
+import Layout from "@/components/common/Layout";
+
 import Login from "@/pages/Login";
 import Barbershops from "@/pages/Barbershops";
-import AuthenticatedLayout from "@/components/common/AuthenticatedLayout";
 import Dashboard from "@/pages/Dashboard";
 import Appointments from "@/pages/Appointments";
 import Bookings from "@/pages/Bookings";
@@ -18,8 +21,6 @@ import ReviewPage from "@/pages/Review";
 import CustomerAppointmentsPage from "@/pages/CustomerAppointments";
 
 import { NotificationProvider } from "@/context/NotificationProvider";
-
-import Layout from "@/components/common/Layout";
 
 export default function App() {
   return (
