@@ -464,11 +464,11 @@ const AppointmentRow = memo(function AppointmentRow({
           <div className="font-medium truncate text-xs">
             {appointment.serviceName}
           </div>
-          {appointment.servicePrice && (
+          {/* {appointment.servicePrice && (
             <div className="text-xs text-gray-500">
               ${appointment.servicePrice}
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
