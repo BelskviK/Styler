@@ -11,6 +11,25 @@ body {
   font-family: "Roboto", "Noto Sans Georgian", "Noto Sans Display", sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
+  background-color: white;
+  color: #111418;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode styles for entire app */
+.dark {
+  background-color: #0f1419;
+  color: #e2e8f0;
+}
+
+.dark body {
+  background-color: #0f1419;
+  color: #e2e8f0;
+}
+
+/* Ensure all elements inherit dark mode */
+.dark * {
+  border-color: #374151;
 }
 
 /* Language-specific font classes */
@@ -61,4 +80,31 @@ body {
 
 .sidebar-container {
   overflow-y: auto;
+}
+
+/* Dark mode transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Force dark mode on all common elements */
+.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark .text-gray-900 {
+  color: #fbf9f9 !important;
+}
+
+.dark .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #374151 !important;
 }

@@ -54,19 +54,11 @@ export default function DateTimePicker({
 
       const dateString = formatDateForAPI(selectedDate);
 
-      console.log("📅 Fetching busy slots for:", {
-        companyId: company.id || company._id,
-        stylistId: selectedStylist.id || selectedStylist._id,
-        date: dateString,
-      });
-
       const response = await AppointmentService.getBusyTimeSlots(
         company.id || company._id,
         selectedStylist.id || selectedStylist._id,
         dateString
       );
-
-      console.log("✅ Busy slots response:", response.data);
 
       if (response.data.success) {
         setBusySlots(response.data.busySlots || []);

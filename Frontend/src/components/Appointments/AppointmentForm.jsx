@@ -401,7 +401,6 @@ export default function AppointmentForm({
       const response = await AppointmentService.createAppointment(
         appointmentData
       );
-      console.log("✅ Appointment created successfully:", response);
 
       toast.success("Appointment created successfully");
 

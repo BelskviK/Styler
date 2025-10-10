@@ -10,23 +10,24 @@ FEAT: PAGE Appointments: Appointment ADD Table Types (today and upcoming)
 
 FIX: page dashbord's upcomming Appointments has Todays app...
 
-FEAT: PAGE Appointments: Appointment ADD Call Button
-
-    FIX: model pre post save
-
     FEAT: designe of Home PAGE
 
     FEAT: i18n everything
 
     FEAT: dark mode
 
-    FEAT: RESPONSIVE
-
     FEAT: Nottification clicking navigating
 
     FEAT: subscription plan content
 
     FEAT: subscription plan APi
+
+
+    ✅ FEAT: RESPONSIVE
+
+    ✅ FIX: model pre post save
+
+✅ FEAT: PAGE Appointments: Appointment ADD Call Button
 
 ✅ FIX: Datepicker registeres -1 day (choshen 15 aug db saves 14 aug)
 

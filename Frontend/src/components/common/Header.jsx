@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/context/ThemeContext";
 
 // Default profile SVG component
 const DefaultProfileSVG = ({ className = "w-8 h-8" }) => (
@@ -27,7 +28,46 @@ const HamburgerMenuIcon = ({ className = "w-6 h-6" }) => (
     />
   </svg>
 );
+// Theme Toggle Component - UPDATED VERSION
+// In Header.jsx, update the ThemeToggle component temporarily:
+const ThemeToggle = () => {
+  const { isDark, toggleTheme } = useTheme();
 
+  const handleClick = () => {
+    console.log("Theme toggle clicked. Current isDark:", isDark);
+    toggleTheme();
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {isDark ? (
+        // Sun icon - we're in dark mode, so show sun to switch to light
+        <svg
+          className="w-5 h-5 text-yellow-500"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-12a.75.75 0 0 0 .75-.75V2a.75.75 0 0 0-1.5 0v2.25c0 .414.336.75.75.75zm0 15a.75.75 0 0 0-.75.75V22a.75.75 0 0 0 1.5 0v-2.25A.75.75 0 0 0 12 20zM4.222 5.222a.75.75 0 0 0 1.06 0l1.5-1.5a.75.75 0 0 0-1.06-1.06l-1.5 1.5a.75.75 0 0 0 0 1.06zm14.496 14.496a.75.75 0 0 0 1.06 0l1.5-1.5a.75.75 0 1 0-1.06-1.06l-1.5 1.5a.75.75 0 0 0 0 1.06zM2 12a.75.75 0 0 0 .75.75H5a.75.75 0 0 0 0-1.5H2.75A.75.75 0 0 0 2 12zm17 0a.75.75 0 0 0 .75-.75V9a.75.75 0 0 0-1.5 0v2.25c0 .414.336.75.75.75zm-15.722 6.778a.75.75 0 0 0 0-1.06l-1.5-1.5a.75.75 0 0 0-1.06 1.06l1.5 1.5a.75.75 0 0 0 1.06 0zm14.496-14.496a.75.75 0 0 0 0-1.06l-1.5-1.5a.75.75 0 1 0-1.06 1.06l1.5 1.5a.75.75 0 0 0 1.06 0z" />
+        </svg>
+      ) : (
+        // Moon icon - we're in light mode, so show moon to switch to dark
+        <svg
+          className="w-5 h-5 text-gray-700"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998z" />
+        </svg>
+      )}
+      {/* Temporary debug text */}
+      <span className="text-xs">{isDark ? "Dark" : "Light"}</span>
+    </button>
+  );
+};
 // User avatar component with dropdown
 const UserAvatar = ({ user, className = "w-8 h-8" }) => {
   if (user?.profileImage) {
@@ -66,11 +106,15 @@ const ProfileDropdown = ({ user, onLogout, isOpen, onClose }) => {
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+      className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
     >
-      <div className="px-4 py-2 border-b border-gray-100">
-        <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-        <p className="text-xs text-gray-500">{user?.email}</p>
+      <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+        <p className="text-sm font-medium text-gray-900 dark:text-white">
+          {user?.name}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {user?.email}
+        </p>
       </div>
 
       <button
@@ -78,7 +122,7 @@ const ProfileDropdown = ({ user, onLogout, isOpen, onClose }) => {
           navigate("/settings");
           onClose();
         }}
-        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg
           className="w-4 h-4 mr-2"
@@ -108,7 +152,7 @@ const ProfileDropdown = ({ user, onLogout, isOpen, onClose }) => {
           navigate("/Pricing");
           onClose();
         }}
-        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg
           className="w-4 h-4 mr-2"
@@ -131,7 +175,7 @@ const ProfileDropdown = ({ user, onLogout, isOpen, onClose }) => {
           onLogout();
           onClose();
         }}
-        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+        className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg
           className="w-4 h-4 mr-2"
@@ -173,16 +217,16 @@ const BurgerMenuDropdown = ({ isOpen, onClose }) => {
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+      className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
     >
       {/* Mobile-only login and registration items (hidden on sm and above) */}
-      <div className="sm:hidden border-b border-gray-100">
+      <div className="sm:hidden border-b border-gray-100 dark:border-gray-700">
         <button
           onClick={() => {
             navigate("/login");
             onClose();
           }}
-          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg
             className="w-4 h-4 mr-2"
@@ -205,7 +249,7 @@ const BurgerMenuDropdown = ({ isOpen, onClose }) => {
             navigate("/register/customer");
             onClose();
           }}
-          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg
             className="w-4 h-4 mr-2"
@@ -229,7 +273,7 @@ const BurgerMenuDropdown = ({ isOpen, onClose }) => {
           navigate("/dashboard");
           onClose();
         }}
-        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg
           className="w-4 h-4 mr-2"
@@ -252,7 +296,7 @@ const BurgerMenuDropdown = ({ isOpen, onClose }) => {
           navigate("/Pricing");
           onClose();
         }}
-        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg
           className="w-4 h-4 mr-2"
@@ -307,24 +351,27 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 z-50">
+    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 z-50">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <h1
             onClick={handleLogoClick}
-            className="text-xl font-semibold text-gray-900 cursor-pointer"
+            className="text-xl font-semibold text-gray-900 dark:text-white cursor-pointer"
           >
             {user?.companyName || "SalonApp"}
           </h1>
         </div>
 
         <div className="flex items-center space-x-4">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* My Appointments button - hidden on tablet and mobile */}
           {user?.role === "customer" && (
             <div className="hidden lg:flex items-center space-x-2">
               <button
                 onClick={() => navigate("/history")}
-                className="text-sm text-gray-600 hover:text-gray-900"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               >
                 My Appointments
               </button>
@@ -336,7 +383,7 @@ const Header = () => {
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2 relative">
                 {/* Welcome message first - hidden on tablet and mobile */}
-                <span className="hidden sm:inline text-sm text-gray-700">
+                <span className="hidden sm:inline text-sm text-gray-700 dark:text-gray-300">
                   Welcome, {user?.name}
                 </span>
 
@@ -348,7 +395,7 @@ const Header = () => {
                   >
                     <UserAvatar
                       user={user}
-                      className="w-8 h-8 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="w-8 h-8 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     />
                   </button>
 
@@ -366,13 +413,13 @@ const Header = () => {
               {/* Text buttons hidden on mobile, visible on larger screens */}
               <button
                 onClick={() => navigate("/login")}
-                className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hidden sm:block"
               >
                 Login
               </button>
               <button
                 onClick={() => navigate("/register/customer")}
-                className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hidden sm:block"
               >
                 Register
               </button>
@@ -383,7 +430,7 @@ const Header = () => {
                   onClick={toggleBurgerMenu}
                   className="flex items-center justify-center focus:outline-none"
                 >
-                  <HamburgerMenuIcon className="w-6 h-6 text-gray-600 hover:text-gray-900" />
+                  <HamburgerMenuIcon className="w-6 h-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" />
                 </button>
 
                 <BurgerMenuDropdown

@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "@/App";
 import { AuthProvider } from "@/context/AuthProvider";
 import I18nProvider from "@/context/I18nProvider";
-import { NotificationProvider } from "@/context/NotificationProvider";
 
 import "./index.css";
 import "primeicons/primeicons.css";

@@ -21,50 +21,53 @@ import ReviewPage from "@/pages/Review";
 import CustomerAppointmentsPage from "@/pages/CustomerAppointments";
 
 import { NotificationProvider } from "@/context/NotificationProvider";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export default function App() {
   return (
-    <NotificationProvider>
-      <Routes>
-        {/* Public routes without Layout (they'll handle their own layout) */}
+    <ThemeProvider>
+      <NotificationProvider>
+        <Routes>
+          {/* Public routes without Layout (they'll handle their own layout) */}
 
-        <Route element={<Layout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register/customer" element={<Register />} />
-          <Route path="/barbershops" element={<Barbershops />} />
-          <Route path="/barbershop/:companyName" element={<CompanyPage />} />
-          <Route path="/forbusiness" element={<ForBusiness />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/review/:appointmentId" element={<ReviewPage />} />
-          <Route path="/history" element={<CustomerAppointmentsPage />} />
-          <Route path="settings" element={<Settings />} />
+          <Route element={<Layout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register/customer" element={<Register />} />
+            <Route path="/barbershops" element={<Barbershops />} />
+            <Route path="/barbershop/:companyName" element={<CompanyPage />} />
+            <Route path="/forbusiness" element={<ForBusiness />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/review/:appointmentId" element={<ReviewPage />} />
+            <Route path="/history" element={<CustomerAppointmentsPage />} />
+            <Route path="settings" element={<Settings />} />
 
-          {/* All other routes use Layout with Header */}
-          {/* Protected routes */}
-          <Route element={<AuthenticatedLayout />}>
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={["admin", "superadmin", "styler"]}
-                />
-              }
-            >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="bookings" element={<Bookings />} />
-              <Route path="stylists" element={<Stylists />} />
-              <Route path="services" element={<Services />} />
-              <Route path="appointments" element={<Appointments />} />
+            {/* All other routes use Layout with Header */}
+            {/* Protected routes */}
+            <Route element={<AuthenticatedLayout />}>
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["admin", "superadmin", "styler"]}
+                  />
+                }
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="bookings" element={<Bookings />} />
+                <Route path="stylists" element={<Stylists />} />
+                <Route path="services" element={<Services />} />
+                <Route path="appointments" element={<Appointments />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Catch-all */}
-          <Route
-            path="*"
-            element={<h1 className="text-xl">Page Not Found</h1>}
-          />
-        </Route>
-      </Routes>
-    </NotificationProvider>
+            {/* Catch-all */}
+            <Route
+              path="*"
+              element={<h1 className="text-xl">Page Not Found</h1>}
+            />
+          </Route>
+        </Routes>
+      </NotificationProvider>
+    </ThemeProvider>
   );
 }

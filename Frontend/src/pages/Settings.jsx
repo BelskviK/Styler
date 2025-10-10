@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import UserService from "@/services/UserService";
@@ -20,12 +20,7 @@ const Settings = () => {
 
   const { t } = useI18n();
 
-  // Fetch user data on component mount
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await UserService.getCurrentUser();
@@ -49,7 +44,11 @@ const Settings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+  // Fetch user data on component mount
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleImageSubmit = async (e) => {
     e.preventDefault();
