@@ -1,5 +1,5 @@
 // Backend/controllers/analytics.controller.js
-import AnalyticsService from "../services/analytics.service.js";
+import AnalyticsService from "./analytics.service.js";
 
 export async function getRevenueAnalytics(req, res) {
   try {
